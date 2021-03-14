@@ -26,10 +26,8 @@ function ascender(g::Group)
     return maximum(asc)
 end
 
-# The descender is not really the typographic descender here but rather
-# the offset to the baseline
-# TODO Document and rename this
-descender(g::Group) = 0
+# Offset of the ink relative to the baseline 
+yoffset(g::Group) = 0
 xpositions(g::Group) = [p[1] for p in g.positions]
 ypositions(g::Group) = [p[2] for p in g.positions]
 
@@ -44,12 +42,12 @@ function rightinkbound(g::Group)
 end
 
 function bottominkbound(g::Group)
-    bottoms = bottominkbound.(g.elements) .* g.scales .+ ypositions(g)
+    bottoms = -yoffset.(g.elements) .+ bottominkbound.(g.elements) .* g.scales .+ ypositions(g)
     return minimum(bottoms)
 end
 
 function topinkbound(g::Group)
-    tops = topinkbound.(g.elements) .* g.scales .+ ypositions(g)
+    tops = -yoffset.(g.elements) .+ topinkbound.(g.elements) .* g.scales .+ ypositions(g)
     return maximum(tops)
 end
 
@@ -59,19 +57,21 @@ end
 
 advance(s::Space) = s.width
 ascender(s::Space) = 0
-descender(::Space) = 0
+yoffset(::Space) = 0
 
 advance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
 ascender(char::TeXChar) = ascender(char.font)
-descender(char::TeXChar) = descender(char.font)
+yoffset(char::TeXChar) = descender(char.font)
 
-for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound, :inkheight, :inkwidth)
+for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(::Space) = 0
     @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
 end
 
 hmid(x) = 0.5*(leftinkbound(x) + rightinkbound(x))
+vmid(x) = 0.5*(bottominkbound(x) + topinkbound(x))
 inkwidth(x) = rightinkbound(x) - leftinkbound(x)
+inkheight(x) = topinkbound(x) - bottominkbound(x)
 
 tex_layout(char::TeXChar) = char
 tex_layout(::Nothing) = Space(0)
@@ -109,13 +109,13 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         sub_width = advance(sub) * shrink
         super_width = advance(super) * shrink
 
-        y0 = descender(core)
+        y0 = yoffset(core)
 
         # TODO Make that not hacky as hell
         # Compute at which height to put superscript
         h = inkheight(TeXChar('u', NewCMItalicFont))
 
-        ysub = y0 + descender(sub) * shrink
+        ysub = y0 + yoffset(sub) * shrink
 
         return Group(
             [core, sub, super],
@@ -124,9 +124,7 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
     elseif head == :integral
         # TODO
     elseif head == :underover
-        # TODO padding use is arbitrary
-        # It is added on top and remove on the bottom... looks reasonnable in
-        # experiments, may not be robust
+        # TODO padding used is arbitrary
         pad = 0.2
         core, sub, super = tex_layout.(args)
 
@@ -134,9 +132,9 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         dxsub = mid - hmid(sub) * shrink
         dxsuper = mid - hmid(super) * shrink
 
-        # The leftmost element should have x = 0
+        # The leftmost element must have x = 0
         x0 = -min(0, dxsub, dxsuper)
-        y0 = descender(core)
+        y0 = yoffset(core)
 
         return Group(
             [core, sub, super],
@@ -144,7 +142,7 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
                 Point2f0(x0, y0),
                 Point2f0(
                     x0 + dxsub,
-                    y0 + bottominkbound(core) - ascender(sub) * shrink + pad),
+                    y0 + bottominkbound(core) - ascender(sub) * shrink),
                 Point2f0(
                     x0 + dxsuper,
                     y0 + topinkbound(core) + pad)
@@ -161,7 +159,30 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         sym = TeXChar(args[1].args[1], fontenv.function_font)
         return horizontal_layout([Space(0.2), sym, Space(0.2)])
     elseif head == :delimited
-        # TODO
+        grow = 1.1
+        elements = tex_layout.(args)
+        left, content, right = elements
+
+        height = inkheight(content)
+        left_scale = max(1, height / inkheight(left))
+        right_scale = max(1, height / inkheight(right))
+        scales = [left_scale, 1, right_scale]
+
+        ys = yoffset.(elements)
+        @show ys
+        y0 = ys[2]
+            
+        dxs = advance.(elements) .* scales
+        xs = [0, cumsum(dxs[1:end-1])...]
+        @show bottominkbound(content)
+        # TODO Height calculation for the parenthesis looks wrong
+        # TODO Check what the algorithm should be there
+        # Center the delimiters in the middle of the bot and top baselines ?
+        return Group(elements, [
+            Point2f0(xs[1], yoffset(left) - bottominkbound(left) + bottominkbound(content)),
+            Point2f0(xs[2], y0),
+            Point2f0(xs[3], yoffset(right) - bottominkbound(right) + bottominkbound(content))
+        ], scales)
     elseif head == :accent || head == :wide_accent
         # TODO
     elseif head == :font
@@ -172,23 +193,14 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         return TeXChar(args[1], NewCMMathFont)
     end
 
-    @error "Something went wrong with $expr"
+    @eroro "Unsupported $expr"
 end
 
-function horizontal_layout(elements)
-    n = length(elements)
-    dxs = zeros(n)
-    ys = zeros(n)
-    
-    for (i, elem) in enumerate(elements)
-        dxs[i] = advance(elem)
-        ys[i] = descender(elem)
-    end
+function horizontal_layout(elements ; scales=ones(length(elements)))
+    dxs = advance.(elements)
+    ys = yoffset.(elements)
+    xs = [0, cumsum(dxs[1:end-1])...]
 
-    xs = zeros(n)
-    xs[2:end] = cumsum(dxs[1:end-1])
-
-    scales = ones(n)
     return Group(elements, Point2f0.(xs, ys), scales)
 end
 
@@ -207,8 +219,10 @@ end
 unravel(char, pos, scale) = [(char, pos, scale)]
 
 
-function draw_glyph!(scene, texchar, position, scale)
+function draw_glyph!(scene, texchar::TeXChar, position, scale)
     size = 64
+    x = position[1] * size
+    y = position[2] * size
     text!(scene, string(texchar.char), font=texchar.font, position=position.*size, textsize=size*scale)
 end
 
@@ -219,7 +233,8 @@ begin  # Quick test
     using CairoMakie
     
     scene = Scene()
-    expr = parse(TeXExpr, raw"∫ \sin(\varphi) \cos(\omega t) = \lim_{x →\infty} A^j v_{(a + b)}^i \Lambda_L \sum^j_m \sum_{k=1234}^n 22 \nabla x!")
+    tex = raw"∫ \cos(\omega t) = \lim_{x →\infty} A^j v_{(a + b)}^i \Lambda_L \sum^j_m \sum_{k=1234}^n 22k  \nabla x!"
+    expr = parse(TeXExpr, tex)
     layout = tex_layout(expr)
 
     for (elem, pos, scale) in unravel(layout)
