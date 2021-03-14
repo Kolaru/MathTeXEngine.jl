@@ -7,7 +7,8 @@ end
 
 TeXChar(char, path::AbstractString, command) = TeXChar(char, FTFont(path), command)
 
-Base.show(io::IO, tc::TeXChar) = print(io, "TeXChar $(tc.char) [# $(codepoint(tc.char)) in $(tc.font.family_name) - $(tc.font.style_name)]")
+Base.show(io::IO, tc::TeXChar) =
+    print(io, "TeXChar '$(tc.char)' [U+$(uppercase(string(codepoint(tc.char), base=16, pad=4))) in $(tc.font.family_name) - $(tc.font.style_name)]")
 
 boundingbox(tc::TeXChar) = FreeTypeAbstraction.boundingbox(tc.char, tc.font, 64)
 

@@ -14,39 +14,51 @@ struct Group
     elements::Vector
     positions::Vector{Point2f0}
     scales::Vector
-    advance
 end
 
-advance(g::Group) = g.advance
+function advance(g::Group)
+    adv = xpositions(g) .+ advance.(g.elements) .* g.scales
+    return maximum(adv)
+end
+
+function ascender(g::Group)
+    asc = ypositions(g) .+ ascender.(g.elements) .* g.scales
+    return maximum(asc)
+end
+
+# The descender is not really the typographic descender here but rather
+# the offset to the baseline
+# TODO Document and rename this
 descender(g::Group) = 0
 xpositions(g::Group) = [p[1] for p in g.positions]
 ypositions(g::Group) = [p[2] for p in g.positions]
 
-function leftinkbound(group::Group)
-    lefts = leftinkbound.(group.elements) .* group.scales .+ xpositions(group)
+function leftinkbound(g::Group)
+    lefts = leftinkbound.(g.elements) .* g.scales .+ xpositions(g)
     return minimum(lefts)
 end
 
-function rightinkbound(group::Group)
-    rights = rightinkbound.(group.elements) .* group.scales .+ xpositions(group)
+function rightinkbound(g::Group)
+    rights = rightinkbound.(g.elements) .* g.scales .+ xpositions(g)
     return maximum(rights)
 end
 
-function bottominkbound(group::Group)
-    bottoms = bottominkbound.(group.elements) .* group.scales .+ ypositions(group)
+function bottominkbound(g::Group)
+    bottoms = bottominkbound.(g.elements) .* g.scales .+ ypositions(g)
     return minimum(bottoms)
 end
 
-function topinkbound(group::Group)
-    tops = topinkbound.(group.elements) .* group.scales .+ ypositions(group)
+function topinkbound(g::Group)
+    tops = topinkbound.(g.elements) .* g.scales .+ ypositions(g)
     return maximum(tops)
 end
 
 struct Space
-    advance
+    width
 end
 
-advance(s::Space) = s.advance
+advance(s::Space) = s.width
+ascender(s::Space) = 0
 descender(::Space) = 0
 
 advance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
@@ -97,8 +109,6 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         sub_width = advance(sub) * shrink
         super_width = advance(super) * shrink
 
-        width = core_width + max(sub_width, super_width)
-
         y0 = descender(core)
 
         # TODO Make that not hacky as hell
@@ -110,35 +120,36 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         return Group(
             [core, sub, super],
             [Point2f0(0, y0), Point2f0(core_width, ysub), Point2f0(core_width, h-0.2)],
-            [1, shrink, shrink],
-            width)
+            [1, shrink, shrink])
     elseif head == :integral
         # TODO
     elseif head == :underover
+        # TODO padding use is arbitrary
+        # It is added on top and remove on the bottom... looks reasonnable in
+        # experiments, may not be robust
         pad = 0.2
         core, sub, super = tex_layout.(args)
 
-        top = topinkbound(core)
-        bot = bottominkbound(core)
-        left = leftinkbound(core)
-        right = rightinkbound(core)
         mid = hmid(core)
+        dxsub = mid - hmid(sub) * shrink
+        dxsuper = mid - hmid(super) * shrink
 
+        # The leftmost element should have x = 0
+        x0 = -min(0, dxsub, dxsuper)
         y0 = descender(core)
 
         return Group(
             [core, sub, super],
             [
-                Point2f0(0, y0),
+                Point2f0(x0, y0),
                 Point2f0(
-                    mid - inkwidth(sub) * shrink / 2,
-                    y0 + bot - pad - topinkbound(sub) * shrink),
+                    x0 + dxsub,
+                    y0 + bottominkbound(core) - ascender(sub) * shrink + pad),
                 Point2f0(
-                    mid - inkwidth(super) * shrink / 2,
-                    y0 + top + pad)
+                    x0 + dxsuper,
+                    y0 + topinkbound(core) + pad)
             ],
-            [1, shrink, shrink],
-            advance(core)
+            [1, shrink, shrink]
         )
     elseif head == :function
         name = args[1]
@@ -147,7 +158,7 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
     elseif head == :space
         return Space(args[1])
     elseif head == :spaced_symbol # TODO add :symbol head to the symbol when needed
-        sym = TeXChar(args[1][1], fontenv.function_font)
+        sym = TeXChar(args[1].args[1], fontenv.function_font)
         return horizontal_layout([Space(0.2), sym, Space(0.2)])
     elseif head == :delimited
         # TODO
@@ -158,7 +169,7 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
     elseif head == :frac
         # TODO
     elseif head == :symbol
-        return fontenv.symbol_set[args[1]]
+        return TeXChar(args[1], NewCMMathFont)
     end
 
     @error "Something went wrong with $expr"
@@ -174,12 +185,11 @@ function horizontal_layout(elements)
         ys[i] = descender(elem)
     end
 
-    # We want the first to be 0 and to use the last as the advance of the group
-    xs = zeros(n + 1)
-    xs[2:end] = cumsum(dxs[1:end])
+    xs = zeros(n)
+    xs[2:end] = cumsum(dxs[1:end-1])
 
     scales = ones(n)
-    return Group(elements, Point2f0.(xs[1:end-1], ys), scales, xs[end])
+    return Group(elements, Point2f0.(xs, ys), scales)
 end
 
 function unravel(group::Group, parent_pos=Point2f0(0), parent_scale=1.0f0)
@@ -209,7 +219,7 @@ begin  # Quick test
     using CairoMakie
     
     scene = Scene()
-    expr = parse(TeXExpr, raw"∫ \sin(\varphi) \cos(\omega t) = \lim_{x \infty} A^j v_{(a + b)}^i \Lambda_L \sum^j_m \sum_{k=1234}^n 22 \nabla x!")
+    expr = parse(TeXExpr, raw"∫ \sin(\varphi) \cos(\omega t) = \lim_{x →\infty} A^j v_{(a + b)}^i \Lambda_L \sum^j_m \sum_{k=1234}^n 22 \nabla x!")
     layout = tex_layout(expr)
 
     for (elem, pos, scale) in unravel(layout)
