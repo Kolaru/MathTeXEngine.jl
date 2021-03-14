@@ -8,6 +8,14 @@ import FreeTypeAbstraction:
 
 include("symbols.jl")
 
+"""
+
+The height of the letter x in the given font, i.e. the height of the letters
+without neither ascender nor descender.
+"""
+xheight(font::FTFont) = inkheight(TeXChar('x', font))
+
+
 # Positions (resp. scales) are positions of the elements relative to the parent
 # Absolute pos and scales will get computed when all gets flattened
 struct Group
@@ -26,8 +34,11 @@ function ascender(g::Group)
     return maximum(asc)
 end
 
-# Offset of the ink relative to the baseline 
-yoffset(g::Group) = 0
+function descender(g::Group)
+    des = ypositions(g) .+ descender.(g.elements) .* g.scales
+    return maximum(des)
+end
+
 xpositions(g::Group) = [p[1] for p in g.positions]
 ypositions(g::Group) = [p[2] for p in g.positions]
 
@@ -42,26 +53,30 @@ function rightinkbound(g::Group)
 end
 
 function bottominkbound(g::Group)
-    bottoms = -yoffset.(g.elements) .+ bottominkbound.(g.elements) .* g.scales .+ ypositions(g)
+    bottoms = bottominkbound.(g.elements) .* g.scales .+ ypositions(g)
     return minimum(bottoms)
 end
 
 function topinkbound(g::Group)
-    tops = -yoffset.(g.elements) .+ topinkbound.(g.elements) .* g.scales .+ ypositions(g)
+    tops = topinkbound.(g.elements) .* g.scales .+ ypositions(g)
     return maximum(tops)
 end
+
+xheight(g::Group) = maximum(xheight.(g.elements) .* g.scales)
 
 struct Space
     width
 end
 
 advance(s::Space) = s.width
-ascender(s::Space) = 0
-yoffset(::Space) = 0
+ascender(::Space) = 0
+descender(::Space) = 0
+xheight(::Space) = 0
 
 advance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
 ascender(char::TeXChar) = ascender(char.font)
-yoffset(char::TeXChar) = descender(char.font)
+descender(char::TeXChar) = descender(char.font)
+xheight(char::TeXChar) = xheight(char.font)
 
 for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(::Space) = 0
@@ -109,23 +124,17 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         sub_width = advance(sub) * shrink
         super_width = advance(super) * shrink
 
-        y0 = yoffset(core)
-
-        # TODO Make that not hacky as hell
-        # Compute at which height to put superscript
-        h = inkheight(TeXChar('u', NewCMItalicFont))
-
-        ysub = y0 + yoffset(sub) * shrink
 
         return Group(
             [core, sub, super],
-            [Point2f0(0, y0), Point2f0(core_width, ysub), Point2f0(core_width, h-0.2)],
+            [
+                Point2f0(0, 0),
+                Point2f0(core_width, -0.2),
+                Point2f0(core_width, xheight(core) - 0.5 * descender(super))],
             [1, shrink, shrink])
     elseif head == :integral
         # TODO
     elseif head == :underover
-        # TODO padding used is arbitrary
-        pad = 0.2
         core, sub, super = tex_layout.(args)
 
         mid = hmid(core)
@@ -134,18 +143,17 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
 
         # The leftmost element must have x = 0
         x0 = -min(0, dxsub, dxsuper)
-        y0 = yoffset(core)
 
         return Group(
             [core, sub, super],
             [
-                Point2f0(x0, y0),
+                Point2f0(x0, 0),
                 Point2f0(
                     x0 + dxsub,
-                    y0 + bottominkbound(core) - ascender(sub) * shrink),
+                    bottominkbound(core) - (ascender(sub) - xheight(sub)/2) * shrink),
                 Point2f0(
                     x0 + dxsuper,
-                    y0 + topinkbound(core) + pad)
+                    topinkbound(core) - descender(super))
             ],
             [1, shrink, shrink]
         )
@@ -167,10 +175,6 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         left_scale = max(1, height / inkheight(left))
         right_scale = max(1, height / inkheight(right))
         scales = [left_scale, 1, right_scale]
-
-        ys = yoffset.(elements)
-        @show ys
-        y0 = ys[2]
             
         dxs = advance.(elements) .* scales
         xs = [0, cumsum(dxs[1:end-1])...]
@@ -179,9 +183,9 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         # TODO Check what the algorithm should be there
         # Center the delimiters in the middle of the bot and top baselines ?
         return Group(elements, [
-            Point2f0(xs[1], yoffset(left) - bottominkbound(left) + bottominkbound(content)),
-            Point2f0(xs[2], y0),
-            Point2f0(xs[3], yoffset(right) - bottominkbound(right) + bottominkbound(content))
+            Point2f0(xs[1], -bottominkbound(left) + bottominkbound(content)),
+            Point2f0(xs[2], 0),
+            Point2f0(xs[3], -bottominkbound(right) + bottominkbound(content))
         ], scales)
     elseif head == :accent || head == :wide_accent
         # TODO
@@ -193,15 +197,14 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         return TeXChar(args[1], NewCMMathFont)
     end
 
-    @eroro "Unsupported $expr"
+    @error "Unsupported $expr"
 end
 
 function horizontal_layout(elements ; scales=ones(length(elements)))
     dxs = advance.(elements)
-    ys = yoffset.(elements)
     xs = [0, cumsum(dxs[1:end-1])...]
 
-    return Group(elements, Point2f0.(xs, ys), scales)
+    return Group(elements, Point2f0.(xs, 0), scales)
 end
 
 function unravel(group::Group, parent_pos=Point2f0(0), parent_scale=1.0f0)
@@ -218,12 +221,15 @@ end
 
 unravel(char, pos, scale) = [(char, pos, scale)]
 
+draw_glyph!(args...) = nothing
 
 function draw_glyph!(scene, texchar::TeXChar, position, scale)
     size = 64
     x = position[1] * size
-    y = position[2] * size
-    text!(scene, string(texchar.char), font=texchar.font, position=position.*size, textsize=size*scale)
+    # Characters are drawn from the bottom left of the font bounding box but
+    # their position is relative to the baseline, so we need to offset them
+    y = (position[2] + descender(texchar.font)) * size
+    text!(scene, string(texchar.char), font=texchar.font, position=Point2f0(x, y), textsize=size*scale)
 end
 
 draw_glyph!(scene, space::Space, position, scale) = nothing
