@@ -6,15 +6,41 @@ import FreeTypeAbstraction:
     ascender, descender, get_extent, hadvance, inkheight, inkwidth,
     leftinkbound, rightinkbound, topinkbound, bottominkbound
 
-include("symbols.jl")
+include("fonts.jl")
 
-"""
+struct TeXChar
+    char::Char
+    font::FTFont
+end
 
-The height of the letter x in the given font, i.e. the height of the letters
-without neither ascender nor descender.
-"""
-xheight(font::FTFont) = inkheight(TeXChar('x', font))
+TeXChar(char, path::AbstractString, command) = TeXChar(char, FTFont(path), command)
 
+Base.show(io::IO, tc::TeXChar) =
+    print(io, "TeXChar '$(tc.char)' [U+$(uppercase(string(codepoint(tc.char), base=16, pad=4))) in $(tc.font.family_name) - $(tc.font.style_name)]")
+
+advance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
+ascender(char::TeXChar) = ascender(char.font)
+descender(char::TeXChar) = descender(char.font)
+xheight(char::TeXChar) = xheight(char.font)
+    
+struct Space
+    width
+end
+
+advance(s::Space) = s.width
+ascender(::Space) = 0
+descender(::Space) = 0
+xheight(::Space) = 0
+
+for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
+    @eval $inkfunc(::Space) = 0
+    @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
+end
+
+hmid(x) = 0.5*(leftinkbound(x) + rightinkbound(x))
+vmid(x) = 0.5*(bottominkbound(x) + topinkbound(x))
+inkwidth(x) = rightinkbound(x) - leftinkbound(x)
+inkheight(x) = topinkbound(x) - bottominkbound(x)
 
 # Positions (resp. scales) are positions of the elements relative to the parent
 # Absolute pos and scales will get computed when all gets flattened
@@ -64,61 +90,27 @@ end
 
 xheight(g::Group) = maximum(xheight.(g.elements) .* g.scales)
 
-struct Space
-    width
-end
 
-advance(s::Space) = s.width
-ascender(::Space) = 0
-descender(::Space) = 0
-xheight(::Space) = 0
+tex_layout(char::TeXChar, fontset) = char
+tex_layout(::Nothing, fontset) = Space(0)
+tex_layout(char::Char, fontset) = get_math_char(char, fontset)
 
-advance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
-ascender(char::TeXChar) = ascender(char.font)
-descender(char::TeXChar) = descender(char.font)
-xheight(char::TeXChar) = xheight(char.font)
-
-for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
-    @eval $inkfunc(::Space) = 0
-    @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
-end
-
-hmid(x) = 0.5*(leftinkbound(x) + rightinkbound(x))
-vmid(x) = 0.5*(bottominkbound(x) + topinkbound(x))
-inkwidth(x) = rightinkbound(x) - leftinkbound(x)
-inkheight(x) = topinkbound(x) - bottominkbound(x)
-
-tex_layout(char::TeXChar) = char
-tex_layout(::Nothing) = Space(0)
-
-function tex_layout(integer::Integer, fontenv=DefaultFontEnv)
-    elements = TeXChar.(collect(string(integer)), fontenv.number_font)
+function tex_layout(integer::Integer, fontset)
+    elements = get_number_char.(collect(string(integer)), Ref(fontset))
     return horizontal_layout(elements)
 end
 
-function tex_layout(char::Char, fontenv=DefaultFontEnv)
-    # TODO Do this better and not hard coded
-    # TODO better fontenv interface
-    if char in raw".;:!?()[]"
-        TeXChar(char, NewCMRegularFont)
-    else
-        TeXChar(char, fontenv.math_font)
-    end
-end
-
-# I don't see a reason to go through the Box, HList, VList business
-# Let's see if I'll regret it ;)
-function tex_layout(expr, fontenv=DefaultFontEnv)
+function tex_layout(expr, fontset=NewComputerModern)
     head = expr.head
     args = [expr.args...]
     n = length(args)
     shrink = 0.6
 
     if head == :group
-        elements = tex_layout.(args, Ref(DefaultFontEnv))
+        elements = tex_layout.(args, Ref(fontset))
         return horizontal_layout(elements)
     elseif head == :decorated
-        core, sub, super = tex_layout.(args)
+        core, sub, super = tex_layout.(args, Ref(fontset))
 
         core_width = advance(core)
         sub_width = advance(sub) * shrink
@@ -135,7 +127,7 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
     elseif head == :integral
         # TODO
     elseif head == :underover
-        core, sub, super = tex_layout.(args)
+        core, sub, super = tex_layout.(args, Ref(fontset))
 
         mid = hmid(core)
         dxsub = mid - hmid(sub) * shrink
@@ -159,16 +151,17 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
         )
     elseif head == :function
         name = args[1]
-        elements = TeXChar.(collect(name), fontenv.function_font)
+        elements = get_function_char.(collect(name), Ref(fontset))
         return horizontal_layout(elements)
     elseif head == :space
         return Space(args[1])
-    elseif head == :spaced_symbol # TODO add :symbol head to the symbol when needed
-        sym = TeXChar(args[1].args[1], fontenv.function_font)
+    elseif head == :spaced_symbol
+        sym = get_math_char(args[1].args[1], fontset)
         return horizontal_layout([Space(0.2), sym, Space(0.2)])
     elseif head == :delimited
+        # TODO Parsing of this is crippling slow and I don't know why
         grow = 1.1
-        elements = tex_layout.(args)
+        elements = tex_layout.(args, Ref(fontset))
         left, content, right = elements
 
         height = inkheight(content)
@@ -194,10 +187,11 @@ function tex_layout(expr, fontenv=DefaultFontEnv)
     elseif head == :frac
         # TODO
     elseif head == :symbol
-        return TeXChar(args[1], NewCMMathFont)
+        char, command = args
+        return get_symbol_char(char, command, fontset)
     end
 
-    @error "Unsupported $expr"
+    @error "Unsupported expr $expr"
 end
 
 function horizontal_layout(elements ; scales=ones(length(elements)))
