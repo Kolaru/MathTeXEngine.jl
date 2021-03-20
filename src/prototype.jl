@@ -1,5 +1,5 @@
 using FreeTypeAbstraction
-using GeometryBasics
+import GeometryBasics: Point2f0
 using MathTeXParser
 
 import FreeTypeAbstraction:
@@ -32,10 +32,35 @@ ascender(::Space) = 0
 descender(::Space) = 0
 xheight(::Space) = 0
 
+struct ScaledChar
+    char::TeXChar
+    scale
+end
+
+for func in (:advance, :ascender, :descender, :xheight)
+    @eval $func(scaled::ScaledChar) = $func(scaled.char) * scaled.scale
+end
+
 for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(::Space) = 0
     @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
+    @eval $inkfunc(scaled::ScaledChar) = $inkfunc(scaled.char) * scaled.scale
 end
+
+struct Line
+    v
+    thickness
+end
+
+advance(line::Line) = inkwidth(line)
+ascender(::Line) = 0
+descender(::Line) = 0
+xheight(::Line) = 0
+leftinkbound(line::Line) = min(line.v[1], 0)
+rightinkbound(line::Line) = max(line.v[1], 0)
+bottominkbound(line::Line) = min(line.v[2], 0)
+topinkbound(line::Line) = max(line.v[2], 0)
+
 
 hmid(x) = 0.5*(leftinkbound(x) + rightinkbound(x))
 vmid(x) = 0.5*(bottominkbound(x) + topinkbound(x))
@@ -116,7 +141,6 @@ function tex_layout(expr, fontset=NewComputerModern)
         sub_width = advance(sub) * shrink
         super_width = advance(super) * shrink
 
-
         return Group(
             [core, sub, super],
             [
@@ -156,11 +180,12 @@ function tex_layout(expr, fontset=NewComputerModern)
     elseif head == :space
         return Space(args[1])
     elseif head == :spaced_symbol
-        sym = get_math_char(args[1].args[1], fontset)
+        @show args[1]
+        char, command = args[1].args
+        sym = get_symbol_char(char, command, fontset)
         return horizontal_layout([Space(0.2), sym, Space(0.2)])
     elseif head == :delimited
         # TODO Parsing of this is crippling slow and I don't know why
-        grow = 1.1
         elements = tex_layout.(args, Ref(fontset))
         left, content, right = elements
 
@@ -171,7 +196,7 @@ function tex_layout(expr, fontset=NewComputerModern)
             
         dxs = advance.(elements) .* scales
         xs = [0, cumsum(dxs[1:end-1])...]
-        @show bottominkbound(content)
+
         # TODO Height calculation for the parenthesis looks wrong
         # TODO Check what the algorithm should be there
         # Center the delimiters in the middle of the bot and top baselines ?
@@ -186,6 +211,33 @@ function tex_layout(expr, fontset=NewComputerModern)
         # TODO
     elseif head == :frac
         # TODO
+    elseif head == :sqrt
+        content = tex_layout(args[1], fontset)
+        sq = get_symbol_char('√', raw"\sqrt", fontset)
+
+        thick = thickness(fontset)
+        relpad = 0.15
+
+        h = inkheight(content)
+        pad = relpad * h
+        h += 2pad
+    
+        scale = h / inkheight(sq)
+        lw = thickness(fontset) * scale
+
+        sqrt = ScaledChar(sq, scale)
+
+        # The root symbol must be manually placed
+        y0 = bottominkbound(content) - bottominkbound(sqrt) - pad/2
+        x = inkwidth(sqrt) - lw/2
+        y = y0 + topinkbound(sqrt) - lw/2
+        w =  inkwidth(content) + 0.2
+        line = Line(Point2f0(w, 0), lw)
+
+        return Group(
+            [sqrt, line, content],
+            [Point2f0(0, y0), Point2f0(x, y), Point2f0(x, 0)],
+            [1, 1, 1])
     elseif head == :symbol
         char, command = args
         return get_symbol_char(char, command, fontset)
@@ -217,31 +269,42 @@ unravel(char, pos, scale) = [(char, pos, scale)]
 
 draw_glyph!(args...) = nothing
 
-function draw_glyph!(scene, texchar::TeXChar, position, scale)
+function draw_glyph!(ax, texchar::TeXChar, position, scale)
     size = 64
     x = position[1] * size
     # Characters are drawn from the bottom left of the font bounding box but
     # their position is relative to the baseline, so we need to offset them
-    y = (position[2] + descender(texchar.font)) * size
-    text!(scene, string(texchar.char), font=texchar.font, position=Point2f0(x, y), textsize=size*scale)
+    y = (position[2] + descender(texchar.font) * scale) * size
+    text!(ax, string(texchar.char), font=texchar.font, position=Point2f0(x, y), textsize=size*scale)
 end
 
-draw_glyph!(scene, space::Space, position, scale) = nothing
+draw_glyph!(ax, space::Space, position, scale) = nothing
+draw_glyph!(ax, scaled::ScaledChar, position, scale) = draw_glyph!(ax, scaled.char, position, scale * scaled.scale)
 
+function draw_glyph!(ax, line::Line, position, scale)
+    x0, y0 = position
+    xs = [x0, x0 + line.v[1]]
+    ys = [y0, y0 + line.v[2]]
+    lines!(ax, xs .* 64, ys .* 64, linewidth=line.thickness * 64)
+end
 
 begin  # Quick test
     using CairoMakie
     
-    scene = Scene()
-    tex = raw"∫ \cos(\omega t) = \lim_{x →\infty} A^j v_{(a + b)}^i \Lambda_L \sum^j_m \sum_{k=1234}^n 22k  \nabla x!"
+    fig = Figure()
+    fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
+    ax = Axis(fig[2, 1])
+    ax.aspect = DataAspect()
+    hidedecorations!(ax)
+    tex = raw"\sqrt{\cos(\omega t)} = \lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \sqrt{\Lambda_L \sum^j_m} \sum_{k=1234}^n 22k  \nabla x!"
     expr = parse(TeXExpr, tex)
     layout = tex_layout(expr)
 
     for (elem, pos, scale) in unravel(layout)
-        draw_glyph!(scene, elem, pos, scale)
+        draw_glyph!(ax, elem, pos, scale)
     end
-    scene
+    fig
 end
 
-save("supersub.pdf", scene)
+save("supersub.pdf", fig)
 

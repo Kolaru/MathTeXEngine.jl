@@ -7,6 +7,7 @@ The height of the letter x in the given font, i.e. the height of the letters
 without neither ascender nor descender.
 """
 xheight(font::FTFont) = inkheight(TeXChar('x', font))
+thickness(font::FTFont) = font.underline_thickness / font.units_per_EM
 
 abstract type TeXFontSet end
 
@@ -35,6 +36,8 @@ font set. The argument `command` contains the LaTeX command corresponding to the
 character, to allow supporting non-unicode font sets.
 """
 get_symbol_char(char::Char, command, fontset) = TeXChar(char, fontset.math)
+
+thickness(fontset) = thickness(fontset.math)
 
 const NewComputerModern = NewCMFontSet(
     FTFont("assets/fonts/NewCM10-regular.otf"),
