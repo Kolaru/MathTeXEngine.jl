@@ -40,7 +40,7 @@ get_symbol_char(char::Char, command, fontset) = TeXChar(char, fontset.math)
 thickness(fontset) = thickness(fontset.math)
 
 const NewComputerModern = NewCMFontSet(
-    FTFont("assets/fonts/NewCM10-regular.otf"),
-    FTFont("assets/fonts/NewCM10-italic.otf"),
-    FTFont("assets/fonts/NewCMMath-regular.otf")
+    FTFont("assets/fonts/NewCM10-Regular.otf"),
+    FTFont("assets/fonts/NewCM10-Italic.otf"),
+    FTFont("assets/fonts/NewCMMath-Regular.otf")
 )
