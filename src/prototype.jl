@@ -149,7 +149,27 @@ function tex_layout(expr, fontset=NewComputerModern)
                 Point2f0(core_width, xheight(core) - 0.5 * descender(super))],
             [1, shrink, shrink])
     elseif head == :integral
-        # TODO
+        sub, super = tex_layout.(args[2:3], Ref(fontset))
+
+        # TODO: Use proper LaTeX Integral Symbol
+        # This one is too heavy / thick
+        intchar = get_symbol_char('∫', raw"\int", fontset)
+        int = ScaledChar(intchar, 2)
+
+        iw = advance(int)
+        xh = xheight(fontset.math)
+        ih = inkheight(int)
+
+        # last term corrects asymmetry of integral char
+        y0 = xh/2 - ih/2 - bottominkbound(int) 
+        subpos =  Point2f0(iw/2, -ih/2)
+        superpos =  Point2f0(iw, ih/2)
+
+        return Group(
+            [int, sub, super],
+            [Point2f0(0, y0), subpos, superpos],
+            [1, shrink, shrink]
+            )
     elseif head == :underover
         core, sub, super = tex_layout.(args, Ref(fontset))
 
@@ -210,7 +230,31 @@ function tex_layout(expr, fontset=NewComputerModern)
     elseif head == :font
         # TODO
     elseif head == :frac
-        # TODO
+        numerator = tex_layout(args[1], fontset)
+        denominator = tex_layout(args[2], fontset)
+
+        # extend fraction line by half an xheight
+        xh = xheight(fontset.math)
+        w = max(inkwidth(numerator), inkwidth(denominator)) + xh/2
+
+        # fixed width fraction line
+        lw = thickness(fontset)
+
+        line = Line(Point2f0(w,0), lw)
+        y0 = xh/2 - lw/2
+
+        # horizontal center align for numerator and denominator
+        x1 = (w-inkwidth(numerator))/2
+        x2 = (w-inkwidth(denominator))/2
+
+        ytop    = y0 + xh/2 - bottominkbound(numerator)
+        ybottom = y0 - xh/2 - topinkbound(denominator)
+
+        return Group(
+            [line, numerator, denominator],
+            [Point2f0(0,y0), Point2f0(x1, ytop), Point2f0(x2, ybottom)],
+            [1,1,1]
+            )
     elseif head == :sqrt
         content = tex_layout(args[1], fontset)
         sq = get_symbol_char('√', raw"\sqrt", fontset)
@@ -288,6 +332,7 @@ function draw_glyph!(ax, line::Line, position, scale)
     lines!(ax, xs .* 64, ys .* 64, linewidth=line.thickness * 64)
 end
 
+##
 begin  # Quick test
     using CairoMakie
     
@@ -296,7 +341,8 @@ begin  # Quick test
     ax = Axis(fig[2, 1])
     ax.aspect = DataAspect()
     hidedecorations!(ax)
-    tex = raw"\sqrt{\cos(\omega t)} = \lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \sqrt{\Lambda_L \sum^j_m} \sum_{k=1234}^n 22k  \nabla x!"
+    #tex = raw"\sqrt{\cos(\omega t)} = \lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \sqrt{\Lambda_L \sum^j_m} \sum_{k=1234}^n 22k  \nabla x!=\frac{1+2}{4+a+g}\int"
+    tex = raw"\lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \nabla x!=\frac{1+2}{4+a+g}\int_{0}^{2π} \sin(x)\, dx"
     expr = parse(TeXExpr, tex)
     layout = tex_layout(expr)
 
@@ -305,6 +351,6 @@ begin  # Quick test
     end
     fig
 end
-
+##
 save("supersub.pdf", fig)
 
