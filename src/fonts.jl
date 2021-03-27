@@ -42,7 +42,7 @@ thickness(fontset) = thickness(fontset.math)
 xheight(fontset) = xheight(fontset.regular)
 
 const NewComputerModern = NewCMFontSet(
-    FTFont("assets/fonts/NewCM10-regular.otf"),
-    FTFont("assets/fonts/NewCM10-italic.otf"),
-    FTFont("assets/fonts/NewCMMath-regular.otf")
+    FTFont("assets/fonts/NewCM10-Regular.otf"),
+    FTFont("assets/fonts/NewCM10-Italic.otf"),
+    FTFont("assets/fonts/NewCMMath-Regular.otf")
 )
