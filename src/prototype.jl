@@ -322,7 +322,10 @@ function draw_glyph!(ax, texchar::TeXChar, position, scale)
     # Characters are drawn from the bottom left of the font bounding box but
     # their position is relative to the baseline, so we need to offset them
     y = (position[2] + descender(texchar.font) * scale) * size
-    text!(ax, string(texchar.char), font=texchar.font, position=Point2f0(x, y), textsize=size*scale)
+    text!(ax, string(texchar.char), font=texchar.font,
+        position=Point2f0(x, y),
+        textsize=size*scale,
+        space=:data)
 end
 
 draw_glyph!(ax, space::Space, position, scale) = nothing
@@ -355,5 +358,5 @@ begin  # Quick test
     fig
 end
 ##
-save("supersub.pdf", fig)
+save("test.pdf", fig)
 
