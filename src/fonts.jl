@@ -35,9 +35,11 @@ Create a TeXChar for the character representing a symbol in the given
 font set. The argument `command` contains the LaTeX command corresponding to the
 character, to allow supporting non-unicode font sets.
 """
+# TODO Substitute minus sign
 get_symbol_char(char::Char, command, fontset) = TeXChar(char, fontset.math)
 
 thickness(fontset) = thickness(fontset.math)
+xheight(fontset) = xheight(fontset.regular)
 
 const NewComputerModern = NewCMFontSet(
     FTFont("assets/fonts/NewCM10-regular.otf"),

@@ -87,7 +87,7 @@ end
 
 function descender(g::Group)
     des = ypositions(g) .+ descender.(g.elements) .* g.scales
-    return maximum(des)
+    return minimum(des)
 end
 
 xpositions(g::Group) = [p[1] for p in g.positions]
@@ -115,6 +115,10 @@ end
 
 xheight(g::Group) = maximum(xheight.(g.elements) .* g.scales)
 
+# y position to get under some element
+under_offset(elem, under, scale=1) = bottominkbound(elem) - (ascender(under) - xheight(under)/2) * scale
+# y position to get over some element
+over_offset(elem, over) = topinkbound(elem) - descender(over)
 
 tex_layout(char::TeXChar, fontset) = char
 tex_layout(::Nothing, fontset) = Space(0)
@@ -166,10 +170,10 @@ function tex_layout(expr, fontset=NewComputerModern)
                 Point2f0(x0, 0),
                 Point2f0(
                     x0 + dxsub,
-                    bottominkbound(core) - (ascender(sub) - xheight(sub)/2) * shrink),
+                    under_offset(core, sub, shrink)),
                 Point2f0(
                     x0 + dxsuper,
-                    topinkbound(core) - descender(super))
+                    over_offset(core, super))
             ],
             [1, shrink, shrink]
         )
@@ -180,7 +184,6 @@ function tex_layout(expr, fontset=NewComputerModern)
     elseif head == :space
         return Space(args[1])
     elseif head == :spaced_symbol
-        @show args[1]
         char, command = args[1].args
         sym = get_symbol_char(char, command, fontset)
         return horizontal_layout([Space(0.2), sym, Space(0.2)])
@@ -210,7 +213,21 @@ function tex_layout(expr, fontset=NewComputerModern)
     elseif head == :font
         # TODO
     elseif head == :frac
-        # TODO
+        num, denum = tex_layout.(args, Ref(fontset))
+        width = max(inkwidth(num), inkwidth(denum))
+        line = Line(Point2f0(width, 0), thickness(fontset))
+        y0 = xheight(fontset)/2
+        frac = Group(
+            [num, line, denum],
+            [
+                Point2f0(width/2 - hmid(num), y0 + over_offset(line, num)),
+                Point2f0(0, y0),
+                Point2f0(width/2 - hmid(denum), y0 + under_offset(line, denum))],
+            [1, 1, 1]
+        )
+
+        return horizontal_layout([Space(0.2), frac, Space(0.2)])
+
     elseif head == :sqrt
         content = tex_layout(args[1], fontset)
         sq = get_symbol_char('√', raw"\sqrt", fontset)
@@ -235,9 +252,9 @@ function tex_layout(expr, fontset=NewComputerModern)
         line = Line(Point2f0(w, 0), lw)
 
         return Group(
-            [sqrt, line, content],
+            [sq, line, content],
             [Point2f0(0, y0), Point2f0(x, y), Point2f0(x, 0)],
-            [1, 1, 1])
+            [scale, 1, 1])
     elseif head == :symbol
         char, command = args
         return get_symbol_char(char, command, fontset)
@@ -285,7 +302,7 @@ function draw_glyph!(ax, line::Line, position, scale)
     x0, y0 = position
     xs = [x0, x0 + line.v[1]]
     ys = [y0, y0 + line.v[2]]
-    lines!(ax, xs .* 64, ys .* 64, linewidth=line.thickness * 64)
+    lines!(ax, xs .* 64, ys .* 64, linewidth=line.thickness * scale * 64)
 end
 
 begin  # Quick test
@@ -296,7 +313,8 @@ begin  # Quick test
     ax = Axis(fig[2, 1])
     ax.aspect = DataAspect()
     hidedecorations!(ax)
-    tex = raw"\sqrt{\cos(\omega t)} = \lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \sqrt{\Lambda_L \sum^j_m} \sum_{k=1234}^n 22k  \nabla x!"
+    hidespines!(ax)
+    tex = raw"\sqrt{\cos(\omega t)} = \lim_{x →\infty} A^j v_{(a + b)_k}^i \frac{1}{2 \pi} \frac{x + \sqrt{2}}{3x - y} \sum_{k=1234}^{n + 1} 22k  \nabla x!"
     expr = parse(TeXExpr, tex)
     layout = tex_layout(expr)
 
@@ -306,5 +324,5 @@ begin  # Quick test
     fig
 end
 
-save("supersub.pdf", fig)
+save("test.pdf", fig)
 
