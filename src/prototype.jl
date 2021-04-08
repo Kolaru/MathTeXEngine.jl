@@ -155,10 +155,22 @@ function tex_layout(expr, fontset=NewComputerModern)
     elseif head == :integral
         sub, super = tex_layout.(args[2:3], Ref(fontset))
 
-        # TODO: Use proper LaTeX Integral Symbol
-        # This one is too heavy / thick
-        intchar = get_symbol_char('∫', raw"\int", fontset)
-        int = ScaledChar(intchar, 2)
+        # TODO fix the gap
+        # TODO Generalize this to other symbols ? This should be decided by the
+        # fontset
+        topint = get_symbol_char('⌠', raw"\inttop", fontset)
+        botint = get_symbol_char('⌡', raw"\intbottom", fontset)
+
+        @show leftinkbound(topint)
+        @show leftinkbound(botint)
+
+        int = Group(
+            [topint, botint],
+            [
+                Point2f0(leftinkbound(topint), inkheight(topint)/2),
+                Point2f0(leftinkbound(botint), -inkheight(botint)/2)
+            ],
+            [1, 1])
 
         iw = advance(int)
         xh = xheight(fontset.math)
