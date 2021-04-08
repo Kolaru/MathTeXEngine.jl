@@ -155,20 +155,17 @@ function tex_layout(expr, fontset=NewComputerModern)
     elseif head == :integral
         sub, super = tex_layout.(args[2:3], Ref(fontset))
 
-        # TODO fix the gap
         # TODO Generalize this to other symbols ? This should be decided by the
         # fontset
         topint = get_symbol_char('⌠', raw"\inttop", fontset)
         botint = get_symbol_char('⌡', raw"\intbottom", fontset)
 
-        @show inkheight(topint)
-        @show inkheight(botint)
 
         int = Group(
             [topint, botint],
             [
-                Point2f0(leftinkbound(topint), inkheight(topint)/2),
-                Point2f0(leftinkbound(botint), -inkheight(botint)/2)
+                Point2f0(leftinkbound(topint), inkheight(topint)/2 - bottominkbound(topint)),
+                Point2f0(leftinkbound(botint), -inkheight(botint)/2 - bottominkbound(botint))
             ],
             [1, 1])
 
@@ -346,8 +343,9 @@ function draw_glyph!(ax, texchar::TeXChar, position, scale)
             (x, y0)
         ],
         color=RGBA(1, 0, 0, 0.5),
-        strokecolor=RGBA(0, 0, 0, 0.5),
-        strokewidth=1
+        strokecolor=RGBA(0, 0, 0, 0.0),
+        strokewidth=1,
+        zorder=-100
     )
     text!(ax, string(texchar.char), font=texchar.font,
         position=Point2f0(x, y),
@@ -368,6 +366,7 @@ end
 ##
 begin  # Quick test
     using CairoMakie
+    using Colors
     
     fig = Figure()
     fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
