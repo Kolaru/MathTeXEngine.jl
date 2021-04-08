@@ -161,8 +161,8 @@ function tex_layout(expr, fontset=NewComputerModern)
         topint = get_symbol_char('⌠', raw"\inttop", fontset)
         botint = get_symbol_char('⌡', raw"\intbottom", fontset)
 
-        @show leftinkbound(topint)
-        @show leftinkbound(botint)
+        @show inkheight(topint)
+        @show inkheight(botint)
 
         int = Group(
             [topint, botint],
@@ -334,6 +334,21 @@ function draw_glyph!(ax, texchar::TeXChar, position, scale)
     # Characters are drawn from the bottom left of the font bounding box but
     # their position is relative to the baseline, so we need to offset them
     y = (position[2] + descender(texchar.font) * scale) * size
+    y0 = position[2] * size + bottominkbound(texchar) * size * scale
+    w = inkwidth(texchar) * size * scale
+    h = inkheight(texchar) * size * scale
+    poly!(ax, 
+        Point2f0[
+            (x, y0),
+            (x + w, y0),
+            (x + w, y0 + h),
+            (x, y0 + h),
+            (x, y0)
+        ],
+        color=RGBA(1, 0, 0, 0.5),
+        strokecolor=RGBA(0, 0, 0, 0.5),
+        strokewidth=1
+    )
     text!(ax, string(texchar.char), font=texchar.font,
         position=Point2f0(x, y),
         textsize=size*scale,
