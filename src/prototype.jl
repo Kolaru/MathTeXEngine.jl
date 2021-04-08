@@ -331,22 +331,6 @@ function draw_glyph!(ax, texchar::TeXChar, position, scale)
     # Characters are drawn from the bottom left of the font bounding box but
     # their position is relative to the baseline, so we need to offset them
     y = (position[2] + descender(texchar.font) * scale) * size
-    y0 = position[2] * size + bottominkbound(texchar) * size * scale
-    w = inkwidth(texchar) * size * scale
-    h = inkheight(texchar) * size * scale
-    poly!(ax, 
-        Point2f0[
-            (x, y0),
-            (x + w, y0),
-            (x + w, y0 + h),
-            (x, y0 + h),
-            (x, y0)
-        ],
-        color=RGBA(1, 0, 0, 0.5),
-        strokecolor=RGBA(0, 0, 0, 0.0),
-        strokewidth=1,
-        zorder=-100
-    )
     text!(ax, string(texchar.char), font=texchar.font,
         position=Point2f0(x, y),
         textsize=size*scale,
@@ -362,6 +346,64 @@ function draw_glyph!(ax, line::Line, position, scale)
     ys = [y0, y0 + line.v[2]]
     lines!(ax, xs .* 64, ys .* 64, linewidth=line.thickness * scale * 64)
 end
+
+draw_glyph_bbox!(ax, glyph, position, scale) = nothing
+
+function draw_glyph_bbox!(ax, texchar::TeXChar, position, scale)
+    size = 64
+    x = position[1] * size
+    # Characters are drawn from the bottom left of the font bounding box but
+    # their position is relative to the baseline, so we need to offset them
+    y = position[2] * size
+    w = inkwidth(texchar) * size * scale
+    h = topinkbound(texchar) * size * scale
+    a = advance(texchar) * size * scale
+    d = bottominkbound(texchar) * size * scale
+
+    # The advance after the right inkbound
+    poly!(ax, 
+        Point2f0[
+            (x + w, y + d),
+            (x + a, y + d),
+            (x + a, y + h),
+            (x + w, y + h),
+            (x + w, y + d)
+        ],
+        color=RGBA(0, 1, 0, 0.3),
+        strokecolor=RGBA(0, 0, 0, 0.0),
+        strokewidth=1
+    )
+
+    # The descender
+    poly!(ax,
+        Point2f0[
+            (x, y),
+            (x + w, y),
+            (x + w, y + d),
+            (x, y + d),
+            (x, y)
+        ],
+        color=RGBA(0, 0, 1, 0.3),
+        strokecolor=RGBA(0, 0, 0, 0.0),
+        strokewidth=1
+    )
+
+    # The inkbound above the baseline
+    poly!(ax, 
+        Point2f0[
+            (x, y),
+            (x + w, y),
+            (x + w, y + h),
+            (x, y + h),
+            (x, y)
+        ],
+        color=RGBA(1, 0, 0, 0.5),
+        strokecolor=RGBA(0, 0, 0, 0.0),
+        strokewidth=1
+    )
+end
+
+draw_glyph_bbox!(ax, scaled::ScaledChar, position, scale) = draw_glyph_bbox!(ax, scaled.char, position, scale * scaled.scale)
 
 ##
 begin  # Quick test
@@ -379,6 +421,7 @@ begin  # Quick test
     layout = tex_layout(expr)
 
     for (elem, pos, scale) in unravel(layout)
+        draw_glyph_bbox!(ax, elem, pos, scale)
         draw_glyph!(ax, elem, pos, scale)
     end
     fig
