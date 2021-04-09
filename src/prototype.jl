@@ -147,10 +147,10 @@ function tex_layout(expr, fontset=NewComputerModern)
 
         return Group(
             [core, sub, super],
-            [
-                Point2f0(0, 0),
-                Point2f0(core_width, -0.2),
-                Point2f0(core_width, xheight(core) - 0.5 * descender(super))],
+            Point2f0[
+                (0, 0),
+                (core_width, -0.2),
+                (core_width, xheight(core) - 0.5 * descender(super))],
             [1, shrink, shrink])
     elseif head == :integral
         sub, super = tex_layout.(args[2:3], Ref(fontset))
@@ -163,9 +163,9 @@ function tex_layout(expr, fontset=NewComputerModern)
 
         int = Group(
             [topint, botint],
-            [
-                Point2f0(leftinkbound(topint), inkheight(topint)/2 - bottominkbound(topint)),
-                Point2f0(leftinkbound(botint), -inkheight(botint)/2 - bottominkbound(botint))
+            Point2f0[
+                (leftinkbound(topint), inkheight(topint)/2 - bottominkbound(topint)),
+                (leftinkbound(botint), -inkheight(botint)/2 - bottominkbound(botint))
             ],
             [1, 1])
 
@@ -180,7 +180,7 @@ function tex_layout(expr, fontset=NewComputerModern)
 
         return Group(
             [int, sub, super],
-            [Point2f0(0, y0), subpos, superpos],
+            Point2f0[(0, y0), subpos, superpos],
             [1, shrink, shrink]
             )
     elseif head == :underover
@@ -195,12 +195,12 @@ function tex_layout(expr, fontset=NewComputerModern)
 
         return Group(
             [core, sub, super],
-            [
-                Point2f0(x0, 0),
-                Point2f0(
+            Point2f0[
+                (x0, 0),
+                (
                     x0 + dxsub,
                     under_offset(core, sub, shrink)),
-                Point2f0(
+                (
                     x0 + dxsuper,
                     over_offset(core, super))
             ],
@@ -232,10 +232,11 @@ function tex_layout(expr, fontset=NewComputerModern)
         # TODO Height calculation for the parenthesis looks wrong
         # TODO Check what the algorithm should be there
         # Center the delimiters in the middle of the bot and top baselines ?
-        return Group(elements, [
-            Point2f0(xs[1], -bottominkbound(left) + bottominkbound(content)),
-            Point2f0(xs[2], 0),
-            Point2f0(xs[3], -bottominkbound(right) + bottominkbound(content))
+        return Group(elements, 
+            Point2f0[
+                (xs[1], -bottominkbound(left) + bottominkbound(content)),
+                (xs[2], 0),
+                (xs[3], -bottominkbound(right) + bottominkbound(content))
         ], scales)
     elseif head == :accent || head == :wide_accent
         # TODO
@@ -264,7 +265,7 @@ function tex_layout(expr, fontset=NewComputerModern)
 
         return Group(
             [line, numerator, denominator],
-            [Point2f0(0,y0), Point2f0(x1, ytop), Point2f0(x2, ybottom)],
+            Point2f0[(0,y0), (x1, ytop), (x2, ybottom)],
             [1,1,1]
             )
     elseif head == :sqrt
@@ -292,7 +293,7 @@ function tex_layout(expr, fontset=NewComputerModern)
 
         return Group(
             [sq, line, content],
-            [Point2f0(0, y0), Point2f0(x, y), Point2f0(x, 0)],
+            Point2f0[(0, y0), (x, y), (x, 0)],
             [scale, 1, 1])
     elseif head == :symbol
         char, command = args
