@@ -47,19 +47,32 @@ for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(scaled::ScaledChar) = $inkfunc(scaled.char) * scaled.scale
 end
 
-struct Line
-    v
-    thickness
-end
+abstract type Line end
 
 advance(line::Line) = inkwidth(line)
 ascender(::Line) = 0
 descender(::Line) = 0
 xheight(::Line) = 0
-leftinkbound(line::Line) = min(line.v[1], 0)
-rightinkbound(line::Line) = max(line.v[1], 0)
-bottominkbound(line::Line) = min(line.v[2], 0)
-topinkbound(line::Line) = max(line.v[2], 0)
+
+struct VLine <: Line
+    height
+    thickness
+end
+
+struct HLine <: Line
+    width
+    thickness
+end
+
+leftinkbound(line::VLine) = -line.thickness/2
+rightinkbound(line::VLine) = line.thickness/2
+bottominkbound(line::VLine) = min(line.height, 0)
+topinkbound(line::VLine) = max(line.height, 0)
+
+leftinkbound(line::HLine) = min(line.width, 0)
+rightinkbound(line::HLine) = max(line.width, 0)
+bottominkbound(line::HLine) = -line.thickness/2
+topinkbound(line::HLine) = line.thickness/2
 
 
 hmid(x) = 0.5*(leftinkbound(x) + rightinkbound(x))
@@ -253,7 +266,7 @@ function tex_layout(expr, fontset=NewComputerModern)
         # fixed width fraction line
         lw = thickness(fontset)
 
-        line = Line(Point2f0(w,0), lw)
+        line = HLine(w, lw)
         y0 = xh/2 - lw/2
 
         # horizontal center align for numerator and denominator
@@ -270,31 +283,39 @@ function tex_layout(expr, fontset=NewComputerModern)
             )
     elseif head == :sqrt
         content = tex_layout(args[1], fontset)
-        sq = get_symbol_char('√', raw"\sqrt", fontset)
+        sqrt = get_symbol_char('√', raw"\sqrt", fontset)
 
         thick = thickness(fontset)
         relpad = 0.15
 
         h = inkheight(content)
-        pad = relpad * h
-        h += 2pad
-    
-        scale = h / inkheight(sq)
-        lw = thickness(fontset) * scale
+        ypad = relpad * h
+        h += 2ypad
 
-        sqrt = ScaledChar(sq, scale)
+        if h > inkheight(sqrt)
+            sqrt = get_symbol_char('⎷', raw"\sqrtbottom", fontset)
+        end
+
+        h = max(inkheight(sqrt), h)
 
         # The root symbol must be manually placed
-        y0 = bottominkbound(content) - bottominkbound(sqrt) - pad/2
-        x = inkwidth(sqrt) - lw/2
-        y = y0 + topinkbound(sqrt) - lw/2
-        w =  inkwidth(content) + 0.2
-        line = Line(Point2f0(w, 0), lw)
+        y0 = bottominkbound(content) - bottominkbound(sqrt) - ypad/2
+        y = y0 + bottominkbound(sqrt) + h
+        xpad = advance(sqrt) - inkwidth(sqrt)
+        w =  inkwidth(content) + 2xpad
+
+        lw = sqrt_thickness(fontset)
+        hline = HLine(w, lw)
+        vline = VLine(inkheight(sqrt) - h, lw)
 
         return Group(
-            [sq, line, content],
-            Point2f0[(0, y0), (x, y), (x, 0)],
-            [scale, 1, 1])
+            [sqrt, hline, vline, content],
+            Point2f0[
+                (0, y0),
+                (inkwidth(sqrt) - lw/2, y - lw/2),
+                (inkwidth(sqrt) - lw/2, y),
+                (advance(sqrt), 0)],
+            [1, 1, 1, 1])
     elseif head == :symbol
         char, command = args
         return get_symbol_char(char, command, fontset)
@@ -341,11 +362,24 @@ end
 draw_glyph!(ax, space::Space, position, scale) = nothing
 draw_glyph!(ax, scaled::ScaledChar, position, scale) = draw_glyph!(ax, scaled.char, position, scale * scaled.scale)
 
-function draw_glyph!(ax, line::Line, position, scale)
-    x0, y0 = position
-    xs = [x0, x0 + line.v[1]]
-    ys = [y0, y0 + line.v[2]]
-    lines!(ax, xs .* 64, ys .* 64, linewidth=line.thickness * scale * 64)
+function draw_glyph!(ax, line::VLine, position, scale)
+    lw = line.thickness * scale / 2
+    xmid, y0 = position
+    x0 = xmid - lw
+    x1 = xmid + lw
+    y1 = y0 + line.height
+    points = Point2f0[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
+    poly!(ax, points .* 64)
+end
+
+function draw_glyph!(ax, line::HLine, position, scale)
+    lw = line.thickness * scale / 2
+    x0, ymid = position
+    x1 = x0 + line.width
+    y0 = ymid - lw
+    y1 = ymid + lw
+    points = Point2f0[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
+    poly!(ax, points .* 64)
 end
 
 draw_glyph_bbox!(ax, glyph, position, scale) = nothing
@@ -367,8 +401,7 @@ function draw_glyph_bbox!(ax, texchar::TeXChar, position, scale)
             (x + w, y + d),
             (x + a, y + d),
             (x + a, y + h),
-            (x + w, y + h),
-            (x + w, y + d)
+            (x + w, y + h)
         ],
         color=RGBA(0, 1, 0, 0.3),
         strokecolor=RGBA(0, 0, 0, 0.0),
@@ -381,8 +414,7 @@ function draw_glyph_bbox!(ax, texchar::TeXChar, position, scale)
             (x, y),
             (x + w, y),
             (x + w, y + d),
-            (x, y + d),
-            (x, y)
+            (x, y + d)
         ],
         color=RGBA(0, 0, 1, 0.3),
         strokecolor=RGBA(0, 0, 0, 0.0),
@@ -395,8 +427,7 @@ function draw_glyph_bbox!(ax, texchar::TeXChar, position, scale)
             (x, y),
             (x + w, y),
             (x + w, y + h),
-            (x, y + h),
-            (x, y)
+            (x, y + h)
         ],
         color=RGBA(1, 0, 0, 0.5),
         strokecolor=RGBA(0, 0, 0, 0.0),
@@ -417,15 +448,16 @@ begin  # Quick test
     ax.aspect = DataAspect()
     hidedecorations!(ax)
     #tex = raw"\sqrt{\cos(\omega t)} = \lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \sqrt{\Lambda_L \sum^j_m} \sum_{k=1234}^n 22k  \nabla x!=\frac{1+2}{4+a+g}\int"
-    tex = raw"\lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \nabla x!=\frac{1+2}{4+a+g}\int_{0}^{2π} \sin(x)\, dx"
+    tex = raw"\lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \nabla x!= \sqrt{\frac{1+2}{4+a+g}}\int_{0}^{2π} \sin(x)\, dx"
     expr = parse(TeXExpr, tex)
     layout = tex_layout(expr)
 
     for (elem, pos, scale) in unravel(layout)
-        draw_glyph_bbox!(ax, elem, pos, scale)
         draw_glyph!(ax, elem, pos, scale)
+        draw_glyph_bbox!(ax, elem, pos, scale)
     end
     fig
+
 end
 ##
 save("test.pdf", fig)

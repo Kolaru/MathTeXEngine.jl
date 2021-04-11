@@ -39,6 +39,8 @@ character, to allow supporting non-unicode font sets.
 get_symbol_char(char::Char, command, fontset) = TeXChar(char, fontset.math)
 
 thickness(fontset) = thickness(fontset.math)
+sqrt_thickness(fontset) = thickness(fontset.math)
+
 xheight(fontset) = xheight(fontset.regular)
 
 const NewComputerModern = NewCMFontSet(
