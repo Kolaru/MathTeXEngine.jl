@@ -166,6 +166,7 @@ function tex_layout(expr, fontset=NewComputerModern)
                 (core_width, xheight(core) - 0.5 * descender(super))],
             [1, shrink, shrink])
     elseif head == :integral
+        pad = 0.2
         sub, super = tex_layout.(args[2:3], Ref(fontset))
 
         # TODO Generalize this to other symbols ? This should be decided by the
@@ -173,28 +174,26 @@ function tex_layout(expr, fontset=NewComputerModern)
         topint = get_symbol_char('⌠', raw"\inttop", fontset)
         botint = get_symbol_char('⌡', raw"\intbottom", fontset)
 
-
-        int = Group(
-            [topint, botint],
+        top = Group([topint, super],
             Point2f0[
-                (leftinkbound(topint), inkheight(topint)/2 - bottominkbound(topint)),
-                (leftinkbound(botint), -inkheight(botint)/2 - bottominkbound(botint))
+                (0, 0),
+                (inkwidth(topint) + pad, topinkbound(topint) - xheight(super))
             ],
-            [1, 1])
-
-        iw = advance(int)
-        xh = xheight(fontset.math)
-        ih = inkheight(int)
-
-        # last term corrects asymmetry of integral char
-        y0 = xh/2 - ih/2 - bottominkbound(int) 
-        subpos =  Point2f0(iw/2, -ih/2)
-        superpos =  Point2f0(iw, ih/2)
+            [1, shrink])
+        bottom = Group([botint, sub],
+            Point2f0[
+                (0, 0),
+                (inkwidth(botint) + pad, bottominkbound(botint))
+            ],
+            [1, shrink])
 
         return Group(
-            [int, sub, super],
-            Point2f0[(0, y0), subpos, superpos],
-            [1, shrink, shrink]
+            [top, bottom],
+            Point2f0[
+                (leftinkbound(topint), xheight(fontset.math)/2),
+                (leftinkbound(botint), xheight(fontset.math)/2 - inkheight(botint) - bottominkbound(botint))
+            ],
+            [1, 1]
             )
     elseif head == :underover
         core, sub, super = tex_layout.(args, Ref(fontset))
