@@ -172,6 +172,8 @@ struct VLine{T} <: TeXElement
     thickness::T
 end
 
+VLine(height, thickness) = VLine(promote(height, thickness)...)
+
 leftinkbound(line::VLine) = -line.thickness/2
 rightinkbound(line::VLine) = line.thickness/2
 bottominkbound(line::VLine{T}) where T = min(line.height, zero(T))
@@ -186,6 +188,8 @@ struct HLine{T} <: TeXElement
     width::T
     thickness::T
 end
+
+HLine(height, thickness) = HLine(promote(height, thickness)...)
 
 leftinkbound(line::HLine{T}) where T = min(line.width, zero(T))
 rightinkbound(line::HLine{T}) where T = max(line.width, zero(T))

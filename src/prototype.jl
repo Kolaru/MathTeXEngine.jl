@@ -123,17 +123,18 @@ begin  # Quick test
     ax.aspect = DataAspect()
     hidedecorations!(ax)
     #tex = raw"\sqrt{\cos(\omega t)} = \lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \sqrt{\Lambda_L \sum^j_m} \sum_{k=1234}^n 22k  \nabla x!=\frac{1+2}{4+a+g}\int"
-    tex = raw"\lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \nabla x!= \sqrt{\frac{1+2}{4+a+g}}\int_{0}^{2π} \sin(x)\, dx"
-    expr = parse(TeXExpr, tex)
+    tex = raw"\lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} x!= \sqrt{\frac{1+2}{4+a+g}}\int_{0}^{2π} \sin(x) dx"
+    expr = texparse(tex)
     layout = tex_layout(expr)
 
     for (elem, pos, scale) in unravel(layout)
         draw_texelement!(ax, elem, pos, scale)
-        draw_texelement_helpers!(ax, elem, pos, scale)
+        # draw_texelement_helpers!(ax, elem, pos, scale)
     end
     fig
 
 end
 ##
 save("test.pdf", fig)
+save("example.png", fig)
 

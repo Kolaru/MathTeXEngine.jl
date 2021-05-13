@@ -13,175 +13,181 @@ function tex_layout(expr, fontset=NewComputerModern)
     n = length(args)
     shrink = 0.6
 
-    if head == :group
-        elements = tex_layout.(args, Ref(fontset))
-        return horizontal_layout(elements)
-    elseif head == :decorated
-        core, sub, super = tex_layout.(args, Ref(fontset))
+    try
+        if head == :group || head == :expr
+            elements = tex_layout.(args, Ref(fontset))
+            return horizontal_layout(elements)
+        elseif head == :decorated
+            core, sub, super = tex_layout.(args, Ref(fontset))
 
-        core_width = advance(core)
-        sub_width = advance(sub) * shrink
-        super_width = advance(super) * shrink
+            core_width = advance(core)
+            sub_width = advance(sub) * shrink
+            super_width = advance(super) * shrink
 
-        return Group(
-            [core, sub, super],
-            Point2f0[
-                (0, 0),
-                (core_width, -0.2),
-                (core_width, xheight(core) - 0.5 * descender(super))],
-            [1, shrink, shrink])
-    elseif head == :integral
-        pad = 0.2
-        sub, super = tex_layout.(args[2:3], Ref(fontset))
+            return Group(
+                [core, sub, super],
+                Point2f0[
+                    (0, 0),
+                    (core_width, -0.2),
+                    (core_width, xheight(core) - 0.5 * descender(super))],
+                [1, shrink, shrink])
+        elseif head == :integral
+            pad = 0.2
+            sub, super = tex_layout.(args[2:3], Ref(fontset))
 
-        # TODO Generalize this to other symbols ? This should be decided by the
-        # fontset
-        topint = get_symbol_char('⌠', raw"\inttop", fontset)
-        botint = get_symbol_char('⌡', raw"\intbottom", fontset)
+            # TODO Generalize this to other symbols ? This should be decided by the
+            # fontset
+            topint = get_symbol_char('⌠', raw"\inttop", fontset)
+            botint = get_symbol_char('⌡', raw"\intbottom", fontset)
 
-        top = Group([topint, super],
-            Point2f0[
-                (0, 0),
-                (inkwidth(topint) + pad, topinkbound(topint) - xheight(super))
-            ],
-            [1, shrink])
-        bottom = Group([botint, sub],
-            Point2f0[
-                (0, 0),
-                (inkwidth(botint) + pad, bottominkbound(botint))
-            ],
-            [1, shrink])
+            top = Group([topint, super],
+                Point2f0[
+                    (0, 0),
+                    (inkwidth(topint) + pad, topinkbound(topint) - xheight(super))
+                ],
+                [1, shrink])
+            bottom = Group([botint, sub],
+                Point2f0[
+                    (0, 0),
+                    (inkwidth(botint) + pad, bottominkbound(botint))
+                ],
+                [1, shrink])
 
-        return Group(
-            [top, bottom],
-            Point2f0[
-                (leftinkbound(topint), xheight(fontset.math)/2),
-                (leftinkbound(botint), xheight(fontset.math)/2 - inkheight(botint) - bottominkbound(botint))
-            ],
-            [1, 1]
+            return Group(
+                [top, bottom],
+                Point2f0[
+                    (leftinkbound(topint), xheight(fontset.math)/2),
+                    (leftinkbound(botint), xheight(fontset.math)/2 - inkheight(botint) - bottominkbound(botint))
+                ],
+                [1, 1]
+                )
+        elseif head == :underover
+            core, sub, super = tex_layout.(args, Ref(fontset))
+
+            mid = hmid(core)
+            dxsub = mid - hmid(sub) * shrink
+            dxsuper = mid - hmid(super) * shrink
+
+            under_offset = bottominkbound(core) - (ascender(sub) - xheight(sub)/2) * shrink
+            over_offset = topinkbound(core) - descender(super)
+
+            # The leftmost element must have x = 0
+            x0 = -min(0, dxsub, dxsuper)
+
+            return Group(
+                [core, sub, super],
+                Point2f0[
+                    (x0, 0),
+                    (x0 + dxsub, under_offset),
+                    (x0 + dxsuper, over_offset)
+                ],
+                [1, shrink, shrink]
             )
-    elseif head == :underover
-        core, sub, super = tex_layout.(args, Ref(fontset))
+        elseif head == :function
+            name = args[1]
+            elements = get_function_char.(collect(name), Ref(fontset))
+            return horizontal_layout(elements)
+        elseif head == :space
+            return Space(args[1])
+        elseif head == :spaced
+            char, command = args[1].args
+            sym = get_symbol_char(char, command, fontset)
+            return horizontal_layout([Space(0.2), sym, Space(0.2)])
+        elseif head == :delimited
+            # TODO Parsing of this is crippling slow and I don't know why
+            elements = tex_layout.(args, Ref(fontset))
+            left, content, right = elements
 
-        mid = hmid(core)
-        dxsub = mid - hmid(sub) * shrink
-        dxsuper = mid - hmid(super) * shrink
+            height = inkheight(content)
+            left_scale = max(1, height / inkheight(left))
+            right_scale = max(1, height / inkheight(right))
+            scales = [left_scale, 1, right_scale]
+                
+            dxs = advance.(elements) .* scales
+            xs = [0, cumsum(dxs[1:end-1])...]
 
-        under_offset = bottominkbound(core) - (ascender(sub) - xheight(sub)/2) * shrink
-        over_offset = topinkbound(core) - descender(super)
+            # TODO Height calculation for the parenthesis looks wrong
+            # TODO Check what the algorithm should be there
+            # Center the delimiters in the middle of the bot and top baselines ?
+            return Group(elements, 
+                Point2f0[
+                    (xs[1], -bottominkbound(left) + bottominkbound(content)),
+                    (xs[2], 0),
+                    (xs[3], -bottominkbound(right) + bottominkbound(content))
+            ], scales)
+        elseif head == :accent || head == :wide_accent
+            # TODO
+        elseif head == :font
+            # TODO
+        elseif head == :frac
+            numerator = tex_layout(args[1], fontset)
+            denominator = tex_layout(args[2], fontset)
 
-        # The leftmost element must have x = 0
-        x0 = -min(0, dxsub, dxsuper)
+            # extend fraction line by half an xheight
+            xh = xheight(fontset.math)
+            w = max(inkwidth(numerator), inkwidth(denominator)) + xh/2
 
-        return Group(
-            [core, sub, super],
-            Point2f0[
-                (x0, 0),
-                (x0 + dxsub, under_offset),
-                (x0 + dxsuper, over_offset)
-            ],
-            [1, shrink, shrink]
-        )
-    elseif head == :function
-        name = args[1]
-        elements = get_function_char.(collect(name), Ref(fontset))
-        return horizontal_layout(elements)
-    elseif head == :space
-        return Space(args[1])
-    elseif head == :spaced_symbol
-        char, command = args[1].args
-        sym = get_symbol_char(char, command, fontset)
-        return horizontal_layout([Space(0.2), sym, Space(0.2)])
-    elseif head == :delimited
-        # TODO Parsing of this is crippling slow and I don't know why
-        elements = tex_layout.(args, Ref(fontset))
-        left, content, right = elements
+            # fixed width fraction line
+            lw = thickness(fontset)
 
-        height = inkheight(content)
-        left_scale = max(1, height / inkheight(left))
-        right_scale = max(1, height / inkheight(right))
-        scales = [left_scale, 1, right_scale]
-            
-        dxs = advance.(elements) .* scales
-        xs = [0, cumsum(dxs[1:end-1])...]
+            line = HLine(w, lw)
+            y0 = xh/2 - lw/2
 
-        # TODO Height calculation for the parenthesis looks wrong
-        # TODO Check what the algorithm should be there
-        # Center the delimiters in the middle of the bot and top baselines ?
-        return Group(elements, 
-            Point2f0[
-                (xs[1], -bottominkbound(left) + bottominkbound(content)),
-                (xs[2], 0),
-                (xs[3], -bottominkbound(right) + bottominkbound(content))
-        ], scales)
-    elseif head == :accent || head == :wide_accent
-        # TODO
-    elseif head == :font
-        # TODO
-    elseif head == :frac
-        numerator = tex_layout(args[1], fontset)
-        denominator = tex_layout(args[2], fontset)
+            # horizontal center align for numerator and denominator
+            x1 = (w-inkwidth(numerator))/2
+            x2 = (w-inkwidth(denominator))/2
 
-        # extend fraction line by half an xheight
-        xh = xheight(fontset.math)
-        w = max(inkwidth(numerator), inkwidth(denominator)) + xh/2
+            ytop    = y0 + xh/2 - bottominkbound(numerator)
+            ybottom = y0 - xh/2 - topinkbound(denominator)
 
-        # fixed width fraction line
-        lw = thickness(fontset)
+            return Group(
+                [line, numerator, denominator],
+                Point2f0[(0,y0), (x1, ytop), (x2, ybottom)],
+                [1,1,1]
+                )
+        elseif head == :sqrt
+            content = tex_layout(args[1], fontset)
+            sqrt = get_symbol_char('√', raw"\sqrt", fontset)
 
-        line = HLine(w, lw)
-        y0 = xh/2 - lw/2
+            thick = thickness(fontset)
+            relpad = 0.15
 
-        # horizontal center align for numerator and denominator
-        x1 = (w-inkwidth(numerator))/2
-        x2 = (w-inkwidth(denominator))/2
+            h = inkheight(content)
+            ypad = relpad * h
+            h += 2ypad
 
-        ytop    = y0 + xh/2 - bottominkbound(numerator)
-        ybottom = y0 - xh/2 - topinkbound(denominator)
+            if h > inkheight(sqrt)
+                sqrt = get_symbol_char('⎷', raw"\sqrtbottom", fontset)
+            end
 
-        return Group(
-            [line, numerator, denominator],
-            Point2f0[(0,y0), (x1, ytop), (x2, ybottom)],
-            [1,1,1]
-            )
-    elseif head == :sqrt
-        content = tex_layout(args[1], fontset)
-        sqrt = get_symbol_char('√', raw"\sqrt", fontset)
+            h = max(inkheight(sqrt), h)
 
-        thick = thickness(fontset)
-        relpad = 0.15
+            # The root symbol must be manually placed
+            y0 = bottominkbound(content) - bottominkbound(sqrt) - ypad/2
+            y = y0 + bottominkbound(sqrt) + h
+            xpad = advance(sqrt) - inkwidth(sqrt)
+            w =  inkwidth(content) + 2xpad
 
-        h = inkheight(content)
-        ypad = relpad * h
-        h += 2ypad
+            lw = sqrt_thickness(fontset)
+            hline = HLine(w, lw)
+            vline = VLine(inkheight(sqrt) - h, lw)
 
-        if h > inkheight(sqrt)
-            sqrt = get_symbol_char('⎷', raw"\sqrtbottom", fontset)
+            return Group(
+                [sqrt, hline, vline, content],
+                Point2f0[
+                    (0, y0),
+                    (inkwidth(sqrt) - lw/2, y - lw/2),
+                    (inkwidth(sqrt) - lw/2, y),
+                    (advance(sqrt), 0)],
+                [1, 1, 1, 1])
+        elseif head == :symbol
+            char, command = args
+            return get_symbol_char(char, command, fontset)
         end
-
-        h = max(inkheight(sqrt), h)
-
-        # The root symbol must be manually placed
-        y0 = bottominkbound(content) - bottominkbound(sqrt) - ypad/2
-        y = y0 + bottominkbound(sqrt) + h
-        xpad = advance(sqrt) - inkwidth(sqrt)
-        w =  inkwidth(content) + 2xpad
-
-        lw = sqrt_thickness(fontset)
-        hline = HLine(w, lw)
-        vline = VLine(inkheight(sqrt) - h, lw)
-
-        return Group(
-            [sqrt, hline, vline, content],
-            Point2f0[
-                (0, y0),
-                (inkwidth(sqrt) - lw/2, y - lw/2),
-                (inkwidth(sqrt) - lw/2, y),
-                (advance(sqrt), 0)],
-            [1, 1, 1, 1])
-    elseif head == :symbol
-        char, command = args
-        return get_symbol_char(char, command, fontset)
+    catch
+        @warn "Error while processing expr"
+        println(expr)
+        rethrow()
     end
 
     @error "Unsupported expr $expr"
