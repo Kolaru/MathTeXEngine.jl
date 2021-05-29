@@ -1,7 +1,7 @@
 using FreeTypeAbstraction
 import GeometryBasics: Point2f0
 using MathTeXParser
-
+using LaTeXStrings
 import FreeTypeAbstraction:
     ascender, descender, get_extent, hadvance, inkheight, inkwidth,
     leftinkbound, rightinkbound, topinkbound, bottominkbound
@@ -16,8 +16,7 @@ using Colors
 
 draw_texelement!(args...) = nothing
 
-function draw_texelement!(ax, texchar::TeXChar, position, scale)
-    size = 64
+function draw_texelement!(ax, texchar::TeXChar, position, scale ; size=64)
     x = position[1] * size
     # Characters are drawn from the bottom left of the font bounding box but
     # their position is relative to the baseline, so we need to offset them
@@ -28,24 +27,24 @@ function draw_texelement!(ax, texchar::TeXChar, position, scale)
         space=:data)
 end
 
-function draw_texelement!(ax, line::VLine, position, scale)
+function draw_texelement!(ax, line::VLine, position, scale ; size=64)
     lw = line.thickness * scale / 2
     xmid, y0 = position
     x0 = xmid - lw
     x1 = xmid + lw
     y1 = y0 + line.height
     points = Point2f0[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
-    poly!(ax, points .* 64)
+    poly!(ax, points .* size, color=:black)
 end
 
-function draw_texelement!(ax, line::HLine, position, scale)
+function draw_texelement!(ax, line::HLine, position, scale ; size=64)
     lw = line.thickness * scale / 2
     x0, ymid = position
     x1 = x0 + line.width
     y0 = ymid - lw
     y1 = ymid + lw
     points = Point2f0[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
-    poly!(ax, points .* 64)
+    poly!(ax, points .* size, color=:black)
 end
 
 draw_texelement_helpers!(args...) = nothing
@@ -115,26 +114,43 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale)
     )
 end
 
-##
-begin  # Quick test
-    fig = Figure()
-    fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
-    ax = Axis(fig[2, 1])
-    ax.aspect = DataAspect()
-    hidedecorations!(ax)
-    #tex = raw"\sqrt{\cos(\omega t)} = \lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} \sqrt{\Lambda_L \sum^j_m} \sum_{k=1234}^n 22k  \nabla x!=\frac{1+2}{4+a+g}\int"
-    tex = raw"\lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} x!= \sqrt{\frac{1+2}{4+a+g}}\int_{0}^{2π} \sin(x) dx"
+
+function makie_tex!(ax, latex::LaTeXString ; debug=false)
+    tex = latex[2:end-1]  # TODO Split string correctly at $. Do it in TeXParser ?
     expr = texparse(tex)
     layout = tex_layout(expr)
 
     for (elem, pos, scale) in unravel(layout)
         draw_texelement!(ax, elem, pos, scale)
-        # draw_texelement_helpers!(ax, elem, pos, scale)
+        if debug
+            draw_texelement_helpers!(ax, elem, pos, scale)
+        end
     end
-    fig
-
 end
-##
+
+struct TeXLabel
+    string::LaTeXString
+end
+
+function Makie.text!(ax, latex::TeXLabel ; kwargs...)
+    makie_tex!(ax, latex.string)
+    @show kwargs
+end
+
+Makie.MakieLayout.iswhitespace(late::TeXLabel) = false
+
+begin  # Quick test
+    fig = Figure()
+    fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
+    ax = Axis(fig[2, 1])
+    ax.aspect = DataAspect()
+
+    tex = L"\lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} x!= \sqrt{\frac{1+2}{4+a+g}}\int_{0}^{2π} \sin(x) dx"
+
+    ax.xlabel = TeXLabel(L"\omega^2")
+    fig
+end
 save("test.pdf", fig)
 save("example.png", fig)
 
+ 

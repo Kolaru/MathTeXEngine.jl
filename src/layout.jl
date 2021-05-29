@@ -195,11 +195,10 @@ end
 
 tex_layout(char::TeXChar, fontset) = char
 tex_layout(::Nothing, fontset) = Space(0)
-tex_layout(char::Char, fontset) = get_math_char(char, fontset)
 
-function tex_layout(integer::Integer, fontset)
-    elements = get_number_char.(collect(string(integer)), Ref(fontset))
-    return horizontal_layout(elements)
+function tex_layout(char::Char, fontset)
+    char in "0123456789" && return get_number_char(char, fontset)
+    return get_math_char(char, fontset)
 end
 
 function horizontal_layout(elements ; scales=ones(length(elements)))
