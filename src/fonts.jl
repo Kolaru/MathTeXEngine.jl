@@ -43,8 +43,11 @@ sqrt_thickness(fontset) = thickness(fontset.math)
 
 xheight(fontset) = xheight(fontset.regular)
 
+load_font(name) = FTFont(joinpath(@__DIR__, "..", "assets", "fonts", name))
+
 const NewComputerModern = NewCMFontSet(
-    FTFont("assets/fonts/NewCM10-Regular.otf"),
-    FTFont("assets/fonts/NewCM10-Italic.otf"),
-    FTFont("assets/fonts/NewCMMath-Regular.otf")
+    load_font("NewCM10-Regular.otf"),
+    load_font("NewCM10-Italic.otf"),
+    load_font("NewCMMath-Regular.otf")
 )
+
