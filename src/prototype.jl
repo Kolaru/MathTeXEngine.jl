@@ -34,7 +34,7 @@ function draw_texelement!(ax, line::VLine, position, scale ; size=64)
     x1 = xmid + lw
     y1 = y0 + line.height
     points = Point2f0[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
-    poly!(ax, points .* size, color=:black)
+    mesh!(ax, points .* size, color=:black)
 end
 
 function draw_texelement!(ax, line::HLine, position, scale ; size=64)
@@ -44,7 +44,7 @@ function draw_texelement!(ax, line::HLine, position, scale ; size=64)
     y0 = ymid - lw
     y1 = ymid + lw
     points = Point2f0[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
-    poly!(ax, points .* size, color=:black)
+    mesh!(ax, points .* size, color=:black, shading=false)
 end
 
 draw_texelement_helpers!(args...) = nothing
@@ -62,7 +62,7 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale)
     left = leftinkbound(texchar) * size * scale
 
     # The space between th origin and the left ink bound
-    poly!(ax, 
+    mesh!(ax,
         Point2f0[
             (x, y + d),
             (x - left, y + d),
@@ -70,12 +70,11 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale)
             (x, y + h)
         ],
         color=RGBA(1, 1, 0, 0.6),
-        strokecolor=RGBA(0, 0, 0, 0.0),
-        strokewidth=1
+        shading=false
     )
 
     # The advance after the right inkbound
-    poly!(ax, 
+    mesh!(ax,
         Point2f0[
             (x + w, y + d),
             (x + a, y + d),
@@ -83,12 +82,11 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale)
             (x + w, y + h)
         ],
         color=RGBA(0, 1, 0, 0.3),
-        strokecolor=RGBA(0, 0, 0, 0.0),
-        strokewidth=1
+        shading=false
     )
 
     # The descender
-    poly!(ax,
+    mesh!(ax,
         Point2f0[
             (x, y),
             (x + w, y),
@@ -96,12 +94,11 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale)
             (x, y + d)
         ],
         color=RGBA(0, 0, 1, 0.3),
-        strokecolor=RGBA(0, 0, 0, 0.0),
-        strokewidth=1
+        shading=false
     )
 
     # The inkbound above the baseline
-    poly!(ax, 
+    mesh!(ax,
         Point2f0[
             (x, y),
             (x + w, y),
@@ -109,11 +106,9 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale)
             (x, y + h)
         ],
         color=RGBA(1, 0, 0, 0.5),
-        strokecolor=RGBA(0, 0, 0, 0.0),
-        strokewidth=1
+        shading=false
     )
 end
-
 
 function makie_tex!(ax, latex::LaTeXString ; debug=false)
     tex = latex[2:end-1]  # TODO Split string correctly at $. Do it in TeXParser ?
@@ -132,9 +127,13 @@ struct TeXLabel
     string::LaTeXString
 end
 
-function Makie.text!(ax, latex::TeXLabel ; kwargs...)
-    makie_tex!(ax, latex.string)
-    @show kwargs
+function Makie.plot!(plot::Makie.Text{Tuple{TeXLabel}})
+    kw_args = Attributes(plot)
+    @show kw_args
+    @show haskey(plot, :test)
+    @show plot.test
+    # For now, don't handle observables (plot[1] -> Observable{TeXLabel})
+    makie_tex!(plot, plot[1][].string)
 end
 
 Makie.MakieLayout.iswhitespace(late::TeXLabel) = false
@@ -144,13 +143,7 @@ begin  # Quick test
     fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
     ax = Axis(fig[2, 1])
     ax.aspect = DataAspect()
-
     tex = L"\lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} x!= \sqrt{\frac{1+2}{4+a+g}}\int_{0}^{2π} \sin(x) dx"
-
-    ax.xlabel = TeXLabel(L"\omega^2")
-    fig
+    text!(ax, TeXLabel2(tex), test = 1)
+    display(fig)
 end
-save("test.pdf", fig)
-save("example.png", fig)
-
- 
