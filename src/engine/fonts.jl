@@ -9,6 +9,7 @@ without neither ascender nor descender.
 xheight(font::FTFont) = inkheight(TeXChar('x', font))
 thickness(font::FTFont) = font.underline_thickness / font.units_per_EM
 
+# TODO This whole file probably need rework
 abstract type TeXFontSet end
 
 struct NewCMFontSet <: TeXFontSet
@@ -43,9 +44,10 @@ sqrt_thickness(fontset) = thickness(fontset.math)
 
 xheight(fontset) = xheight(fontset.regular)
 
-load_font(name) = FTFont(joinpath(@__DIR__, "..", "assets", "fonts", name))
+load_font(name) = FTFont(joinpath(@__DIR__, "..", "..", "assets", "fonts", name))
 
-const NewComputerModern = NewCMFontSet(
+# TODO Somehow defining a constant messed up some pointers
+load_fontset(::Type{NewCMFontSet}) = NewCMFontSet(
     load_font("NewCM10-Regular.otf"),
     load_font("NewCM10-Italic.otf"),
     load_font("NewCMMath-Regular.otf")

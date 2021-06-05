@@ -1,4 +1,3 @@
-
 """
     tex_layout(mathexpr::TeXExpr, fontset)
 
@@ -7,7 +6,7 @@ TeXExpr for the given font set.
 
 Currently the only supported font set is NewComputerModern.
 """
-function tex_layout(expr, fontset=NewComputerModern)
+function tex_layout(expr, fontset)
     head = expr.head
     args = [expr.args...]
     n = length(args)
@@ -19,7 +18,7 @@ function tex_layout(expr, fontset=NewComputerModern)
             return horizontal_layout(elements)
         elseif head == :decorated
             core, sub, super = tex_layout.(args, Ref(fontset))
-
+            
             core_width = advance(core)
             sub_width = advance(sub) * shrink
             super_width = advance(super) * shrink
@@ -43,21 +42,21 @@ function tex_layout(expr, fontset=NewComputerModern)
             top = Group([topint, super],
                 Point2f0[
                     (0, 0),
-                    (inkwidth(topint) + pad, topinkbound(topint) - xheight(super))
+                    (rightinkbound(topint) + pad, topinkbound(topint) - xheight(super))
                 ],
                 [1, shrink])
             bottom = Group([botint, sub],
                 Point2f0[
                     (0, 0),
-                    (inkwidth(botint) + pad, bottominkbound(botint))
+                    (rightinkbound(botint) + pad, bottominkbound(botint))
                 ],
                 [1, shrink])
 
             return Group(
                 [top, bottom],
                 Point2f0[
-                    (leftinkbound(topint), xheight(fontset.math)/2),
-                    (leftinkbound(botint), xheight(fontset.math)/2 - inkheight(botint) - bottominkbound(botint))
+                    (0, xheight(fontset.math)/2),
+                    (0, xheight(fontset.math)/2 - inkheight(botint) - bottominkbound(botint))
                 ],
                 [1, 1]
                 )
@@ -173,11 +172,11 @@ function tex_layout(expr, fontset=NewComputerModern)
             vline = VLine(inkheight(sqrt) - h, lw)
 
             return Group(
-                [sqrt, hline, vline, content],
+                [sqrt, vline, hline, content],
                 Point2f0[
                     (0, y0),
-                    (inkwidth(sqrt) - lw/2, y - lw/2),
-                    (inkwidth(sqrt) - lw/2, y),
+                    (rightinkbound(sqrt) - lw/2, y),
+                    (rightinkbound(sqrt) - lw/2, y - lw/2),
                     (advance(sqrt), 0)],
                 [1, 1, 1, 1])
         elseif head == :symbol
@@ -227,4 +226,14 @@ function unravel(group::Group, parent_pos=Point2f0(0), parent_scale=1.0f0)
 end
 
 unravel(char::ScaledChar, pos, scale) = unravel(char.char, pos, scale*char.scale)
+unravel(::Space, pos, scale) = []
 unravel(element, pos, scale) = [(element, pos, scale)]
+
+function generate_tex_elements(str, fontset=NewCMFontSet)
+    expr = texparse(str)
+    layout = tex_layout(expr, load_fontset(fontset))
+    return unravel(layout)
+end
+
+# Still hacky as hell
+generate_tex_elements(str::LaTeXString, fontset=NewCMFontSet) = generate_tex_elements(str[2:end-1], fontset)
