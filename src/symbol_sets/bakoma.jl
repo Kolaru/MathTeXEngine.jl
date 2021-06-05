@@ -1,9 +1,8 @@
-# Currently unsupported because font metrics given by FreeTypeAbstraction is
-# not correct
+# Currently unsupported
 # Probably need to parse the associated .afm files to make this work
 
 _latex_to_bakoma = Dict(
-    raw"\sqrt"                 => ("cmex10", 0x70),
+    raw"\sqrt"                     => ("cmex10", 0x70),
     raw"\bigcap"                   => ("cmex10", 0x5c),
     raw"\bigcup"                   => ("cmex10", 0x5b),
     raw"\bigodot"                  => ("cmex10", 0x4b),

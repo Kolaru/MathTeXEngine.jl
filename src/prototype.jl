@@ -114,7 +114,7 @@ begin  # Quick test
     fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
     ax = Axis(fig[2, 1])
     ax.aspect = DataAspect()
-    tex = L"\lim_{x →\infty} A^j v_{(a + b)_k}^i \sqrt{2} x!= \sqrt{\frac{1+2}{4+a+x}}\int_{0}^{2π} \sin(x) dx"
+    tex = L"\lim_{α →\infty} A^j v_{(a + b)_k}^i \sqrt{2} x!= \sqrt{\frac{1+2}{4+a+x}}\int_{0}^{2π} \sin(x) dx"
     # text!(ax, TeXLabel(tex), test = 1)
     makie_tex!(ax, tex, debug=false, size=300)
     fig

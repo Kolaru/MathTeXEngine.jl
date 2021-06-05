@@ -10,7 +10,7 @@ Them main use of the package is through `generate_tex_elements` taking a LaTeX s
 - `VLine(height, thickness)` a vertical line.
 - `HLine(width, thickness)` an horizontal line.
 
-This contains enough information to then draw everyting with any plotting package that can draw arbitrary glyph in arbitrary font. The position is the origin of the character accordingt to `FreeType`.
+This contains enough information to then draw everything with any plotting package that can draw arbitrary glyph in arbitrary font. The position is the origin of the character according to `FreeType`.
 
 The engine should support every construction the parser does (see below).
 
