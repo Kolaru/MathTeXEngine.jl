@@ -2,9 +2,15 @@
 
 This is a work in progress package aimed at providing a pure Julia engine for LaTeX math mode. It is composed of two main parts: a LaTeX parser and a LaTeX engine, both only for LaTeX math mode.
 
+## Main features
+
+- Parsing of (possibly nested) LaTeX expression and creation of a layout for them.
+- Equivalence between traditional LaTeX commands and their unicode input equivalent.
+- Pure julia.
+
 ## Engine
 
-Them main use of the package is through `generate_tex_elements` taking a LaTeX string as input and return a list of tuples `(TeXElement, position, scale)` where `TeXElement` is one of the following:
+The main use of the package is through `generate_tex_elements` taking a LaTeX string as input and return a list of tuples `(TeXElement, position, scale)` where `TeXElement` is one of the following:
 
 - `TeXChar(char, font)` a unicode character to be displayed in a specific font.
 - `VLine(height, thickness)` a vertical line.
@@ -22,33 +28,31 @@ Currently the only font set supported is New Computer Modern.
 
 ## Parser
 
-Parsing is done through the exported function `texparse` into nested `TeXExpr` objects forming a tree. The parser does not perform any layouting.
-
-### General features
-- Parsing of LaTeX expression into nested `TeXExpr` objects consisting of a head (e.g. `:frac`) representing the type of the expression and a list of arguments.
-- Mapping of LaTeX command to the corresponding Unicode symbols.
-- Unicode character input, parsed as they respective command.
-- Pretty printing of the the resulting expressions.
-- Hopefully helpful error messages.
-- `texexpr(expr, showdebug=true)` showing each parsing step.
+Parsing is done through the exported function `texparse` into nested `TeXExpr` objects forming a tree. The parser does not perform any operation to layout the elements, it only transforms them into a syntax tree.
 
 ### Supported constructions
-- `:decorated [core, subscript, superscript]` Elements "decorated" with subscript and superscript.
-- `:delimited [left_delimiter, content, right_delimiter]` Groups with automatically sized delimiters.
-- `:frac [numerator, denumerator]` Fraction.
-- `:function [name]` Named functions (like `sin`).
-- `:group [elements...]` Groups defined with braces, possibly nested.
-- `:integral [symbol, low_bound, high_bound]` Integrals.
-- `:spaced [symbol]` Symbols with spaces around them (binary symbols, relational symbols and arrows).
-- `:symbol [char, command]` Generic recognized symbol. `char` is the unicode `Char` representing the symbol and `command` is a string containing the command input in LaTeX.
-- `:underover [symbol, under, over]` Symbols or function with information over and/or under them (sum, limits and the like, except integrals that have a separate object).
+
+The table below contains the list of all supported LaTeX construction and their representation when parsed.
+
+| Description | LaTeX example | Expression head | Fields |
+|--|--|--|--|
+| Delimiter | `\left( \right)` | `:delimited` | `left_delimiter, content, right_delimiter` |
+| Fraction | `\frac{}{}` | `:frac` | `numerator, denumerator` |
+| Function | `\sin` | `:function` | `name` |
+| Generic symbol | `x` | `:symbol` | `char, command` |
+| Group | `{ }` | `:group` | `elements...` |
+| Integral | `\int_a^b` | `:integral` | `symbol, low_bound, high_bound` |
+| Spaced symbol | `+` | `:spaced` | `symbol` |
+| Subscript and superscript | `x_0^2` | `:decorated` | `core, subscript, superscript` |
+| Symbol with script under and/or over it | `\sum_i^k` | `:underover` | `symbol, under, over` |
 
 ### To be implemented
-- `:accent [symbol, core]` and `:wide_accent [symbol, core]` Narrow and wide accents.
-- `:mathfont [fontstyle, content]` Mathematical font commands (`\mathbb` and the like). `fontstyle` omits the starting `\math` (e.g. it is `bb` for a `\mathbb` command).
-- `:punctuation [symbol]` Punctuation (I don't think they are treated differently from other symbols in math mode though).
-- `:space, [width]` Fixed space commands (the `\quad` family).
 
+| Description | LaTeX example | Head | Fields | Comment |
+|--|--|--|--|--|
+| Accent | `\vec{v}` | `:accent` | `symbol, core` | May need a specific type of expression for wide accent |
+| Basic font | `\mathrm{d}` | `:font` | `fontstyle, content` |
+| Space | `\quad` | `:space` | `width` |
 
 ### Example
 
