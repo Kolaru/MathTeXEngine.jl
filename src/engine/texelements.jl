@@ -117,7 +117,9 @@ struct TeXChar <: TeXElement
     font::FTFont
 end
 
-TeXChar(char, path::AbstractString, command) = TeXChar(char, FTFont(path), command)
+function TeXChar(char, fontset::FontSet, char_type, command=nothing)
+    return TeXChar(char, get_font(fontset, char_type))
+end
 
 for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))

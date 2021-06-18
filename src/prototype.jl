@@ -38,7 +38,7 @@ end
 
 draw_texelement_helpers!(args... ; size=64) = nothing
 
-# TODO Move helper rect to them module
+# TODO Move helper rect to the module
 function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=64)
     x = position[1] * size
     # Characters are drawn from the bottom left of the font bounding box but

@@ -20,8 +20,6 @@ function tex_layout(expr, fontset)
             core, sub, super = tex_layout.(args, Ref(fontset))
             
             core_width = advance(core)
-            sub_width = advance(sub) * shrink
-            super_width = advance(super) * shrink
 
             return Group(
                 [core, sub, super],
@@ -36,8 +34,8 @@ function tex_layout(expr, fontset)
 
             # TODO Generalize this to other symbols ? This should be decided by the
             # fontset
-            topint = get_symbol_char('⌠', raw"\inttop", fontset)
-            botint = get_symbol_char('⌡', raw"\intbottom", fontset)
+            topint = TeXChar('⌠', fontset, :symbol, raw"\inttop")
+            botint = TeXChar('⌡', fontset, :symbol, raw"\intbottom")
 
             top = Group([topint, super],
                 Point2f0[
@@ -55,8 +53,8 @@ function tex_layout(expr, fontset)
             return Group(
                 [top, bottom],
                 Point2f0[
-                    (0, xheight(fontset.math)/2),
-                    (0, xheight(fontset.math)/2 - inkheight(botint) - bottominkbound(botint))
+                    (0, xheight(fontset)/2),
+                    (0, xheight(fontset)/2 - inkheight(botint) - bottominkbound(botint))
                 ],
                 [1, 1]
                 )
@@ -84,13 +82,13 @@ function tex_layout(expr, fontset)
             )
         elseif head == :function
             name = args[1]
-            elements = get_function_char.(collect(name), Ref(fontset))
+            elements = TeXChar.(collect(name), Ref(fontset), Ref(:function))
             return horizontal_layout(elements)
         elseif head == :space
             return Space(args[1])
         elseif head == :spaced
             char, command = args[1].args
-            sym = get_symbol_char(char, command, fontset)
+            sym = TeXChar(char, fontset, :symbol, command)
             return horizontal_layout([Space(0.2), sym, Space(0.2)])
         elseif head == :delimited
             # TODO Parsing of this is crippling slow and I don't know why
@@ -123,7 +121,7 @@ function tex_layout(expr, fontset)
             denominator = tex_layout(args[2], fontset)
 
             # extend fraction line by half an xheight
-            xh = xheight(fontset.math)
+            xh = xheight(fontset)
             w = max(inkwidth(numerator), inkwidth(denominator)) + xh/2
 
             # fixed width fraction line
@@ -146,7 +144,7 @@ function tex_layout(expr, fontset)
                 )
         elseif head == :sqrt
             content = tex_layout(args[1], fontset)
-            sqrt = get_symbol_char('√', raw"\sqrt", fontset)
+            sqrt = TeXChar('√', fontset, :symbol, raw"\sqrt")
 
             thick = thickness(fontset)
             relpad = 0.15
@@ -156,7 +154,7 @@ function tex_layout(expr, fontset)
             h += 2ypad
 
             if h > inkheight(sqrt)
-                sqrt = get_symbol_char('⎷', raw"\sqrtbottom", fontset)
+                sqrt = TeXChar('⎷', fontset, :symbol, raw"\sqrtbottom")
             end
 
             h = max(inkheight(sqrt), h)
@@ -167,7 +165,7 @@ function tex_layout(expr, fontset)
             xpad = advance(sqrt) - inkwidth(sqrt)
             w =  inkwidth(content) + 2xpad
 
-            lw = sqrt_thickness(fontset)
+            lw = thickness(fontset)
             hline = HLine(w, lw)
             vline = VLine(inkheight(sqrt) - h, lw)
 
@@ -181,7 +179,7 @@ function tex_layout(expr, fontset)
                 [1, 1, 1, 1])
         elseif head == :symbol
             char, command = args
-            return get_symbol_char(char, command, fontset)
+            return TeXChar(char, fontset, :symbol, command)
         end
     catch
         @warn "Error while processing expr"
@@ -196,8 +194,15 @@ tex_layout(char::TeXChar, fontset) = char
 tex_layout(::Nothing, fontset) = Space(0)
 
 function tex_layout(char::Char, fontset)
-    char in "0123456789" && return get_number_char(char, fontset)
-    return get_math_char(char, fontset)
+    # TODO Move that to parser
+    if char in "0123456789"
+        char_type = :digit
+    elseif char in ".,:;[]()"
+        char_type = :punctuation
+    else
+        char_type = :variable
+    end
+    return TeXChar(char, fontset, char_type)
 end
 
 function horizontal_layout(elements ; scales=ones(length(elements)))
@@ -229,11 +234,11 @@ unravel(char::ScaledChar, pos, scale) = unravel(char.char, pos, scale*char.scale
 unravel(::Space, pos, scale) = []
 unravel(element, pos, scale) = [(element, pos, scale)]
 
-function generate_tex_elements(str, fontset=NewCMFontSet)
+function generate_tex_elements(str, fontset=FontSet())
     expr = texparse(str)
-    layout = tex_layout(expr, load_fontset(fontset))
+    layout = tex_layout(expr, fontset)
     return unravel(layout)
 end
 
 # Still hacky as hell
-generate_tex_elements(str::LaTeXString, fontset=NewCMFontSet) = generate_tex_elements(str[2:end-1], fontset)
+generate_tex_elements(str::LaTeXString, fontset=FontSet()) = generate_tex_elements(str[2:end-1], fontset)

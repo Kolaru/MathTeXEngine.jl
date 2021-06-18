@@ -1,5 +1,86 @@
 using FreeTypeAbstraction
 
+fontpath(fontname) = joinpath(@__DIR__, "..", "..", "assets", "fonts", fontname)
+
+const _cached_fonts = Dict{String, FTFont}()
+
+"""
+    load_font(str)
+
+Load a font. `str` must be either the full path to the font file, or a font in
+the package font folder.
+
+A font at a given location is cached for further use.
+"""
+function load_font(str)
+    if isfile(str)
+        path = str
+    elseif isfile(fontpath(str))
+        path = fontpath(str)
+    end
+
+    get!(_cached_fonts, path) do
+        FTFont(path)
+    end
+end
+
+# Loading the font directly here lead to FreeTypeAbstraction to fail with error code 35
+const _default_fonts = Dict(
+    :regular => "NewCM10-Regular.otf",
+    :italic => "NewCM10-Italic.otf",
+    :math => "NewCMMath-Regular.otf"
+)
+
+const _default_font_mapping = Dict(
+    :digit => :regular,
+    :function => :regular,
+    :punctuation => :regular,
+    :symbol => :math,
+    :variable => :italic
+)
+
+"""
+    Fontset([font_mapping, fonts])
+
+A set of font for LaTeX rendering.
+
+# Fields
+  - `font_mapping` a dict mapping the different character types (`:digit`,
+    `:function`, `:punctuation`, `:symbol`, `:variable`) to a font identifier.
+    Default to `MathTeXEngine._default_font_mapping`
+  - `fonts` a dict mapping font identifier to a font path. Default to
+    `MathTeXEngine._default_fonts` which represents the NewComputerModern font.
+"""
+struct FontSet
+    fonts::Dict{Symbol, String}
+    font_mapping::Dict{Symbol, Symbol}
+end
+
+FontSet(fonts) = FontSet(fonts, _default_font_mapping)
+FontSet() = FontSet(_default_fonts, _default_font_mapping)
+
+function get_font(fontset, char_type)
+    font_id = fontset.font_mapping[char_type]
+    return fontset[font_id]
+end
+
+Base.getindex(fonset::FontSet, font_id) = load_font(fonset.fonts[font_id])
+
+# Few helper functions
+"""
+    thickness(font::FTFont)
+
+The thickness of the underline for the given font.
+"""
+thickness(font::FTFont) = font.underline_thickness / font.units_per_EM
+
+"""
+    thickness(font::FontSet)
+
+The thickness of the underline for the given font set.
+"""
+thickness(fontset::FontSet) = thickness(fontset[:math])
+
 """
     xheight(font::FTFont)
 
@@ -7,49 +88,14 @@ The height of the letter x in the given font, i.e. the height of the letters
 without neither ascender nor descender.
 """
 xheight(font::FTFont) = inkheight(TeXChar('x', font))
-thickness(font::FTFont) = font.underline_thickness / font.units_per_EM
 
-# TODO This whole file probably need rework
-abstract type TeXFontSet end
-
-struct NewCMFontSet <: TeXFontSet
-    regular::FTFont
-    italic::FTFont
-    math::FTFont
-end
-
-function get_math_char(char::Char, fontset)
-    if char in raw".;:!?()[]"
-        TeXChar(char, fontset.regular)
-    else
-        TeXChar(char, fontset.italic)
-    end
-end
-
-get_function_char(char::Char, fontset) = TeXChar(char, fontset.regular)
-get_number_char(char::Char, fontset) = TeXChar(char, fontset.regular)
 
 """
-    get_symbol_char(char, command, fontset)
+    xheight(font::FontSet)
 
-Create a TeXChar for the character representing a symbol in the given
-font set. The argument `command` contains the LaTeX command corresponding to the
-character, to allow supporting non-unicode font sets.
+The height of the letter x in the given fontset, i.e. the height of the letters
+without neither ascender nor descender.
 """
-# TODO Substitute minus sign
-get_symbol_char(char::Char, command, fontset) = TeXChar(char, fontset.math)
+xheight(fontset) = xheight(fontset[:regular])
 
-thickness(fontset) = thickness(fontset.math)
-sqrt_thickness(fontset) = thickness(fontset.math)
-
-xheight(fontset) = xheight(fontset.regular)
-
-load_font(name) = FTFont(joinpath(@__DIR__, "..", "..", "assets", "fonts", name))
-
-# TODO Somehow defining a constant messed up some pointers
-load_fontset(::Type{NewCMFontSet}) = NewCMFontSet(
-    load_font("NewCM10-Regular.otf"),
-    load_font("NewCM10-Italic.otf"),
-    load_font("NewCMMath-Regular.otf")
-)
 
