@@ -13,11 +13,13 @@ end
         test_parse(
             raw"\vec{a}",
             (:accent, raw"\vec", 'a'),
-            broken=true)
+            broken=true
+        )
         test_parse(
             raw"\dot{\vec{x}}",
             (:accent, raw"\dot", (:accent, raw"\vec", 'x')),
-            broken=true)
+            broken=true
+        )
     end
 
     @testset "Delimiter" begin
@@ -30,10 +32,7 @@ end
             raw"\left( a + b \right)",
             (:delimited,
                 '(',
-                (:group,
-                    'a',
-                    (:spaced, '+'),
-                    'b'),
+                (:group, 'a', (:spaced, '+'), 'b'),
                 ')'
             )
         )
@@ -105,6 +104,7 @@ end
         # Check interaction with decoration
         test_parse(
             raw"ω_k",
-            (:decorated, (:symbol, 'ω', "\\omega"), 'k', nothing))
+            (:decorated, (:symbol, 'ω', "\\omega"), 'k', nothing)
+        )
     end
 end
