@@ -42,6 +42,7 @@ The table below contains the list of all supported LaTeX construction and their 
 | Generic symbol | `x` | `:symbol` | `char, command` |
 | Group | `{ }` | `:group` | `elements...` |
 | Integral | `\int_a^b` | `:integral` | `symbol, low_bound, high_bound` |
+| Square root | `\sqrt{2}` | `:sqrt` | `content` |
 | Spaced symbol | `+` | `:spaced` | `symbol` |
 | Subscript and superscript | `x_0^2` | `:decorated` | `core, subscript, superscript` |
 | Symbol with script under and/or over it | `\sum_i^k` | `:underover` | `symbol, under, over` |
