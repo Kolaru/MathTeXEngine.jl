@@ -11,7 +11,6 @@ function Base.showerror(io::IO, e::TeXParseError)
 end
 
 function show_state(io::IO, stack, position, data)
-
     if position > lastindex(data)
         println(io, "after the end of the data")
         println(io, data)
@@ -124,7 +123,8 @@ function end_token!(stack)
         # Simplify by constructing a single :delimited expr
         left = delimited.args[1]
         right = delimited.args[end]
-        content = TeXExpr(:group, delimited.args[2:end-1])
+        args = delimited.args[2:end-1]
+        content = length(args) == 1 ? first(args) : TeXExpr(:group, args)
         simplified = TeXExpr(:delimited, [left.args[1], content, right.args[1]])
         push_to_current!(stack, simplified)
     end

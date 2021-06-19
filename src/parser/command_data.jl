@@ -41,14 +41,9 @@ end
 register_function!(head::Symbol, command) = 
     register_function!(func -> TeXExpr(head, [func]), command)
 
-function register_symbol!(expr_builder, symbol_char)
-    symbol = TeXExpr(:symbol, [symbol_char, String([symbol_char])])
-    symbol_to_expr[symbol_char] = expr_builder(symbol)
+function register_symbol!(head::Symbol, symbol)
+    symbol_to_expr[symbol] = TeXExpr(head, [symbol])
 end
-
-register_symbol!(head::Symbol, command) = 
-    register_symbol!(symbol -> TeXExpr(head, [symbol]), command)
-
 
 binary_operator_symbols = split("+ * -")
 binary_operator_commands = split(raw"""

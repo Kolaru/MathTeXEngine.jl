@@ -23,21 +23,19 @@ end
     @testset "Delimiter" begin
         test_parse(
             raw"\left( x \right)",
-            (:delimited, '(', 'x', ')'),
-            broken=true
+            (:delimited, '(', 'x', ')')
         )
 
         test_parse(
-            raw"\left( x + y \right)",
+            raw"\left( a + b \right)",
             (:delimited,
                 '(',
                 (:group,
-                    'x',
+                    'a',
                     (:spaced, '+'),
-                    'y'),
+                    'b'),
                 ')'
-            ),
-            broken=true
+            )
         )
 
         # TODO Recursive delim
@@ -54,6 +52,10 @@ end
             raw"\exp(x)",
             (:function, "exp"), '(', 'x', ')'
         )
+    end
+
+    @testset "Group" begin
+        test_parse("{x}", 'x')
     end
 
     @testset "Integral" begin
@@ -78,8 +80,7 @@ end
                 (:symbol, '∑', raw"\sum"),
                 (:group, 'k', (:spaced, '='), '0'),
                 'n'
-            ),
-            broken=true
+            )
         )
     end
 
@@ -88,7 +89,7 @@ end
     end
 
     @testset "Spaced symbol" begin
-        test_parse(raw"=", (:spaced, '='), broken=true)
+        test_parse(raw"=", (:spaced, '='))
     end
 
     @testset "Subscript and superscript" begin
