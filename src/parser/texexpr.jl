@@ -15,19 +15,22 @@ TeXExpr(head) = TeXExpr(head, [])
 TeXExpr(head, args...) = TeXExpr(head, collect(args))
 
 """
-    manual_texexpr(tuple::Tuple)
+    manual_texexpr(data)
 
-Convenience function to manually create a TeXExpr from tuples.
+Convenience function to manually create a TeXExpr from tuples or latex strings.
 
 # Example
-
-```julia
-julia> manual_texexpr((:expr, 'a', (:spaced, '+'), 'b'))
+julia> manual_texexpr((:expr, 'a', (:spaced, '+'), raw"\\omega^2"))
 TeXExpr :expr
 ├─ 'a'
 ├─ TeXExpr :spaced
 │  └─ '+'
-└─ 'b'
+└─ TeXExpr :decorated
+   ├─ TeXExpr :symbol
+   │  ├─ 'ω'
+   │  └─ "\\omega"
+   ├─ nothing
+   └─ '2'
 ```
 """
 function manual_texexpr(tuple::Tuple)
@@ -35,15 +38,22 @@ function manual_texexpr(tuple::Tuple)
     args = []
 
     for arg in tuple[2:end]
-        if isa(arg, Tuple)
-            push!(args, manual_texexpr(arg))
-        else
-            push!(args, arg)
-        end
+        push!(args, manual_texexpr(arg))
     end
 
     return TeXExpr(head, args)
 end
+
+function manual_texexpr(str::LaTeXString)
+    expr = texparse(str[2:end])
+    if length(expr.args) == 1
+        return first(expr.args)
+    else
+        return TeXExpr(:group, expr.args)
+    end
+end
+
+manual_texexpr(any) = any
 
 head(texexpr::TeXExpr) = texexpr.head
 head(::Char) = :char

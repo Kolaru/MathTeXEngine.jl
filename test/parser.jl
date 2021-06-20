@@ -1,5 +1,3 @@
-import MathTeXEngine: manual_texexpr, texparse, TeXParseError
-
 function test_parse(input, args... ; broken=false)
     if broken
         @test_broken texparse(input) == manual_texexpr((:group, args...))

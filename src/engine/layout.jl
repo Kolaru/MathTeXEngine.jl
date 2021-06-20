@@ -10,9 +10,8 @@ function tex_layout(expr, fontset)
     shrink = 0.6
 
     try
-        if head == :group || head == :expr
-            elements = tex_layout.(args, Ref(fontset))
-            return horizontal_layout(elements)
+        if head == :accent
+            # TODO
         elseif head == :decorated
             core, sub, super = tex_layout.(args, Ref(fontset))
             
@@ -24,65 +23,8 @@ function tex_layout(expr, fontset)
                     (0, 0),
                     (core_width, -0.2),
                     (core_width, xheight(core) - 0.5 * descender(super))],
-                [1, shrink, shrink])
-        elseif head == :integral
-            pad = 0.2
-            sub, super = tex_layout.(args[2:3], Ref(fontset))
-
-            topint = TeXChar('⌠', fontset, :symbol, raw"\inttop")
-            botint = TeXChar('⌡', fontset, :symbol, raw"\intbottom")
-
-            top = Group([topint, super],
-                Point2f0[
-                    (0, 0),
-                    (rightinkbound(topint) + pad, topinkbound(topint) - xheight(super))
-                ],
-                [1, shrink])
-            bottom = Group([botint, sub],
-                Point2f0[
-                    (0, 0),
-                    (rightinkbound(botint) + pad, bottominkbound(botint))
-                ],
-                [1, shrink])
-
-            return Group(
-                [top, bottom],
-                Point2f0[
-                    (0, xheight(fontset)/2),
-                    (0, xheight(fontset)/2 - inkheight(botint) - bottominkbound(botint))
-                ]
-            )
-        elseif head == :underover
-            core, sub, super = tex_layout.(args, Ref(fontset))
-
-            mid = hmid(core)
-            dxsub = mid - hmid(sub) * shrink
-            dxsuper = mid - hmid(super) * shrink
-
-            under_offset = bottominkbound(core) - (ascender(sub) - xheight(sub)/2) * shrink
-            over_offset = topinkbound(core) - descender(super)
-
-            # The leftmost element must have x = 0
-            x0 = -min(0, dxsub, dxsuper)
-
-            return Group(
-                [core, sub, super],
-                Point2f0[
-                    (x0, 0),
-                    (x0 + dxsub, under_offset),
-                    (x0 + dxsuper, over_offset)
-                ],
                 [1, shrink, shrink]
             )
-        elseif head == :function
-            name = args[1]
-            elements = TeXChar.(collect(name), Ref(fontset), Ref(:function))
-            return horizontal_layout(elements)
-        elseif head == :space
-            return Space(args[1])
-        elseif head == :spaced
-            sym = tex_layout(args[1], fontset)
-            return horizontal_layout([Space(0.2), sym, Space(0.2)])
         elseif head == :delimited
             elements = tex_layout.(args, Ref(fontset))
             left, content, right = elements
@@ -106,8 +48,6 @@ function tex_layout(expr, fontset)
                 ],
                 scales
             )
-        elseif head == :accent
-            # TODO
         elseif head == :font
             # TODO
         elseif head == :frac
@@ -135,6 +75,45 @@ function tex_layout(expr, fontset)
                 [line, numerator, denominator],
                 Point2f0[(0,y0), (x1, ytop), (x2, ybottom)]
             )
+        elseif head == :function
+            name = args[1]
+            elements = TeXChar.(collect(name), Ref(fontset), Ref(:function))
+            return horizontal_layout(elements)
+        elseif head == :group || head == :expr
+            elements = tex_layout.(args, Ref(fontset))
+            return horizontal_layout(elements)
+        elseif head == :integral
+            pad = 0.2
+            sub, super = tex_layout.(args[2:3], Ref(fontset))
+
+            topint = TeXChar('⌠', fontset, :symbol, raw"\inttop")
+            botint = TeXChar('⌡', fontset, :symbol, raw"\intbottom")
+
+            top = Group([topint, super],
+                Point2f0[
+                    (0, 0),
+                    (rightinkbound(topint) + pad, topinkbound(topint) - xheight(super))
+                ],
+                [1, shrink])
+            bottom = Group([botint, sub],
+                Point2f0[
+                    (0, 0),
+                    (rightinkbound(botint) + pad, bottominkbound(botint))
+                ],
+                [1, shrink])
+
+            return Group(
+                [top, bottom],
+                Point2f0[
+                    (0, xheight(fontset)/2),
+                    (0, xheight(fontset)/2 - inkheight(botint) - bottominkbound(botint))
+                ]
+            )
+        elseif head == :space
+            return Space(args[1])
+        elseif head == :spaced
+            sym = tex_layout(args[1], fontset)
+            return horizontal_layout([Space(0.2), sym, Space(0.2)])
         elseif head == :sqrt
             content = tex_layout(args[1], fontset)
             sqrt = TeXChar('√', fontset, :symbol, raw"\sqrt")
@@ -173,6 +152,28 @@ function tex_layout(expr, fontset)
         elseif head == :symbol
             char, command = args
             return TeXChar(char, fontset, :symbol, command)
+        elseif head == :underover
+            core, sub, super = tex_layout.(args, Ref(fontset))
+
+            mid = hmid(core)
+            dxsub = mid - hmid(sub) * shrink
+            dxsuper = mid - hmid(super) * shrink
+
+            under_offset = bottominkbound(core) - (ascender(sub) - xheight(sub)/2) * shrink
+            over_offset = topinkbound(core) - descender(super)
+
+            # The leftmost element must have x = 0
+            x0 = -min(0, dxsub, dxsuper)
+
+            return Group(
+                [core, sub, super],
+                Point2f0[
+                    (x0, 0),
+                    (x0 + dxsub, under_offset),
+                    (x0 + dxsuper, over_offset)
+                ],
+                [1, shrink, shrink]
+            )
         end
     catch
         # TODO Better error
