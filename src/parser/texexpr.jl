@@ -1,3 +1,11 @@
+"""
+    TeXExpr(head::Symbol, args::Vector)
+
+A TeX expression, represented by a head and any number of arguments.
+
+See the documentation to see the valid combinations of head and arguments,
+and the meaning of the latter.
+"""
 struct TeXExpr
     head::Symbol
     args::Vector
@@ -6,6 +14,22 @@ end
 TeXExpr(head) = TeXExpr(head, [])
 TeXExpr(head, args...) = TeXExpr(head, collect(args))
 
+"""
+    manual_texexpr(tuple::Tuple)
+
+Convenience function to manually create a TeXExpr from tuples.
+
+# Example
+
+```julia
+julia> manual_texexpr((:expr, 'a', (:spaced, '+'), 'b'))
+TeXExpr :expr
+├─ 'a'
+├─ TeXExpr :spaced
+│  └─ '+'
+└─ 'b'
+```
+"""
 function manual_texexpr(tuple::Tuple)
     head = tuple[1]
     args = []

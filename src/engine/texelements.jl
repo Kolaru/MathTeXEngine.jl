@@ -213,6 +213,8 @@ struct Group{T} <: TeXElement
     scales::Vector{T}
 end
 
+Group(elements, positions) = Group(elements, positions, ones(length(elements)))
+
 xpositions(g::Group) = [p[1] for p in g.positions]
 ypositions(g::Group) = [p[2] for p in g.positions]
 

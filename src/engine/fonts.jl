@@ -1,5 +1,3 @@
-using FreeTypeAbstraction
-
 fontpath(fontname) = joinpath(@__DIR__, "..", "..", "assets", "fonts", fontname)
 
 const _cached_fonts = Dict{String, FTFont}()

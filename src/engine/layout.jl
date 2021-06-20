@@ -50,9 +50,8 @@ function tex_layout(expr, fontset)
                 Point2f0[
                     (0, xheight(fontset)/2),
                     (0, xheight(fontset)/2 - inkheight(botint) - bottominkbound(botint))
-                ],
-                [1, 1]
-                )
+                ]
+            )
         elseif head == :underover
             core, sub, super = tex_layout.(args, Ref(fontset))
 
@@ -104,7 +103,9 @@ function tex_layout(expr, fontset)
                     (xs[1], -bottominkbound(left) + bottominkbound(content)),
                     (xs[2], 0),
                     (xs[3], -bottominkbound(right) + bottominkbound(content))
-            ], scales)
+                ],
+                scales
+            )
         elseif head == :accent
             # TODO
         elseif head == :font
@@ -132,9 +133,8 @@ function tex_layout(expr, fontset)
 
             return Group(
                 [line, numerator, denominator],
-                Point2f0[(0,y0), (x1, ytop), (x2, ybottom)],
-                [1,1,1]
-                )
+                Point2f0[(0,y0), (x1, ytop), (x2, ybottom)]
+            )
         elseif head == :sqrt
             content = tex_layout(args[1], fontset)
             sqrt = TeXChar('√', fontset, :symbol, raw"\sqrt")
@@ -167,8 +167,9 @@ function tex_layout(expr, fontset)
                     (0, y0),
                     (rightinkbound(sqrt) - lw/2, y),
                     (rightinkbound(sqrt) - lw/2, y - lw/2),
-                    (advance(sqrt), 0)],
-                [1, 1, 1, 1])
+                    (advance(sqrt), 0)
+                ]
+            )
         elseif head == :symbol
             char, command = args
             return TeXChar(char, fontset, :symbol, command)
@@ -198,11 +199,16 @@ function tex_layout(char::Char, fontset)
     return TeXChar(char, fontset, char_type)
 end
 
-function horizontal_layout(elements ; scales=ones(length(elements)))
+"""
+    horizontal_layout(elements)
+
+Layout the elements horizontally, like normal text.
+"""
+function horizontal_layout(elements)
     dxs = advance.(elements)
     xs = [0, cumsum(dxs[1:end-1])...]
 
-    return Group(elements, Point2f0.(xs, 0), scales)
+    return Group(elements, Point2f0.(xs, 0))
 end
 
 """
@@ -227,6 +233,18 @@ unravel(char::ScaledChar, pos, scale) = unravel(char.char, pos, scale*char.scale
 unravel(::Space, pos, scale) = []
 unravel(element, pos, scale) = [(element, pos, scale)]
 
+"""
+    generate_tex_elements(str)
+
+Create a list of tuple `(texelement, position, scale)` from a string
+of LaTeX math mode code. The elements' positions and scales are such as to
+approximatively reproduce the LaTeX output.
+
+The elments are of one of the following types
+    - `TeXChar` a (unicode) character, in a specific font.
+    - `HLine` a horizontal line.
+    - `VLine` a vertical line.
+"""
 function generate_tex_elements(str, fontset=FontSet())
     expr = texparse(str)
     layout = tex_layout(expr, fontset)

@@ -10,6 +10,7 @@ end
 get_command_expr(command) = copy(command_to_expr["\\" * command])
 is_supported_command(command) = haskey(command_to_expr, "\\" * command)
 
+# Register the symbols defined for REPL completion
 for (command, symbol) in latex_symbols
     symbol = first(symbol)  # Convert to Char
     expr = TeXExpr(:symbol, [symbol, command])
@@ -18,7 +19,7 @@ for (command, symbol) in latex_symbols
     symbol_to_expr[symbol] = expr
 end
 
-# Missing commands
+# Symbols missing from the REPL completion data
 tex_symbols[raw"\neq"] = TeXExpr(:symbol, ['≠', raw"\neq"])
 
 function register_command!(expr_builder, command)
