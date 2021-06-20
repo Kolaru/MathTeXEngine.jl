@@ -1,4 +1,4 @@
-import MathTeXEngine: manual_texexpr, texparse
+import MathTeXEngine: manual_texexpr, texparse, TeXParseError
 
 function test_parse(input, args... ; broken=false)
     if broken
@@ -29,6 +29,11 @@ end
         )
 
         test_parse(
+            raw"\left[ y \right)",
+            (:delimited, '[', 'y', ')')
+        )
+
+        test_parse(
             raw"\left( a + b \right)",
             (:delimited,
                 '(',
@@ -36,6 +41,9 @@ end
                 ')'
             )
         )
+
+        @test_throws TeXParseError texparse(raw"\left( x")
+        @test_throws TeXParseError texparse(raw"x \right)")
 
         # TODO Recursive delim
     end
@@ -51,10 +59,22 @@ end
             raw"\exp(x)",
             (:function, "exp"), '(', 'x', ')'
         )
+        test_parse(
+            raw"\tan\alpha",
+            (:function, "tan"), (:symbol, 'α', raw"\alpha")
+        )
     end
 
     @testset "Group" begin
-        test_parse("{x}", 'x')
+        test_parse(raw"{x}", 'x')
+        test_parse(raw"{fgh}", (:group, 'f', 'g', 'h'))
+        test_parse(
+            raw"{a{b{cd}}}",
+            (:group, 'a', (:group, 'b', (:group, 'c', 'd')))
+        )
+
+        @test_throws TeXParseError texparse(raw"{v")
+        @test_throws TeXParseError texparse(raw"w}")
     end
 
     @testset "Integral" begin
@@ -81,14 +101,30 @@ end
                 'n'
             )
         )
+        test_parse(
+            raw"\lim_x",
+            (:underover,
+                (:function, "lim"),
+                'x',
+                nothing
+            )
+        )
     end
 
     @testset "Square root" begin
         test_parse(raw"\sqrt{x}", (:sqrt, 'x'))
+        test_parse(
+            raw"\sqrt{abc}",
+            (:sqrt, (:group, 'a', 'b', 'c'))
+        )
     end
 
     @testset "Spaced symbol" begin
         test_parse(raw"=", (:spaced, '='))
+        test_parse(
+            raw"\rightarrow",
+            (:spaced, (:symbol, '→', raw"\rightarrow"))
+        )
     end
 
     @testset "Subscript and superscript" begin

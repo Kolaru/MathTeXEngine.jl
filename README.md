@@ -60,30 +60,27 @@ The table below contains the list of all supported LaTeX construction and their 
 ```julia
 julia> texparse(raw"\sum^{a_2}_{b + 2} \left[ x + y \right] \Rightarrow \sin^2 ω_k")
 TeXExpr :expr
-├─ TeXExpr :underover   
-│  ├─ TeXExpr :symbol   
+├─ TeXExpr :underover
+│  ├─ TeXExpr :symbol
 │  │  ├─ '∑'
-│  │  └─ "\\sum"        
-│  ├─ TeXExpr :group    
+│  │  └─ "\\sum"
+│  ├─ TeXExpr :group
 │  │  ├─ 'b'
 │  │  ├─ TeXExpr :spaced
-│  │  │  └─ TeXExpr :symbol
-│  │  │     ├─ '+'
-│  │  │     └─ "+"
+│  │  │  └─ '+'
 │  │  └─ '2'
-│  └─ TeXExpr :decorated   
+│  └─ TeXExpr :decorated
 │     ├─ 'a'
 │     ├─ '2'
 │     └─ nothing
-├─ TeXExpr :delimited      
-│  ├─ 'x'
-│  ├─ TeXExpr :spaced
-│  │  └─ TeXExpr :symbol
-│  │     ├─ '+'
-│  │     └─ "+"
-│  ├─ 'y'
-│  └─ TeXExpr :right_delimiter
-│     └─ ']'
+├─ TeXExpr :delimited
+│  ├─ '['
+│  ├─ TeXExpr :group
+│  │  ├─ 'x'
+│  │  ├─ TeXExpr :spaced
+│  │  │  └─ '+'
+│  │  └─ 'y'
+│  └─ ']'
 ├─ TeXExpr :spaced
 │  └─ TeXExpr :symbol
 │     ├─ '⇒'

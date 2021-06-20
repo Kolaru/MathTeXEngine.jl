@@ -103,7 +103,6 @@ end
 
 function end_token!(stack)
     requirement(stack) != :token && return
-
     token = pop!(stack)
 
     if current_head(stack) in [:decorated, :underover, :integral]
@@ -230,13 +229,7 @@ context = Automa.CodeGenContext()
     try
         $(Automa.generate_exec_code(context, machine, actions))
     catch
-        # Workaround for vscode not showing the source error
-        println("unexpected error while parsing")
-        show_state(stderr, stack, p, data)
-        println("original error:")
-        rethrow()
-
-        rethrow(TeXParseError("unexpected error while parsing", stack, p, data))
+        throw(TeXParseError("unexpected error while parsing", stack, p, data))
     end
 
     if length(stack) > 1

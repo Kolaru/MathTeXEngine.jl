@@ -3,13 +3,10 @@
 
 Recursively determine the layout of the math expression represented the given
 TeXExpr for the given font set.
-
-Currently the only supported font set is NewComputerModern.
 """
 function tex_layout(expr, fontset)
     head = expr.head
     args = [expr.args...]
-    n = length(args)
     shrink = 0.6
 
     try
@@ -32,8 +29,6 @@ function tex_layout(expr, fontset)
             pad = 0.2
             sub, super = tex_layout.(args[2:3], Ref(fontset))
 
-            # TODO Generalize this to other symbols ? This should be decided by the
-            # fontset
             topint = TeXChar('⌠', fontset, :symbol, raw"\inttop")
             botint = TeXChar('⌡', fontset, :symbol, raw"\intbottom")
 
@@ -91,7 +86,6 @@ function tex_layout(expr, fontset)
             sym = TeXChar(char, fontset, :symbol, command)
             return horizontal_layout([Space(0.2), sym, Space(0.2)])
         elseif head == :delimited
-            # TODO Parsing of this is crippling slow and I don't know why
             elements = tex_layout.(args, Ref(fontset))
             left, content, right = elements
 
@@ -112,7 +106,7 @@ function tex_layout(expr, fontset)
                     (xs[2], 0),
                     (xs[3], -bottominkbound(right) + bottominkbound(content))
             ], scales)
-        elseif head == :accent || head == :wide_accent
+        elseif head == :accent
             # TODO
         elseif head == :font
             # TODO
@@ -146,7 +140,6 @@ function tex_layout(expr, fontset)
             content = tex_layout(args[1], fontset)
             sqrt = TeXChar('√', fontset, :symbol, raw"\sqrt")
 
-            thick = thickness(fontset)
             relpad = 0.15
 
             h = inkheight(content)
@@ -182,15 +175,13 @@ function tex_layout(expr, fontset)
             return TeXChar(char, fontset, :symbol, command)
         end
     catch
-        @warn "Error while processing expr"
-        println(expr)
-        rethrow()
+        # TODO Better error
+        @error "Error while processing expr"
     end
 
     @error "Unsupported expr $expr"
 end
 
-tex_layout(char::TeXChar, fontset) = char
 tex_layout(::Nothing, fontset) = Space(0)
 
 function tex_layout(char::Char, fontset)
