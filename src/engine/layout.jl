@@ -82,8 +82,7 @@ function tex_layout(expr, fontset)
         elseif head == :space
             return Space(args[1])
         elseif head == :spaced
-            char, command = args[1].args
-            sym = TeXChar(char, fontset, :symbol, command)
+            sym = tex_layout(args[1], fontset)
             return horizontal_layout([Space(0.2), sym, Space(0.2)])
         elseif head == :delimited
             elements = tex_layout.(args, Ref(fontset))
@@ -176,20 +175,23 @@ function tex_layout(expr, fontset)
         end
     catch
         # TODO Better error
+        rethrow()
         @error "Error while processing expr"
     end
 
-    @error "Unsupported expr $expr"
+    @error "Unsupported head $(head) in expr:\n$expr"
 end
 
 tex_layout(::Nothing, fontset) = Space(0)
 
 function tex_layout(char::Char, fontset)
-    # TODO Move that to parser
+    # TODO Move that to parser ?
     if char in "0123456789"
         char_type = :digit
-    elseif char in ".,:;[]()"
+    elseif char in ".,:;!"
         char_type = :punctuation
+    elseif char in "[]()+-*/"
+        char_type = :symbol
     else
         char_type = :variable
     end
