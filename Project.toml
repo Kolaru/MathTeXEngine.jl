@@ -12,3 +12,12 @@ GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+AbstractTrees = "0.3"
+Automa = "0.8"
+DataStructures = "0.18"
+FreeTypeAbstraction = "0.9"
+GeometryBasics = "0.3"
+LaTeXStrings = "1.2"
+julia = "1.3"
