@@ -69,4 +69,10 @@ end
     # Check the following does not error
     tex = L"\lim_{α →\infty} A^j v_{(a + b)_k}^i \sqrt{2} x!= \sqrt{\frac{1+2}{4+a+x}}\int_{0}^{2π} \sin(x) dx"
     generate_tex_elements(tex)
+
+    tex = L"Momentum $p_x$ (a.u.)"
+    generate_tex_elements(tex)
+
+    elems = generate_tex_elements(L"Time $t_0$")
+    @test length(elems) == 7
 end

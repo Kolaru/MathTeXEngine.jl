@@ -212,6 +212,13 @@ function horizontal_layout(elements)
     return Group(elements, Point2f0.(xs, 0))
 end
 
+function layout_text(string, fontset)
+    isempty(string) && return Space(0)
+
+    elements = TeXChar.(collect(string), Ref(fontset), Ref(:text))
+    return horizontal_layout(elements)
+end
+
 """
     unravel(element::TeXElement, pos, scale)
 
@@ -253,4 +260,14 @@ function generate_tex_elements(str, fontset=FontSet())
 end
 
 # Still hacky as hell
-generate_tex_elements(str::LaTeXString, fontset=FontSet()) = generate_tex_elements(str[2:end-1], fontset)
+function generate_tex_elements(str::LaTeXString, fontset=FontSet())
+    parts = String.(split(str, raw"$"))
+    groups = Vector{TeXElement}(undef, length(parts))
+    texts = parts[1:2:end]
+    maths = parts[2:2:end]
+
+    groups[1:2:end] = layout_text.(texts, Ref(fontset))
+    groups[2:2:end] = tex_layout.(texparse.(maths), Ref(fontset))
+
+    return unravel(horizontal_layout(groups))
+end
