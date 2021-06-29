@@ -1,7 +1,7 @@
 name = "MathTeXEngine"
 uuid = "0a4f8689-d25c-4efe-a92b-7142dfc1aa53"
 authors = ["Benoît Richard <kolaru@hotmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
