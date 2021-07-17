@@ -24,9 +24,9 @@ end
 
 # Loading the font directly here lead to FreeTypeAbstraction to fail with error code 35
 const _default_fonts = Dict(
-    :regular => "NewCM10-Regular.otf",
-    :italic => "NewCM10-Italic.otf",
-    :math => "NewCMMath-Regular.otf"
+    :regular => joinpath("NewComputerModern", "NewCM10-Regular.otf"),
+    :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
+    :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
 )
 
 const _default_font_mapping = Dict(
