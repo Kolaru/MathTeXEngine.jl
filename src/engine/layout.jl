@@ -83,31 +83,30 @@ function tex_layout(expr, fontset)
             elements = tex_layout.(args, Ref(fontset))
             return horizontal_layout(elements)
         elseif head == :integral
-            pad = 0.2
+            pad = 0.1
             sub, super = tex_layout.(args[2:3], Ref(fontset))
 
-            topint = TeXChar('⌠', fontset, :symbol, raw"\inttop")
-            botint = TeXChar('⌡', fontset, :symbol, raw"\intbottom")
-
-            top = Group([topint, super],
-                Point2f0[
-                    (0, 0),
-                    (rightinkbound(topint) + pad, topinkbound(topint) - xheight(super))
-                ],
-                [1, shrink])
-            bottom = Group([botint, sub],
-                Point2f0[
-                    (0, 0),
-                    (rightinkbound(botint) + pad, bottominkbound(botint))
-                ],
-                [1, shrink])
+            # Always use ComputerModern fallback for the integral sign
+            # as the Unicode LaTeX approach requires to use glyph variant
+            # which is unlikely to be supported by backends
+            intfont = load_font(joinpath("ComputerModern", "cmex10.ttf"))
+            int = TeXChar(Char(0x5a), intfont)
+            h = inkheight(int)
 
             return Group(
-                [top, bottom],
+                [int, sub, super],
                 Point2f0[
-                    (0, xheight(fontset)/2),
-                    (0, xheight(fontset)/2 - inkheight(botint) - bottominkbound(botint))
-                ]
+                    (0, h/2 + xheight(fontset)/2),
+                    (
+                        0.15 - inkwidth(sub)*shrink/2,
+                        -h/2 + xheight(fontset)/2 - topinkbound(sub)*shrink - pad
+                    ),
+                    (
+                        0.85 - inkwidth(super)*shrink/2,
+                        h/2 + xheight(fontset)/2 + pad
+                    )
+                ],
+                [1, shrink, shrink]
             )
         elseif head == :space
             return Space(args[1])

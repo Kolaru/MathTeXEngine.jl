@@ -10,7 +10,7 @@ using LaTeXStrings
 import Automa.RegExp: @re_str
 import DataStructures: Stack
 import FreeTypeAbstraction:
-    ascender, descender, get_extent, hadvance, inkheight, inkwidth,
+    ascender, boundingbox, descender, get_extent, hadvance, inkheight, inkwidth,
     leftinkbound, rightinkbound, topinkbound, bottominkbound
 import GeometryBasics: Point2f0
 import REPL.REPLCompletions: latex_symbols

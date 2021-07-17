@@ -125,9 +125,7 @@ for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
 end
 
-advance(char::TeXChar) = begin
-    hadvance(get_extent(char.font, char.char))
-end
+advance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
 ascender(char::TeXChar) = ascender(char.font)
 descender(char::TeXChar) = descender(char.font)
 xheight(char::TeXChar) = xheight(char.font)

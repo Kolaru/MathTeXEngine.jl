@@ -4,6 +4,8 @@ const symbol_to_expr = Dict{Char, TeXExpr}()
 
 function get_symbol_expr(symbol)
     !haskey(symbol_to_expr, symbol) && return symbol
+    # Replace hyphen by mathematical minus sign
+    symbol == '-' && return TeXExpr(:spaced, ['−'])
     return copy(symbol_to_expr[symbol])
 end
 
@@ -46,7 +48,7 @@ function register_symbol!(head::Symbol, symbol)
     symbol_to_expr[symbol] = TeXExpr(head, [symbol])
 end
 
-binary_operator_symbols = split("+ * -")
+binary_operator_symbols = split("+ * - −")
 binary_operator_commands = split(raw"""
     \pm             \sqcap                   \rhd
     \mp             \sqcup                   \unlhd
