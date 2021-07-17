@@ -123,6 +123,8 @@ end
             raw"\rightarrow",
             (:spaced, (:symbol, '→', raw"\rightarrow"))
         )
+        # Hyphen must be replaced by a minus sign
+        test_parse(raw"-", (:spaced, '−'))
     end
 
     @testset "Subscript and superscript" begin

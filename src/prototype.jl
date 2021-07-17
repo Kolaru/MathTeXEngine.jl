@@ -115,7 +115,7 @@ begin  # Quick test
     ax = Axis(fig[2, 1])
     ax.aspect = DataAspect()
     tex = L"\lim_{α →\infty} A^j v_{(a + b)_k}^i \sqrt{2} x!= \sqrt{\frac{1+2}{4+a+x}}\int_{0}^{2π} \sin(x) dx"
-    tex = L"Momentum $p_x$"
+    tex = L"Momentum $p_x - p_0$"
     makie_tex!(ax, tex, debug=false, size=300)
     fig
 end
