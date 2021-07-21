@@ -207,7 +207,7 @@ Positions and scales are relative to the group.
 """
 struct Group{T} <: TeXElement
     elements::Vector{<:TeXElement}
-    positions::Vector{Point2f0}
+    positions::Vector{Point2f}
     scales::Vector{T}
 end
 
