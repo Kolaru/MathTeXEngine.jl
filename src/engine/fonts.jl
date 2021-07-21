@@ -1,4 +1,5 @@
-fontpath(fontname) = joinpath(@__DIR__, "..", "..", "assets", "fonts", fontname)
+const FONTS = RelocatableFolders.@path joinpath(@__DIR__, "..", "..", "assets", "fonts")
+fontpath(fontname) = joinpath(FONTS, fontname)
 
 const _cached_fonts = Dict{String, FTFont}()
 

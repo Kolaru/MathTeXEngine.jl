@@ -11,6 +11,7 @@ FreeTypeAbstraction = "663a7486-cb36-511b-a19d-713bb74d65c9"
 GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
+RelocatableFolders = "05181044-ff0b-4ac5-8273-598c1e38db00"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
@@ -20,4 +21,5 @@ DataStructures = "0.18"
 FreeTypeAbstraction = "0.9"
 GeometryBasics = "0.3"
 LaTeXStrings = "1.2"
+RelocatableFolders = "0.1"
 julia = "1.3"

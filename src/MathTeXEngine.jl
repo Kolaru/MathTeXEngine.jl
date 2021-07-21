@@ -14,6 +14,7 @@ import FreeTypeAbstraction:
     leftinkbound, rightinkbound, topinkbound, bottominkbound
 import GeometryBasics: Point2f0
 import REPL.REPLCompletions: latex_symbols
+import RelocatableFolders
 
 const re = Automa.RegExp
 
