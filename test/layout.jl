@@ -57,6 +57,18 @@ end
         @test length(layout.scales) == 2
         test_same_layout(sublayout, layout.elements[2])
     end
+
+    @testset "Space" begin
+        elems = generate_tex_elements(L"\quad a")
+        @test length(elems) == 1
+        char, pos, size = first(elems)
+        @test pos[1] == 1
+
+        elems = generate_tex_elements(L"\qquad b")
+        @test length(elems) == 1
+        char, pos, size = first(elems)
+        @test pos[1] == 2
+    end
 end
 
 @testset "Generate elements" begin

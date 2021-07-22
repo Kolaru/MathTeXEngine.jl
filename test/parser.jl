@@ -117,6 +117,14 @@ end
         )
     end
 
+    @testset "Space" begin
+        # Make sure they are all correct, because these commands contain
+        # non letter characters
+        for (command, width) in MathTeXEngine.spaces
+            test_parse(command, (:space, width))
+        end
+    end
+
     @testset "Spaced symbol" begin
         test_parse(raw"=", (:spaced, '='))
         test_parse(
