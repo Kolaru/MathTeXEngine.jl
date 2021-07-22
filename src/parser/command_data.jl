@@ -44,10 +44,6 @@ end
 register_function!(head::Symbol, command) = 
     register_function!(func -> TeXExpr(head, [func]), command)
 
-function register_symbol!(head::Symbol, symbol)
-    symbol_to_expr[symbol] = TeXExpr(head, [symbol])
-end
-
 function register_space!(command, width)
     if command[1] == '\\'
         command_to_expr[command] = TeXExpr(:space, [width])
@@ -55,6 +51,11 @@ function register_space!(command, width)
         symbol_to_expr[command[1]] = TeXExpr(:space, [width])
     end
 end
+
+function register_symbol!(head::Symbol, symbol)
+    symbol_to_expr[symbol] = TeXExpr(head, [symbol])
+end
+
 
 binary_operator_symbols = split("+ * - −")
 binary_operator_commands = split(raw"""

@@ -120,10 +120,7 @@ end
     @testset "Space" begin
         # Make sure they are all correct, because these commands contain
         # non letter characters
-
         for (command, width) in MathTeXEngine.spaces
-
-            @show command
             test_parse(command, (:space, width))
         end
     end

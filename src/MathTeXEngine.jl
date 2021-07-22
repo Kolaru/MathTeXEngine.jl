@@ -6,7 +6,6 @@ using AbstractTrees
 using Automa
 using FreeTypeAbstraction
 using LaTeXStrings
-using MacroTools
 
 import Automa.RegExp: @re_str
 import DataStructures: Stack

@@ -11,6 +11,8 @@ function Base.showerror(io::IO, e::TeXParseError)
 end
 
 function show_state(io::IO, stack, position, data)
+    # Everything is shifted by one
+    position -= 1
     if position > lastindex(data)
         println(io, "after the end of the data")
         println(io, data)
@@ -30,14 +32,21 @@ function show_state(io::IO, stack, position, data)
         println(io, " " ^ (p - 1), "^")
     end
 
-    println(io, "with stack:")
-    for (k, level) in enumerate(stack)
-        K = length(stack) - k + 1
-        println(io, "[$K] ", level)
-    end
+    println(io, "Stack before")
+    show_stack(io, stack)
+    println(io)
 end
 
 show_state(stack, position, data) = show_state(stdout, stack, position, data)
+
+function show_stack(io, stack)
+    for (k, level) in enumerate(stack)
+        K = length(stack) - k + 1
+        print(io, "[$K] ", level)
+    end
+end
+
+show_stack(stack) = show_stack(stdout, stack)
 
 function show_debug_info(stack, position, data, action_name)
     @info "Action " * String(action_name)
@@ -67,11 +76,10 @@ command_char.actions[:exit] = [:push_char, :end_token]
 
 # Characters
 space = re" "
-space.actions[:enter] = [:end_command_builder]
+space.actions[:exit] = [:end_command_builder]
 special_char = lbrace | rbrace | bslash | super | sub | command_char | space
 other_char = re"." \ special_char
-other_char.actions[:enter] = [:end_command_builder]
-other_char.actions[:exit] = [:push_char, :end_token]
+other_char.actions[:exit] = [:end_command_builder, :push_char, :end_token]
 
 mathexpr = re.rep(special_char | other_char)
 mathexpr.actions[:exit] = [:end_command_builder]
@@ -162,7 +170,9 @@ function _end_group!(stack, p, data)
 end
 
 function _push_char!(stack, p, data)
-    if isvalid(data, p-1)
+    if current_head(stack) == :skip_char
+        pop!(stack)
+    elseif isvalid(data, p-1)
         char = data[prevind(data, p)]
         push_to_current!(stack, get_symbol_expr(char))
     end
@@ -186,23 +196,24 @@ function _setup_decorated!(stack, p, data)
     end
 end
 
-function _begin_command_builder!(stack, p, data)
-    push!(stack, TeXExpr(:command_builder))
-    # char = data[prevind(data, p)]
-    # push_to_current!(stack, char)
-end
+_begin_command_builder!(stack, p, data) = push!(stack, TeXExpr(:command_builder))
 
 function _end_command_builder!(stack, p, data)
     if current_head(stack) == :command_builder
         command_builder = pop!(stack)
 
-        #=
         args = command_builder.args
+        skip_char = false
 
-        current_char = data[prevind(data, p)]
-        command_name = "$current_char"
-        =#
-        command_name = String(Char.(command_builder.args))
+        # One character command are always tested even if the char is not
+        # a letter
+        if length(args) == 0
+            current_char = data[prevind(data, p)]
+            push!(args, current_char)
+            skip_char = true
+        end
+
+        command_name = String(Char.(args))
 
         if command_name == "frac"
             push!(stack, TeXExpr(:frac))
@@ -224,6 +235,10 @@ function _end_command_builder!(stack, p, data)
                 TeXParseError("unsupported command \\$command_name",
                 stack, p, data))
         end
+
+        if skip_char 
+            push!(stack, TeXExpr(:skip_char))
+        end
     end
 end
 
@@ -240,6 +255,12 @@ actions = map(action_names) do action_name
         end
 
         $function_name(stack, p, data)
+
+        if showdebug
+            println("Stack after")
+            show_stack(stack)
+            println()
+        end
     end
 end
 
@@ -260,7 +281,11 @@ context = Automa.CodeGenContext()
         throw(TeXParseError("unexpected error while parsing", stack, p, data))
     end
 
-    if length(stack) > 1
+    while current_head(stack) == :skip_char
+        pop!(stack)
+    end
+
+    if length(stack) > 1 
         err = TeXParseError(
             "end of string reached with unfinished $(current(stack).head)",
             stack, p_eof, data)
