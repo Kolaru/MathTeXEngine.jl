@@ -1,6 +1,8 @@
 using LaTeXStrings
 using Test
 
+using MathTeXEngine
+
 import MathTeXEngine: manual_texexpr, texparse
 import MathTeXEngine: TeXParseError
 

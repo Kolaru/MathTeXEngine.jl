@@ -30,13 +30,19 @@ function show_state(io::IO, stack, position, data)
         println(io, " " ^ (p - 1), "^")
     end
 
-    println(io, "with stack (length $(length(stack))):")
+    println(io, "with stack:")
     for (k, level) in enumerate(stack)
-        println(io, "[$k] ", level)
+        K = length(stack) - k + 1
+        println(io, "[$K] ", level)
     end
 end
 
 show_state(stack, position, data) = show_state(stdout, stack, position, data)
+
+function show_debug_info(stack, position, data, action_name)
+    @info "Action " * String(action_name)
+    show_state(stack, position, data)
+end
 
 # Super and subscript
 super = re"\^"
@@ -61,13 +67,13 @@ command_char.actions[:exit] = [:push_char, :end_token]
 
 # Characters
 space = re" "
+space.actions[:enter] = [:end_command_builder]
 special_char = lbrace | rbrace | bslash | super | sub | command_char | space
 other_char = re"." \ special_char
 other_char.actions[:enter] = [:end_command_builder]
 other_char.actions[:exit] = [:push_char, :end_token]
 
 mathexpr = re.rep(special_char | other_char)
-mathexpr.actions[:all] = [:show_debug_info]
 mathexpr.actions[:exit] = [:end_command_builder]
 
 machine = Automa.compile(mathexpr)
@@ -129,93 +135,115 @@ function end_token!(stack)
     end
 end
 
-actions = Dict(
-    :show_debug_info => quote
-        if showdebug
-            @info "New transition"
-            show_state(stack, p, data)
-        end
-    end,
-    :begin_group => quote
-        push!(stack, TeXExpr(:group))
-    end,
-    :end_group => quote
-        current_head(stack) != :group && throw(
-            TeXParseError("Unexpected '}' at position $(p-1)", stack, p, data))
-        group = pop!(stack)
+# Set all command as function to play more nicely with Revise.jl
 
-        # Remove nestedness for group with a single element
-        if length(group.args) == 1
-            group = first(group.args)
-        end
+_begin_group!(stack, p, data) = push!(stack, TeXExpr(:group))
 
-        if requirement(stack) == :argument
-            push_to_current!(stack, group)
+function _end_group!(stack, p, data)
+    current_head(stack) != :group && throw(
+        TeXParseError("Unexpected '}' at position $(p-1)", stack, p, data))
+    group = pop!(stack)
 
-            if has_all_arguments(current(stack))
-                command = pop!(stack)
-                push_to_current!(stack, command)
-            end
-        else
-            push_to_current!(stack, group)
+    # Remove nestedness for group with a single element
+    if length(group.args) == 1
+        group = first(group.args)
+    end
+
+    if requirement(stack) == :argument
+        push_to_current!(stack, group)
+
+        if has_all_arguments(current(stack))
+            command = pop!(stack)
+            push_to_current!(stack, command)
         end
-    end,
-    :push_char => quote
-        if isvalid(data, p-1)
-            char = data[prevind(data, p)]
-            push_to_current!(stack, get_symbol_expr(char))
-        end
-    end,
-    :end_token => quote
-        if isvalid(data, p-1)
+    else
+        push_to_current!(stack, group)
+    end
+end
+
+function _push_char!(stack, p, data)
+    if isvalid(data, p-1)
+        char = data[prevind(data, p)]
+        push_to_current!(stack, get_symbol_expr(char))
+    end
+end
+
+function _end_token!(stack, p, data)
+    if isvalid(data, p-1)
+        end_token!(stack)
+    end
+end
+
+_begin_sub!(stack, p, data) = push!(stack, TeXExpr(:subscript))
+_begin_super!(stack, p, data) = push!(stack, TeXExpr(:superscript))
+
+function _setup_decorated!(stack, p, data)
+    core = pop!(current(stack).args)
+    if head(core) ∉ [:decorated, :integral, :underover]
+        push!(stack, TeXExpr(:decorated, Any[core, nothing, nothing]))
+    else
+        push!(stack, core)
+    end
+end
+
+function _begin_command_builder!(stack, p, data)
+    push!(stack, TeXExpr(:command_builder))
+    # char = data[prevind(data, p)]
+    # push_to_current!(stack, char)
+end
+
+function _end_command_builder!(stack, p, data)
+    if current_head(stack) == :command_builder
+        command_builder = pop!(stack)
+
+        #=
+        args = command_builder.args
+
+        current_char = data[prevind(data, p)]
+        command_name = "$current_char"
+        =#
+        command_name = String(Char.(command_builder.args))
+
+        if command_name == "frac"
+            push!(stack, TeXExpr(:frac))
+        elseif command_name == "sqrt"
+            push!(stack, TeXExpr(:sqrt))
+        elseif command_name == "left"
+            push!(stack, TeXExpr(:delimited))
+            push!(stack, TeXExpr(:left_delimiter))
+        elseif command_name == "right"
+            current_head(stack) != :delimited && throw(
+                TeXParseError("unexpected '\\right' at position $(p-1)",
+                stack, p, data))
+            push!(stack, TeXExpr(:right_delimiter))
+        elseif is_supported_command(command_name)
+            push_to_current!(stack, get_command_expr(command_name))
             end_token!(stack)
-        end
-    end,
-    :begin_sub => quote
-        push!(stack, TeXExpr(:subscript))
-    end,
-    :begin_super => quote
-        push!(stack, TeXExpr(:superscript))
-    end,
-    :setup_decorated => quote
-        core = pop!(current(stack).args)
-        if head(core) ∉ [:decorated, :integral, :underover]
-            push!(stack, TeXExpr(:decorated, Any[core, nothing, nothing]))
         else
-            push!(stack, core)
-        end
-    end,
-    :begin_command_builder => quote
-        push!(stack, TeXExpr(:command_builder))
-    end,
-    :end_command_builder => quote
-        if current_head(stack) == :command_builder
-            command_builder = pop!(stack)
-            command_name = String(Char.(command_builder.args))
-
-            if command_name == "frac"
-                push!(stack, TeXExpr(:frac))
-            elseif command_name == "sqrt"
-                push!(stack, TeXExpr(:sqrt))
-            elseif command_name == "left"
-                push!(stack, TeXExpr(:delimited))
-                push!(stack, TeXExpr(:left_delimiter))
-            elseif command_name == "right"
-                current_head(stack) != :delimited && throw(
-                    TeXParseError("unexpected '\\right' at position $(p-1)",
-                    stack, p, data))
-                push!(stack, TeXExpr(:right_delimiter))
-            elseif is_supported_command(command_name)
-                push_to_current!(stack, get_command_expr(command_name))
-                end_token!(stack)
-            else
-                throw(
-                    TeXParseError("unsupported command \\$command_name",
-                    stack, p, data))
-            end
+            throw(
+                TeXParseError("unsupported command \\$command_name",
+                stack, p, data))
         end
     end
-)
+end
+
+action_names = [
+    :begin_group, :end_group, :push_char, :end_token, :begin_sub, :begin_super,
+    :setup_decorated, :begin_command_builder, :end_command_builder]
+
+actions = map(action_names) do action_name
+    function_name = Symbol("_" * String(action_name) * "!")
+
+    return action_name => quote
+        if showdebug
+            show_debug_info(stack, p, data, $(QuoteNode(action_name)))
+        end
+
+        $function_name(stack, p, data)
+    end
+end
+
+actions = Dict(actions...)
 
 context = Automa.CodeGenContext()
 @eval function texparse(data ; showdebug=false)

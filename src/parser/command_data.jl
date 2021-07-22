@@ -48,6 +48,14 @@ function register_symbol!(head::Symbol, symbol)
     symbol_to_expr[symbol] = TeXExpr(head, [symbol])
 end
 
+function register_space!(command, width)
+    if command[1] == '\\'
+        command_to_expr[command] = TeXExpr(:space, [width])
+    else
+        symbol_to_expr[command[1]] = TeXExpr(:space, [width])
+    end
+end
+
 binary_operator_symbols = split("+ * - −")
 binary_operator_commands = split(raw"""
     \pm             \sqcap                   \rhd
@@ -121,12 +129,7 @@ generic_functions = split(raw"""
 
 register_function!.(identity, generic_functions)
 
-
-# TODO Add to the parser what come below
-punctuation_symbols = split(raw", ; . !")
-punctuation_commands = split(raw"\ldotp \cdotp")
-
-space_widths = Dict(
+spaces = Dict(
     raw"\,"         => 0.16667,   # 3/18 em = 3 mu
     raw"\thinspace" => 0.16667,   # 3/18 em = 3 mu
     raw"\/"         => 0.16667,   # 3/18 em = 3 mu
@@ -140,6 +143,12 @@ space_widths = Dict(
     raw"\qquad"     => 2,         # 2 em = 36 mu
     raw"\!"         => -0.16667,  # -3/18 em = -3 mu
 )
+
+register_space!.(keys(spaces), values(spaces))
+
+# TODO Add to the parser what come below
+punctuation_symbols = split(raw", ; . !")
+punctuation_commands = split(raw"\ldotp \cdotp")
 
 # Autodelim
 ambi_delimiters = split(raw"""
