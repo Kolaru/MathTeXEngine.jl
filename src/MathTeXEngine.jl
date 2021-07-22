@@ -12,8 +12,9 @@ import DataStructures: Stack
 import FreeTypeAbstraction:
     ascender, boundingbox, descender, get_extent, hadvance, inkheight, inkwidth,
     leftinkbound, rightinkbound, topinkbound, bottominkbound
-import GeometryBasics: Point2f0
+import GeometryBasics: Point2f
 import REPL.REPLCompletions: latex_symbols
+import RelocatableFolders
 
 const re = Automa.RegExp
 

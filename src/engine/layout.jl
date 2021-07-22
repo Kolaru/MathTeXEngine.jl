@@ -19,7 +19,7 @@ function tex_layout(expr, fontset)
 
             return Group(
                 [core, sub, super],
-                Point2f0[
+                Point2f[
                     (0, 0),
                     (core_width, -0.2),
                     (core_width, xheight(core) - 0.5 * descender(super))],
@@ -41,7 +41,7 @@ function tex_layout(expr, fontset)
             # TODO Check what the algorithm should be there
             # Center the delimiters in the middle of the bot and top baselines ?
             return Group(elements, 
-                Point2f0[
+                Point2f[
                     (xs[1], -bottominkbound(left) + bottominkbound(content)),
                     (xs[2], 0),
                     (xs[3], -bottominkbound(right) + bottominkbound(content))
@@ -73,7 +73,7 @@ function tex_layout(expr, fontset)
 
             return Group(
                 [line, numerator, denominator],
-                Point2f0[(0,y0), (x1, ytop), (x2, ybottom)]
+                Point2f[(0,y0), (x1, ytop), (x2, ybottom)]
             )
         elseif head == :function
             name = args[1]
@@ -95,7 +95,7 @@ function tex_layout(expr, fontset)
 
             return Group(
                 [int, sub, super],
-                Point2f0[
+                Point2f[
                     (0, h/2 + xheight(fontset)/2),
                     (
                         0.15 - inkwidth(sub)*shrink/2,
@@ -141,7 +141,7 @@ function tex_layout(expr, fontset)
 
             return Group(
                 [sqrt, vline, hline, content],
-                Point2f0[
+                Point2f[
                     (0, y0),
                     (rightinkbound(sqrt) - lw/2, y),
                     (rightinkbound(sqrt) - lw/2, y - lw/2),
@@ -166,7 +166,7 @@ function tex_layout(expr, fontset)
 
             return Group(
                 [core, sub, super],
-                Point2f0[
+                Point2f[
                     (x0, 0),
                     (x0 + dxsub, under_offset),
                     (x0 + dxsuper, over_offset)
@@ -208,7 +208,7 @@ function horizontal_layout(elements)
     dxs = advance.(elements)
     xs = [0, cumsum(dxs[1:end-1])...]
 
-    return Group(elements, Point2f0.(xs, 0))
+    return Group(elements, Point2f.(xs, 0))
 end
 
 function layout_text(string, fontset)
@@ -224,7 +224,7 @@ end
 Flatten the layouted TeXElement and produce a single list of base element with
 their associated absolute position and scale.
 """
-function unravel(group::Group, parent_pos=Point2f0(0), parent_scale=1.0f0)
+function unravel(group::Group, parent_pos=Point2f(0), parent_scale=1.0f0)
     positions = [parent_pos .+ pos for pos in parent_scale .* group.positions]
     scales = group.scales .* parent_scale
     elements = []
