@@ -90,18 +90,6 @@ current(stack) = first(stack)
 current_head(stack) = head(current(stack))
 push_to_current!(stack, arg) = push!(current(stack).args, arg)
 
-number_of_arguments = Dict(
-    :frac => 2,
-    :sqrt => 1,
-    :accent => 1,
-    :mathfont => 1
-)
-
-function has_all_arguments(texexpr)
-    required = get(number_of_arguments, head(texexpr), 0)
-    return required <= length(texexpr.args)
-end
-
 const require_token = [
     :subscript,
     :superscript,
@@ -110,7 +98,7 @@ const require_token = [
 ]
 
 function requirement(stack)
-    !has_all_arguments(current(stack)) && return :argument
+    current_head(stack) == :argument_gatherer && return :argument
     current_head(stack) in require_token && return :token
     return :none
 end
@@ -160,8 +148,12 @@ function _end_group!(stack, p, data)
     if requirement(stack) == :argument
         push_to_current!(stack, group)
 
-        if has_all_arguments(current(stack))
-            command = pop!(stack)
+        command_builder = current(stack)
+        head, required_n_args, args... = command_builder.args
+
+        if required_n_args == length(args)
+            pop!(stack)
+            command = TeXExpr(head, args)
             push_to_current!(stack, command)
         end
     else
@@ -174,7 +166,8 @@ function _push_char!(stack, p, data)
         pop!(stack)
     elseif isvalid(data, p-1)
         char = data[prevind(data, p)]
-        push_to_current!(stack, get_symbol_expr(char))
+        symbol = get(symbol_to_canonical, char, char)
+        push_to_current!(stack, symbol)
     end
 end
 
@@ -214,12 +207,9 @@ function _end_command_builder!(stack, p, data)
         end
 
         command_name = String(Char.(args))
+        command = "\\" * command_name
 
-        if command_name == "frac"
-            push!(stack, TeXExpr(:frac))
-        elseif command_name == "sqrt"
-            push!(stack, TeXExpr(:sqrt))
-        elseif command_name == "left"
+        if command_name == "left"
             push!(stack, TeXExpr(:delimited))
             push!(stack, TeXExpr(:left_delimiter))
         elseif command_name == "right"
@@ -227,12 +217,18 @@ function _end_command_builder!(stack, p, data)
                 TeXParseError("unexpected '\\right' at position $(p-1)",
                 stack, p, data))
             push!(stack, TeXExpr(:right_delimiter))
-        elseif is_supported_command(command_name)
-            push_to_current!(stack, get_command_expr(command_name))
-            end_token!(stack)
+        elseif haskey(command_to_canonical, command)
+            expr = command_to_canonical[command]
+
+            if head(expr) == :argument_gatherer
+                push!(stack, expr)
+            else
+                push_to_current!(stack, expr)
+                end_token!(stack)
+            end
         else
             throw(
-                TeXParseError("unsupported command \\$command_name",
+                TeXParseError("unsupported command $command",
                 stack, p, data))
         end
 

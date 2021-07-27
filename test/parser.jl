@@ -1,8 +1,9 @@
 function test_parse(input, args... ; broken=false)
+    arg = (:expr, args...)
     if broken
-        @test_broken texparse(input) == manual_texexpr((:group, args...))
+        @test_broken texparse(input) == manual_texexpr(arg)
     else
-        @test texparse(input) == manual_texexpr((:group, args...))
+        @test texparse(input) == manual_texexpr(arg)
     end
 end
 
@@ -59,7 +60,7 @@ end
         )
         test_parse(
             raw"\tan\alpha",
-            (:function, "tan"), (:symbol, 'α', raw"\alpha")
+            (:function, "tan"), 'α'
         )
     end
 
@@ -78,23 +79,23 @@ end
     @testset "Integral" begin
         test_parse(
             raw"\int",
-            (:integral, (:symbol, '∫', raw"\int"), nothing, nothing)
+            (:integral, '∫', nothing, nothing)
         )
         test_parse(
             raw"\int_a^b",
-            (:overunder, (:symbol, '∫', raw"\int"), 'a', 'b')
+            (:integral, '∫', 'a', 'b')
         )
     end
 
     @testset "Overunder" begin
         test_parse(
             raw"\sum",
-            (:underover, (:symbol, '∑', raw"\sum"), nothing, nothing)
+            (:underover, '∑', nothing, nothing)
         )
         test_parse(
             raw"\sum_{k=0}^n",
             (:underover,
-                (:symbol, '∑', raw"\sum"),
+                '∑',
                 (:group, 'k', (:spaced, '='), '0'),
                 'n'
             )
@@ -118,18 +119,16 @@ end
     end
 
     @testset "Space" begin
-        # Make sure they are all correct, because these commands contain
-        # non letter characters
-        for (command, width) in MathTeXEngine.spaces
-            test_parse(command, (:space, width))
-        end
+        test_parse(raw"\quad", (:space, 1))
+        test_parse(raw"\qquad", (:space, 2))
+        test_parse(raw"~", (:space, 0.33333))
     end
 
     @testset "Spaced symbol" begin
         test_parse(raw"=", (:spaced, '='))
         test_parse(
             raw"\rightarrow",
-            (:spaced, (:symbol, '→', raw"\rightarrow"))
+            (:spaced, '→')
         )
         # Hyphen must be replaced by a minus sign
         test_parse(raw"-", (:spaced, '−'))
@@ -141,14 +140,14 @@ end
 
     @testset "Symbol" begin
         for (char, sym) in zip(split("ϕ φ Φ"), split(raw"\phi \varphi \Phi"))
-            test_parse(sym, (:symbol, first(char), sym))
+            test_parse(sym, first(char))
             @test texparse(char) == texparse(sym)
         end
 
         # Check interaction with decoration
         test_parse(
             raw"ω_k",
-            (:decorated, (:symbol, 'ω', "\\omega"), 'k', nothing)
+            (:decorated, 'ω', 'k', nothing)
         )
     end
 end

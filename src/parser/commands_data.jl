@@ -1,63 +1,9 @@
-const tex_symbols = Dict{String, TeXExpr}()
-const command_to_expr = Dict{String, TeXExpr}()
-const symbol_to_expr = Dict{Char, TeXExpr}()
+##
+## Spaced symbols
+##
+# Symbols that need extra space around them
 
-function get_symbol_expr(symbol)
-    !haskey(symbol_to_expr, symbol) && return symbol
-    # Replace hyphen by mathematical minus sign
-    symbol == '-' && return TeXExpr(:spaced, ['−'])
-    return copy(symbol_to_expr[symbol])
-end
-
-get_command_expr(command) = copy(command_to_expr["\\" * command])
-is_supported_command(command) = haskey(command_to_expr, "\\" * command)
-
-# Register the symbols defined for REPL completion
-for (command, symbol) in latex_symbols
-    symbol = first(symbol)  # Convert to Char
-    expr = TeXExpr(:symbol, [symbol, command])
-    tex_symbols[command] = expr
-    command_to_expr[command] = expr
-    symbol_to_expr[symbol] = expr
-end
-
-# Symbols missing from the REPL completion data
-tex_symbols[raw"\neq"] = TeXExpr(:symbol, ['≠', raw"\neq"])
-
-function register_command!(expr_builder, command)
-    !haskey(tex_symbols, command) && return
-
-    expr = tex_symbols[command]
-    symbol = expr.args[1]
-    symbol_to_expr[symbol] = expr_builder(expr)
-    command_to_expr[command] = expr_builder(expr)
-end
-
-register_command!(head::Symbol, command) = 
-    register_command!(symbol -> TeXExpr(head, [symbol]), command)
-
-function register_function!(expr_builder, function_name)
-    func = TeXExpr(:function, [function_name])
-    command_to_expr["\\" * function_name] = expr_builder(func)
-end
-
-register_function!(head::Symbol, command) = 
-    register_function!(func -> TeXExpr(head, [func]), command)
-
-function register_space!(command, width)
-    if command[1] == '\\'
-        command_to_expr[command] = TeXExpr(:space, [width])
-    else
-        symbol_to_expr[command[1]] = TeXExpr(:space, [width])
-    end
-end
-
-function register_symbol!(head::Symbol, symbol)
-    symbol_to_expr[symbol] = TeXExpr(head, [symbol])
-end
-
-
-binary_operator_symbols = split("+ * - −")
+binary_operator_symbols = split("+ * −")
 binary_operator_commands = split(raw"""
     \pm             \sqcap                   \rhd
     \mp             \sqcup                   \unlhd
@@ -99,38 +45,34 @@ arrow_commands = split(raw"""
     \rightleftharpoons      \leadsto""")
 
 spaced_symbols = first.(vcat(binary_operator_symbols, relation_symbols))
-register_symbol!.(:spaced, spaced_symbols)
-
 spaced_commands = vcat(binary_operator_commands, relation_commands, arrow_commands)
-register_command!.(:spaced, spaced_commands)
+
+##
+## Subsuper commands
+##
+# Functions and symbols that expect subscript and/or superscript
 
 underover_commands = split(raw"""
     \sum \prod \coprod \bigcap \bigcup \bigsqcup \bigvee
     \bigwedge \bigodot \bigotimes \bigoplus \biguplus""")
 
 underover_functions = split(raw"lim liminf limsup inf sup min max")
-
-register_command!.(
-    symbol -> TeXExpr(:underover, Any[symbol, nothing, nothing]),
-    underover_commands)
-register_function!.(
-    symbol -> TeXExpr(:underover, Any[symbol, nothing, nothing]),
-    underover_functions)
-
 integral_commands = split(raw"\int \oint")
 
-register_command!.(
-    symbol -> TeXExpr(:integral, Any[symbol, nothing, nothing]),
-    integral_commands)
+##
+## Generic functions
+##
 
 generic_functions = split(raw"""
     arccos csc ker arcsin deg lg Pr arctan det sec arg dim
     sin cos exp sinh cosh gcd ln sup cot hom log tan
     coth tanh""")
 
-register_function!.(identity, generic_functions)
+##
+## Spaces
+##
 
-spaces = Dict(
+space_commands = Dict(
     raw"\,"         => 0.16667,   # 3/18 em = 3 mu
     raw"\thinspace" => 0.16667,   # 3/18 em = 3 mu
     raw"\/"         => 0.16667,   # 3/18 em = 3 mu
@@ -138,16 +80,33 @@ spaces = Dict(
     raw"\:"         => 0.22222,   # 4/18 em = 4 mu
     raw"\;"         => 0.27778,   # 5/18 em = 5 mu
     raw"\ "         => 0.33333,   # 6/18 em = 6 mu
-    raw"~"          => 0.33333,   # 6/18 em = 6 mu, nonbreakable
     raw"\enspace"   => 0.5,       # 9/18 em = 9 mu
     raw"\quad"      => 1,         # 1 em = 18 mu
     raw"\qquad"     => 2,         # 2 em = 36 mu
     raw"\!"         => -0.16667,  # -3/18 em = -3 mu
 )
 
-register_space!.(keys(spaces), values(spaces))
+space_symbols = Dict(
+    '~'          => 0.33333,   # 6/18 em = 6 mu, nonbreakable
+)
 
-# TODO Add to the parser what come below
+##
+## Accents
+##
+
+combining_accents = [
+    raw"\hat",
+    raw"\breve",
+    raw"\bar",
+    raw"\grave",
+    raw"\acute",
+    raw"\tilde",
+    raw"\dot",
+    raw"\ddot",
+    raw"\vec"
+]
+
+# TODO Add to the parser what come below, if needed
 punctuation_symbols = split(raw", ; . !")
 punctuation_commands = split(raw"\ldotp \cdotp")
 
