@@ -117,7 +117,7 @@ struct TeXChar <: TeXElement
     font::FTFont
 end
 
-function TeXChar(char, fontset::FontSet, char_type, command=nothing)
+function TeXChar(char, fontset::FontSet, char_type)
     return TeXChar(char, get_font(fontset, char_type))
 end
 

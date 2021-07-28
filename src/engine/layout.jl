@@ -10,8 +10,20 @@ function tex_layout(expr, fontset)
     shrink = 0.6
 
     try
-        if head == :accent
-            # TODO
+        if head in [:char, :delimiter, :digit, :punctuation, :symbol]
+            char = args[1]
+            return TeXChar(char, fontset, head)
+        elseif head == :accent
+            accent, core = tex_layout.(args, Ref(fontset))
+            
+            return Group(
+                [core, accent],
+                Point2f[
+                    (0, 0),
+                    (hmid(core) - hmid(accent) * shrink, topinkbound(core) - descender(accent))
+                ],
+                [1, shrink]
+            )
         elseif head == :decorated
             core, sub, super = tex_layout.(args, Ref(fontset))
             
@@ -115,7 +127,7 @@ function tex_layout(expr, fontset)
             return horizontal_layout([Space(0.2), sym, Space(0.2)])
         elseif head == :sqrt
             content = tex_layout(args[1], fontset)
-            sqrt = TeXChar('√', fontset, :symbol, raw"\sqrt")
+            sqrt = TeXChar('√', fontset, :symbol)
 
             relpad = 0.15
 
@@ -124,7 +136,7 @@ function tex_layout(expr, fontset)
             h += 2ypad
 
             if h > inkheight(sqrt)
-                sqrt = TeXChar('⎷', fontset, :symbol, raw"\sqrtbottom")
+                sqrt = TeXChar('⎷', fontset, :symbol)
             end
 
             h = max(inkheight(sqrt), h)
@@ -148,9 +160,7 @@ function tex_layout(expr, fontset)
                     (advance(sqrt), 0)
                 ]
             )
-        elseif head == :symbol
-            char, command = args
-            return TeXChar(char, fontset, :symbol, command)
+
         elseif head == :underover
             core, sub, super = tex_layout.(args, Ref(fontset))
 
@@ -184,20 +194,6 @@ function tex_layout(expr, fontset)
 end
 
 tex_layout(::Nothing, fontset) = Space(0)
-
-function tex_layout(char::Char, fontset)
-    # TODO Move that to parser ?
-    if char in "0123456789"
-        char_type = :digit
-    elseif char in ".,:;!"
-        char_type = :punctuation
-    elseif char in "[]()+-*/"
-        char_type = :symbol
-    else
-        char_type = :variable
-    end
-    return TeXChar(char, fontset, char_type)
-end
 
 """
     horizontal_layout(elements)

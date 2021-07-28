@@ -10,14 +10,12 @@ end
 @testset "Parser" begin
     @testset "Accent" begin
         test_parse(
-            raw"\vec{a}",
-            (:accent, raw"\vec", 'a'),
-            broken=true
+            raw"\dot{a}",
+            (:group, 'a', '̇')  # Second char is the combining dot
         )
         test_parse(
-            raw"\dot{\vec{x}}",
-            (:accent, raw"\dot", (:accent, raw"\vec", 'x')),
-            broken=true
+            raw"\vec{x}",
+            (:accent, (:symbol, '→'), 'x')
         )
     end
 
@@ -48,7 +46,7 @@ end
     end
 
     @testset "Fraction" begin
-        test_parse(raw"\frac{1}{2}", (:frac, '1', '2'))
+        test_parse(raw"\frac{1}{n}", (:frac, (:digit, '1'), 'n'))
     end
 
     @testset "Function" begin
@@ -60,7 +58,7 @@ end
         )
         test_parse(
             raw"\tan\alpha",
-            (:function, "tan"), 'α'
+            (:function, "tan"), (:symbol, 'α')
         )
     end
 
@@ -79,24 +77,24 @@ end
     @testset "Integral" begin
         test_parse(
             raw"\int",
-            (:integral, '∫', nothing, nothing)
+            (:integral, (:symbol, '∫'), nothing, nothing)
         )
         test_parse(
             raw"\int_a^b",
-            (:integral, '∫', 'a', 'b')
+            (:integral, (:symbol, '∫'), 'a', 'b')
         )
     end
 
     @testset "Overunder" begin
         test_parse(
             raw"\sum",
-            (:underover, '∑', nothing, nothing)
+            (:underover, (:symbol, '∑'), nothing, nothing)
         )
         test_parse(
             raw"\sum_{k=0}^n",
             (:underover,
-                '∑',
-                (:group, 'k', (:spaced, '='), '0'),
+                (:symbol, '∑'),
+                (:group, 'k', (:spaced, (:symbol, '=')), (:digit, '0')),
                 'n'
             )
         )
@@ -125,13 +123,13 @@ end
     end
 
     @testset "Spaced symbol" begin
-        test_parse(raw"=", (:spaced, '='))
+        test_parse(raw"=", (:spaced, (:symbol, '=')))
         test_parse(
             raw"\rightarrow",
-            (:spaced, '→')
+            (:spaced, (:symbol, '→'))
         )
         # Hyphen must be replaced by a minus sign
-        test_parse(raw"-", (:spaced, '−'))
+        test_parse(raw"-", (:spaced, (:symbol, '−')))
     end
 
     @testset "Subscript and superscript" begin
@@ -140,14 +138,14 @@ end
 
     @testset "Symbol" begin
         for (char, sym) in zip(split("ϕ φ Φ"), split(raw"\phi \varphi \Phi"))
-            test_parse(sym, first(char))
+            test_parse(sym, (:symbol, first(char)))
             @test texparse(char) == texparse(sym)
         end
 
         # Check interaction with decoration
         test_parse(
             raw"ω_k",
-            (:decorated, 'ω', 'k', nothing)
+            (:decorated, (:symbol, 'ω'), 'k', nothing)
         )
     end
 end

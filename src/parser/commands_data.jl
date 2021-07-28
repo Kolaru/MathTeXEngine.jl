@@ -5,9 +5,9 @@
 
 binary_operator_symbols = split("+ * −")
 binary_operator_commands = split(raw"""
-    \pm             \sqcap                   \rhd
-    \mp             \sqcup                   \unlhd
-    \times          \vee                     \unrhd
+    \pm             \sqcap                   
+    \mp             \sqcup                   
+    \times          \vee                     
     \div            \wedge                   \oplus
     \ast            \setminus                \ominus
     \star           \wr                      \otimes
@@ -16,7 +16,7 @@ binary_operator_commands = split(raw"""
     \cdot           \bigtriangledown         \bigcirc
     \cap            \triangleleft            \dagger
     \cup            \triangleright           \ddagger
-    \uplus          \lhd                     \amalg""")
+    \uplus          \amalg""")
 
 relation_symbols = split(raw"= < > :")
 relation_commands = split(raw"""
@@ -29,7 +29,7 @@ relation_commands = split(raw"""
     \sqsubset   \sqsupset   \neq     \smile
     \sqsubseteq \sqsupseteq \doteq   \frown
     \in         \ni         \propto  \vdash
-    \dashv      \dots       \dotplus \doteqdot""")
+    \dashv      \dots       \dotplus""")
 
 arrow_commands = split(raw"""
     \leftarrow              \longleftarrow           \uparrow
@@ -42,7 +42,7 @@ arrow_commands = split(raw"""
     \hookleftarrow          \hookrightarrow          \searrow
     \leftharpoonup          \rightharpoonup          \swarrow
     \leftharpoondown        \rightharpoondown        \nwarrow
-    \rightleftharpoons      \leadsto""")
+    \rightleftharpoons""")
 
 spaced_symbols = first.(vcat(binary_operator_symbols, relation_symbols))
 spaced_commands = vcat(binary_operator_commands, relation_commands, arrow_commands)
@@ -106,40 +106,9 @@ combining_accents = [
     raw"\vec"
 ]
 
-# TODO Add to the parser what come below, if needed
 punctuation_symbols = split(raw", ; . !")
-punctuation_commands = split(raw"\ldotp \cdotp")
+delimiter_symbols = split(raw"| / ( ) [ ] < >")
 
-# Autodelim
-ambi_delimiters = split(raw"""
-    | \| / \backslash \uparrow \downarrow \updownarrow \Uparrow
-    \Downarrow \Updownarrow . \vert \Vert \\|""")
-
-left_delimiter = split(raw"( [ \{ < \lfloor \langle \lceil")
-right_delimiter = split(raw") ] \} > \rfloor \rangle \rceil")
-
-
-## Commands using a braced group as an argument
-narrow_accent_map = Dict(
-    raw"hat"            => raw"\circumflexaccent",
-    raw"breve"          => raw"\combiningbreve",
-    raw"bar"            => raw"\combiningoverline",
-    raw"grave"          => raw"\combininggraveaccent",
-    raw"acute"          => raw"\combiningacuteaccent",
-    raw"tilde"          => raw"\combiningtilde",
-    raw"dot"            => raw"\combiningdotabove",
-    raw"ddot"           => raw"\combiningdiaeresis",
-    raw"vec"            => raw"\combiningrightarrowabove",
-       "\""             => raw"\combiningdiaeresis",
-    raw"`"              => raw"\combininggraveaccent",
-    raw"'"              => raw"\combiningacuteaccent",
-    raw"~"              => raw"\combiningtilde",
-    raw"."              => raw"\combiningdotabove",
-    raw"^"              => raw"\circumflexaccent",
-    raw"overrightarrow" => raw"\rightarrow",
-    raw"overleftarrow"  => raw"\leftarrow",
-    raw"mathring"       => raw"\circ",
-)
-
+# TODO Add to the parser what come below, if needed
 wide_accent_commands = split(raw"\widehat \widetilde \widebar")
 fontnames = split(raw"rm cal it tt sf bf default bb frak scr regular")
