@@ -115,11 +115,14 @@ A MathTeX character with an associated font.
 struct TeXChar <: TeXElement
     char::Char
     font::FTFont
+    slanted::Bool
 end
 
-function TeXChar(char, fontset::FontSet, char_type, command=nothing)
-    return TeXChar(char, get_font(fontset, char_type))
+function TeXChar(char, fontset::FontSet, char_type)
+    return TeXChar(char, get_font(fontset, char_type), is_slanted(fontset, char_type))
 end
+
+TeXChar(char::Char, font::FTFont) = TeXChar(char, font, false)
 
 for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
@@ -147,22 +150,6 @@ leftinkbound(::Space) = 0
 rightinkbound(s::Space) = s.width
 bottominkbound(::Space) = 0
 topinkbound(::Space) = 0
-
-
-"""
-    ScaledChar
-
-A scaled TeXChar.
-"""
-struct ScaledChar{T} <: TeXElement
-    char::TeXChar
-    scale::T
-end
-
-for func in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound,
-             :advance, :ascender, :descender, :xheight)
-    @eval $func(scaled::ScaledChar) = $func(scaled.char) * scaled.scale
-end
 
 """
     Vline

@@ -9,10 +9,21 @@ and the meaning of the latter.
 struct TeXExpr
     head::Symbol
     args::Vector
+
+    TeXExpr(head, args::Vector) = new(head, args)
 end
 
 TeXExpr(head) = TeXExpr(head, [])
 TeXExpr(head, args...) = TeXExpr(head, collect(args))
+TeXExpr(head, arg) = TeXExpr(head, [arg])
+
+function Base.Char(texexpr::TeXExpr)
+    if texexpr.head in [:char, :symbol, :digit]
+        return texexpr.args[1]
+    end
+
+    throw(ArgumentError("cannot convert TeXExpr with head $(texexpr.head) to Char."))
+end
 
 """
     manual_texexpr(data)
@@ -37,6 +48,10 @@ function manual_texexpr(tuple::Tuple)
     head = tuple[1]
     args = []
 
+    if head in [:char, :digit, :symbol]
+        return TeXExpr(head, tuple[2])
+    end
+
     for arg in tuple[2:end]
         push!(args, manual_texexpr(arg))
     end
@@ -53,6 +68,7 @@ function manual_texexpr(str::LaTeXString)
     end
 end
 
+manual_texexpr(char::Char) = TeXExpr(:char, char)
 manual_texexpr(any) = any
 
 head(texexpr::TeXExpr) = texexpr.head

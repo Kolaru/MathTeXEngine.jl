@@ -22,7 +22,8 @@ export TeXExpr, texparse
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
 
 include("parser/texexpr.jl")
-include("parser/command_data.jl")
+include("parser/commands_data.jl")
+include("parser/commands_registration.jl")
 include("parser/parser.jl")
 
 include("engine/fonts.jl")
