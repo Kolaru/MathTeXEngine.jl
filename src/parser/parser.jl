@@ -149,7 +149,8 @@ function _end_group!(stack, p, data)
         push_to_current!(stack, group)
 
         command_builder = current(stack)
-        head, required_n_args, args... = command_builder.args
+        head, required_n_args = command_builder.args[1:2]
+        args = command_builder.args[3:end]
 
         if required_n_args == length(args)
             pop!(stack)
