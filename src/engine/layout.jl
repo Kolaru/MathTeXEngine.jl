@@ -13,16 +13,25 @@ function tex_layout(expr, fontset)
         if head in [:char, :delimiter, :digit, :punctuation, :symbol]
             char = args[1]
             return TeXChar(char, fontset, head)
-        elseif head == :accent
+        elseif head == :combining_accent
             accent, core = tex_layout.(args, Ref(fontset))
-            
+
+            y = topinkbound(core) - xheight(fontset)
+
+            if core.slanted
+                α = slant_angle(fontset)
+                x = (y + bottominkbound(accent)) * tan(α) / 2
+            else
+                x = 0.0
+            end
+
             return Group(
                 [core, accent],
                 Point2f[
                     (0, 0),
-                    (hmid(core) - hmid(accent) * shrink, topinkbound(core) - descender(accent))
+                    (x + hmid(core) - hmid(accent), y)
                 ],
-                [1, shrink]
+                [1, 1]
             )
         elseif head == :decorated
             core, sub, super = tex_layout.(args, Ref(fontset))
@@ -221,8 +230,8 @@ Flatten the layouted TeXElement and produce a single list of base element with
 their associated absolute position and scale.
 """
 function unravel(group::Group, parent_pos=Point2f(0), parent_scale=1.0f0)
-    positions = [parent_pos .+ pos for pos in parent_scale .* group.positions]
     scales = group.scales .* parent_scale
+    positions = [parent_pos .+ pos for pos in parent_scale .* group.positions]
     elements = []
 
     for (elem, pos, scale) in zip(group.elements, positions, scales)

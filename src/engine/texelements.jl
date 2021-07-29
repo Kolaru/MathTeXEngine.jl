@@ -115,11 +115,14 @@ A MathTeX character with an associated font.
 struct TeXChar <: TeXElement
     char::Char
     font::FTFont
+    slanted::Bool
 end
 
 function TeXChar(char, fontset::FontSet, char_type)
-    return TeXChar(char, get_font(fontset, char_type))
+    return TeXChar(char, get_font(fontset, char_type), is_slanted(fontset, char_type))
 end
+
+TeXChar(char::Char, font::FTFont) = TeXChar(char, font, false)
 
 for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))

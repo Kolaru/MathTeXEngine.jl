@@ -51,21 +51,30 @@ A set of font for LaTeX rendering.
     Default to `MathTeXEngine._default_font_mapping`
   - `fonts` a dict mapping font identifier to a font path. Default to
     `MathTeXEngine._default_fonts` which represents the NewComputerModern font.
+  - `slant_angle` the angle by which the italic fonts are slanted, in degree
 """
 struct FontSet
     fonts::Dict{Symbol, String}
     font_mapping::Dict{Symbol, Symbol}
+    slant_angle::Float64
 end
 
-FontSet(fonts) = FontSet(fonts, _default_font_mapping)
-FontSet() = FontSet(_default_fonts, _default_font_mapping)
+FontSet(fonts) = FontSet(fonts, _default_font_mapping, 15)
+FontSet() = FontSet(_default_fonts, _default_font_mapping, 15)
 
 function get_font(fontset, char_type)
     font_id = fontset.font_mapping[char_type]
     return fontset[font_id]
 end
 
-Base.getindex(fonset::FontSet, font_id) = load_font(fonset.fonts[font_id])
+function is_slanted(fontset, char_type)
+    font_id = fontset.font_mapping[char_type]
+    return font_id == :italic
+end
+
+Base.getindex(fontset::FontSet, font_id) = load_font(fontset.fonts[font_id])
+
+slant_angle(fontset) = fontset.slant_angle * π / 180
 
 # Few helper functions
 """

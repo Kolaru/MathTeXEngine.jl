@@ -9,13 +9,14 @@ end
 
 @testset "Parser" begin
     @testset "Accent" begin
+        # First char is the combining accent
         test_parse(
             raw"\dot{a}",
-            (:group, 'a', '̇')  # Second char is the combining dot
+            (:combining_accent, '̇', 'a')
         )
         test_parse(
             raw"\vec{x}",
-            (:accent, (:symbol, '→'), 'x')
+            (:combining_accent, '⃗', 'x')
         )
     end
 

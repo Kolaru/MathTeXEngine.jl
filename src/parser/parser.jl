@@ -154,11 +154,6 @@ function _end_group!(stack, p, data)
         if required_n_args == length(args)
             pop!(stack)
             command = TeXExpr(head, args)
-
-            if command.head == :combining_accent
-                command = TeXExpr(:group, [command.args[2], command.args[1]])
-            end
-
             push_to_current!(stack, command)
         end
     else
