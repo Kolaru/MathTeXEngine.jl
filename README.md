@@ -36,13 +36,19 @@ The table below contains the list of all supported LaTeX construction and their 
 
 | Description | LaTeX example | Expression head | Fields |
 |--|--|--|--|
+| Accent | `\vec{v}` | `:accent` | `symbol, core` |
+| Char | `x` | `:char` |
+| Digit | `3` | `:digit` |
 | Delimiter | `\left( \right)` | `:delimited` | `left_delimiter, content, right_delimiter` |
 | Fraction | `\frac{}{}` | `:frac` | `numerator, denumerator` |
 | Function | `\sin` | `:function` | `name` |
-| Generic symbol | `x` | `:symbol` | `char, command` |
+| Generic symbol | `ω` | `:symbol` | `unicode_char` |
 | Group | `{ }` | `:group` | `elements...` |
 | Integral | `\int_a^b` | `:integral` | `symbol, low_bound, high_bound` |
+| Punctuation | `!` | `:punctuation` |
+| Simple delimiter | `(` | `:delimiter` |
 | Square root | `\sqrt{2}` | `:sqrt` | `content` |
+| Space | `\quad` | `:space` | `width` |
 | Spaced symbol | `+` | `:spaced` | `symbol` |
 | Subscript and superscript | `x_0^2` | `:decorated` | `core, subscript, superscript` |
 | Symbol with script under and/or over it | `\sum_i^k` | `:underover` | `symbol, under, over` |
@@ -51,49 +57,58 @@ The table below contains the list of all supported LaTeX construction and their 
 
 | Description | LaTeX example | Head | Fields | Comment |
 |--|--|--|--|--|
-| Accent | `\vec{v}` | `:accent` | `symbol, core` | May need a specific type of expression for wide accent |
 | Basic font | `\mathrm{d}` | `:font` | `fontstyle, content` |
-| Space | `\quad` | `:space` | `width` |
 
 ### Example
 
 ```julia
-julia> texparse(raw"\sum^{a_2}_{b + 2} \left[ x + y \right] \Rightarrow \sin^2 ω_k")
-TeXExpr :expr
+julia> TeXExpr :expr
 ├─ TeXExpr :underover
 │  ├─ TeXExpr :symbol
-│  │  ├─ '∑'
-│  │  └─ "\\sum"
+│  │  └─ '∑'
 │  ├─ TeXExpr :group
-│  │  ├─ 'b'
+│  │  ├─ TeXExpr :char
+│  │  │  └─ 'b'
 │  │  ├─ TeXExpr :spaced
-│  │  │  └─ '+'
-│  │  └─ '2'
+│  │  │  └─ TeXExpr :symbol
+│  │  │     └─ '+'
+│  │  └─ TeXExpr :digit
+│  │     └─ '2'
 │  └─ TeXExpr :decorated
-│     ├─ 'a'
-│     ├─ '2'
+│     ├─ TeXExpr :char
+│     │  └─ 'a'
+│     ├─ TeXExpr :digit
+│     │  └─ '2'
 │     └─ nothing
 ├─ TeXExpr :delimited
-│  ├─ '['
+│  ├─ TeXExpr :delimiter
+│  │  └─ '['
 │  ├─ TeXExpr :group
-│  │  ├─ 'x'
+│  │  ├─ TeXExpr :combining_accent
+│  │  │  ├─ TeXExpr :symbol
+│  │  │  │  └─ '⃗'
+│  │  │  └─ TeXExpr :char
+│  │  │     └─ 'x'
 │  │  ├─ TeXExpr :spaced
-│  │  │  └─ '+'
-│  │  └─ 'y'
-│  └─ ']'
+│  │  │  └─ TeXExpr :symbol
+│  │  │     └─ '+'
+│  │  └─ TeXExpr :char
+│  │     └─ 'y'
+│  └─ TeXExpr :delimiter
+│     └─ ']'
 ├─ TeXExpr :spaced
 │  └─ TeXExpr :symbol
-│     ├─ '⇒'
-│     └─ "\\Rightarrow"
+│     └─ '⇒'
 ├─ TeXExpr :decorated
 │  ├─ TeXExpr :function
 │  │  └─ "sin"
 │  ├─ nothing
-│  └─ '2'
+│  └─ TeXExpr :digit
+│     └─ '2'
 └─ TeXExpr :decorated
    ├─ TeXExpr :symbol
-   │  ├─ 'ω'
-   │  └─ "\\omega"
-   ├─ 'k'
+   │  └─ 'ω'
+   ├─ TeXExpr :char
+   │  └─ 'k'
    └─ nothing
 ```
