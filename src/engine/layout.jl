@@ -241,7 +241,6 @@ function unravel(group::Group, parent_pos=Point2f(0), parent_scale=1.0f0)
     return elements
 end
 
-unravel(char::ScaledChar, pos, scale) = unravel(char.char, pos, scale*char.scale)
 unravel(::Space, pos, scale) = []
 unravel(element, pos, scale) = [(element, pos, scale)]
 

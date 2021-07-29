@@ -151,22 +151,6 @@ rightinkbound(s::Space) = s.width
 bottominkbound(::Space) = 0
 topinkbound(::Space) = 0
 
-
-"""
-    ScaledChar
-
-A scaled TeXChar.
-"""
-struct ScaledChar{T} <: TeXElement
-    char::TeXChar
-    scale::T
-end
-
-for func in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound,
-             :advance, :ascender, :descender, :xheight)
-    @eval $func(scaled::ScaledChar) = $func(scaled.char) * scaled.scale
-end
-
 """
     Vline
 
