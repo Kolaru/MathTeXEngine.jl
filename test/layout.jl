@@ -14,7 +14,7 @@ end
 @testset "Layout" begin
     @testset "Decorated" begin
         expr = manual_texexpr((:decorated, 'x', 'b', 't'))
-        layout = tex_layout(expr, FontSet())
+        layout = tex_layout(expr, FontFamily())
         @test length(layout.elements) == 3
         @test layout.positions[2][2] < layout.positions[3][2]
         @test layout.scales[1] == 1
@@ -22,17 +22,17 @@ end
         @test layout.scales[3] < 1
 
         expr = manual_texexpr((:decorated, 'y', nothing, 't'))
-        layout = tex_layout(expr, FontSet())
+        layout = tex_layout(expr, FontFamily())
         @test layout.elements[2] == Space(0)
 
         expr = manual_texexpr((:decorated, 'z', 'b', nothing))
-        layout = tex_layout(expr, FontSet())
+        layout = tex_layout(expr, FontFamily())
         @test layout.elements[3] == Space(0)
     end
 
     @testset "Delimited" begin
         expr = manual_texexpr((:delimited, '(', L"\sum_a^b", ')'))
-        layout = tex_layout(expr, FontSet())
+        layout = tex_layout(expr, FontFamily())
 
         hs = inkheight.(layout.elements) .* layout.scales
         @test hs[1] >= hs[2]
@@ -41,19 +41,19 @@ end
 
     @testset "Font" begin
         expr = manual_texexpr((:char, 'u'))
-        texchar = tex_layout(expr, FontSet())
+        texchar = tex_layout(expr, FontFamily())
         @test isa(texchar, TeXChar)
         @test texchar.font.style_name == "10 Italic"
 
         expr = manual_texexpr((:font, :rm, 'u'))
-        texchar = tex_layout(expr, FontSet())
+        texchar = tex_layout(expr, FontFamily())
         @test isa(texchar, TeXChar)
         @test texchar.font.style_name == "10 Regular"
     end
 
     @testset "Group" begin
         expr = manual_texexpr((:group, 'a', 'b', 'c'))
-        layout = tex_layout(expr, FontSet())
+        layout = tex_layout(expr, FontFamily())
         @test length(layout.elements) == 3
         @test length(layout.positions) == 3
         @test length(layout.scales) == 3
@@ -61,9 +61,9 @@ end
         @test all(layout.scales .== 1)
 
         expr = manual_texexpr((:group, 'x', (:group, 'y')))
-        layout = tex_layout(expr, FontSet())
+        layout = tex_layout(expr, FontFamily())
         subexpr = manual_texexpr((:group, 'y'))
-        sublayout = tex_layout(subexpr, FontSet())
+        sublayout = tex_layout(subexpr, FontFamily())
         @test length(layout.elements) == 2
         @test length(layout.positions) == 2
         @test length(layout.scales) == 2

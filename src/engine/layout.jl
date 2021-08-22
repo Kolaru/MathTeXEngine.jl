@@ -1,13 +1,13 @@
 """
-    tex_layout(mathexpr::TeXExpr, fontset)
+    tex_layout(mathexpr::TeXExpr, font_family)
 
 Recursively determine the layout of the math expression represented the given
 TeXExpr for the given font set.
 """
-tex_layout(expr, fontset::FontSet) = tex_layout(expr, LayoutState(fontset))
+tex_layout(expr, font_family::FontFamily) = tex_layout(expr, LayoutState(font_family))
 
 function tex_layout(expr, state)
-    fontset = state.fontset
+    font_family = state.font_family
     head = expr.head
     args = [expr.args...]
     shrink = 0.6
@@ -19,10 +19,10 @@ function tex_layout(expr, state)
         elseif head == :combining_accent
             accent, core = tex_layout.(args, state)
 
-            y = topinkbound(core) - xheight(fontset)
+            y = topinkbound(core) - xheight(font_family)
 
             if core.slanted
-                α = slant_angle(fontset)
+                α = slant_angle(font_family)
                 x = (y + bottominkbound(accent)) * tan(α) / 2
             else
                 x = 0.0
@@ -80,11 +80,11 @@ function tex_layout(expr, state)
             denominator = tex_layout(args[2], state)
 
             # extend fraction line by half an xheight
-            xh = xheight(fontset)
+            xh = xheight(font_family)
             w = max(inkwidth(numerator), inkwidth(denominator)) + xh/2
 
             # fixed width fraction line
-            lw = thickness(fontset)
+            lw = thickness(font_family)
 
             line = HLine(w, lw)
             y0 = xh/2 - lw/2
@@ -121,14 +121,14 @@ function tex_layout(expr, state)
             return Group(
                 [int, sub, super],
                 Point2f[
-                    (0, h/2 + xheight(fontset)/2),
+                    (0, h/2 + xheight(font_family)/2),
                     (
                         0.15 - inkwidth(sub)*shrink/2,
-                        -h/2 + xheight(fontset)/2 - topinkbound(sub)*shrink - pad
+                        -h/2 + xheight(font_family)/2 - topinkbound(sub)*shrink - pad
                     ),
                     (
                         0.85 - inkwidth(super)*shrink/2,
-                        h/2 + xheight(fontset)/2 + pad
+                        h/2 + xheight(font_family)/2 + pad
                     )
                 ],
                 [1, shrink, shrink]
@@ -160,7 +160,7 @@ function tex_layout(expr, state)
             xpad = advance(sqrt) - inkwidth(sqrt)
             w =  inkwidth(content) + 2xpad
 
-            lw = thickness(fontset)
+            lw = thickness(font_family)
             hline = HLine(w, lw)
             vline = VLine(inkheight(sqrt) - h, lw)
 
@@ -220,10 +220,10 @@ function horizontal_layout(elements)
     return Group(elements, Point2f.(xs, 0))
 end
 
-function layout_text(string, fontset)
+function layout_text(string, font_family)
     isempty(string) && return Space(0)
 
-    elements = TeXChar.(collect(string), LayoutState(fontset), Ref(:text))
+    elements = TeXChar.(collect(string), LayoutState(font_family), Ref(:text))
     return horizontal_layout(elements)
 end
 
@@ -260,21 +260,21 @@ The elments are of one of the following types
     - `HLine` a horizontal line.
     - `VLine` a vertical line.
 """
-function generate_tex_elements(str, fontset=FontSet())
+function generate_tex_elements(str, font_family=FontFamily())
     expr = texparse(str)
-    layout = tex_layout(expr, fontset)
+    layout = tex_layout(expr, font_family)
     return unravel(layout)
 end
 
 # Still hacky as hell
-function generate_tex_elements(str::LaTeXString, fontset=FontSet())
+function generate_tex_elements(str::LaTeXString, font_family=FontFamily())
     parts = String.(split(str, raw"$"))
     groups = Vector{TeXElement}(undef, length(parts))
     texts = parts[1:2:end]
     maths = parts[2:2:end]
 
-    groups[1:2:end] = layout_text.(texts, Ref(fontset))
-    groups[2:2:end] = tex_layout.(texparse.(maths), Ref(fontset))
+    groups[1:2:end] = layout_text.(texts, Ref(font_family))
+    groups[2:2:end] = tex_layout.(texparse.(maths), Ref(font_family))
 
     return unravel(horizontal_layout(groups))
 end

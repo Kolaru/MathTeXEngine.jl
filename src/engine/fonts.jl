@@ -50,7 +50,7 @@ const _default_font_modifiers = Dict(
 )
 
 """
-    FontSet([fonts, font_mapping, font_modifiers, slant_angle])
+    FontFamily([fonts, font_mapping, font_modifiers, slant_angle])
 
 A set of font for LaTeX rendering.
 
@@ -65,40 +65,40 @@ A set of font for LaTeX rendering.
     Default to `MathTeXEngine._default_font_modifiers`.
   - `slant_angle` the angle by which the italic fonts are slanted, in degree
 """
-struct FontSet
+struct FontFamily
     fonts::Dict{Symbol, String}
     font_mapping::Dict{Symbol, Symbol}
     font_modifiers::Dict{Symbol, Dict{Symbol, Symbol}}
     slant_angle::Float64
 end
 
-FontSet(fonts) = FontSet(fonts, _default_font_mapping, _default_font_modifiers, 15)
-FontSet() = FontSet(_default_fonts)
+FontFamily(fonts) = FontFamily(fonts, _default_font_mapping, _default_font_modifiers, 15)
+FontFamily() = FontFamily(_default_fonts)
 
 """
-    get_font([fontset=FontSet()], fontstyle)
+    get_font([font_family=FontFamily()], fontstyle)
 
 Get the FTFont object representing a font in the given font family. When called
 with a single argument uses the default font family.
 """
-get_font(fontset::FontSet, fontstyle::Symbol) = load_font(fontset.fonts[fontstyle])
-get_font(fontstyle::Symbol) = get_font(FontSet(), fontstyle)
+get_font(font_family::FontFamily, fontstyle::Symbol) = load_font(font_family.fonts[fontstyle])
+get_font(fontstyle::Symbol) = get_font(FontFamily(), fontstyle)
 
 """
-    get_fontpath([fontset::FontSet], fontstyle)
+    get_fontpath([font_family::FontFamily], fontstyle)
 
 Similar to `get_font` but return the path of the font instead of the FTFont
 object.
 """
-get_fontpath(fontset::FontSet, fontstyle::Symbol) = full_fontpath(fontset.fonts[fontstyle])
-get_fontpath(fontstyle::Symbol) = get_fontpath(FontSet(), fontstyle)
+get_fontpath(font_family::FontFamily, fontstyle::Symbol) = full_fontpath(font_family.fonts[fontstyle])
+get_fontpath(fontstyle::Symbol) = get_fontpath(FontFamily(), fontstyle)
 
-function is_slanted(fontset, char_type)
-    font_id = fontset.font_mapping[char_type]
+function is_slanted(font_family, char_type)
+    font_id = font_family.font_mapping[char_type]
     return font_id == :italic
 end
 
-slant_angle(fontset) = fontset.slant_angle * π / 180
+slant_angle(font_family) = font_family.slant_angle * π / 180
 
 # Few helper functions
 """
@@ -109,11 +109,11 @@ The thickness of the underline for the given font.
 thickness(font::FTFont) = font.underline_thickness / font.units_per_EM
 
 """
-    thickness(font::FontSet)
+    thickness(font::FontFamily)
 
 The thickness of the underline for the given font set.
 """
-thickness(fontset::FontSet) = thickness(get_font(fontset, :math))
+thickness(font_family::FontFamily) = thickness(get_font(font_family, :math))
 
 """
     xheight(font::FTFont)
@@ -125,11 +125,11 @@ xheight(font::FTFont) = inkheight(TeXChar('x', font))
 
 
 """
-    xheight(font::FontSet)
+    xheight(font::FontFamily)
 
-The height of the letter x in the given fontset, i.e. the height of the letters
+The height of the letter x in the given font family, i.e. the height of the letters
 without neither ascender nor descender.
 """
-xheight(fontset) = xheight(get_font(fontset, :regular))
+xheight(font_family) = xheight(get_font(font_family, :regular))
 
 

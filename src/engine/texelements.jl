@@ -119,7 +119,7 @@ struct TeXChar <: TeXElement
 end
 
 function TeXChar(char, state::LayoutState, char_type)
-    return TeXChar(char, get_font(state, char_type), is_slanted(state.fontset, char_type))
+    return TeXChar(char, get_font(state, char_type), is_slanted(state.font_family, char_type))
 end
 
 TeXChar(char::Char, font::FTFont) = TeXChar(char, font, false)
