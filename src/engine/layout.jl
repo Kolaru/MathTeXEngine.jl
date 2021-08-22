@@ -4,8 +4,10 @@
 Recursively determine the layout of the math expression represented the given
 TeXExpr for the given font set.
 """
-function tex_layout(expr, fontset, font_modifiers=Symbol[])
-    @show expr
+tex_layout(expr, fontset::FontSet) = tex_layout(expr, LayoutState(fontset))
+
+function tex_layout(expr, state)
+    fontset = state.fontset
     head = expr.head
     args = [expr.args...]
     shrink = 0.6
@@ -13,9 +15,9 @@ function tex_layout(expr, fontset, font_modifiers=Symbol[])
     try
         if head in [:char, :delimiter, :digit, :punctuation, :symbol]
             char = args[1]
-            return TeXChar(char, fontset, head, font_modifiers)
+            return TeXChar(char, state, head)
         elseif head == :combining_accent
-            accent, core = tex_layout.(args, Ref(fontset), Ref(font_modifiers))
+            accent, core = tex_layout.(args, state)
 
             y = topinkbound(core) - xheight(fontset)
 
@@ -35,7 +37,7 @@ function tex_layout(expr, fontset, font_modifiers=Symbol[])
                 [1, 1]
             )
         elseif head == :decorated
-            core, sub, super = tex_layout.(args, Ref(fontset), Ref(font_modifiers))
+            core, sub, super = tex_layout.(args, state)
             
             core_width = advance(core)
 
@@ -48,7 +50,7 @@ function tex_layout(expr, fontset, font_modifiers=Symbol[])
                 [1, shrink, shrink]
             )
         elseif head == :delimited
-            elements = tex_layout.(args, Ref(fontset), Ref(font_modifiers))
+            elements = tex_layout.(args, state)
             left, content, right = elements
 
             height = inkheight(content)
@@ -72,11 +74,10 @@ function tex_layout(expr, fontset, font_modifiers=Symbol[])
             )
         elseif head == :font
             modifier, content = args
-            push!(font_modifiers, modifier)
-            return tex_layout(content, fontset, font_modifiers)
+            return tex_layout(content, add_font_modifier(state, modifier))
         elseif head == :frac
-            numerator = tex_layout(args[1], fontset)
-            denominator = tex_layout(args[2], fontset)
+            numerator = tex_layout(args[1], state)
+            denominator = tex_layout(args[2], state)
 
             # extend fraction line by half an xheight
             xh = xheight(fontset)
@@ -101,14 +102,14 @@ function tex_layout(expr, fontset, font_modifiers=Symbol[])
             )
         elseif head == :function
             name = args[1]
-            elements = TeXChar.(collect(name), Ref(fontset), Ref(:function), Ref(font_modifiers))
+            elements = TeXChar.(collect(name), state, Ref(:function))
             return horizontal_layout(elements)
         elseif head == :group || head == :expr
-            elements = tex_layout.(args, Ref(fontset), Ref(font_modifiers))
+            elements = tex_layout.(args, state)
             return horizontal_layout(elements)
         elseif head == :integral
             pad = 0.1
-            sub, super = tex_layout.(args[2:3], Ref(fontset), Ref(font_modifiers))
+            sub, super = tex_layout.(args[2:3], state)
 
             # Always use ComputerModern fallback for the integral sign
             # as the Unicode LaTeX approach requires to use glyph variant
@@ -135,11 +136,11 @@ function tex_layout(expr, fontset, font_modifiers=Symbol[])
         elseif head == :space
             return Space(args[1])
         elseif head == :spaced
-            sym = tex_layout(args[1], fontset, font_modifiers)
+            sym = tex_layout(args[1], state)
             return horizontal_layout([Space(0.2), sym, Space(0.2)])
         elseif head == :sqrt
-            content = tex_layout(args[1], fontset, font_modifiers)
-            sqrt = TeXChar('√', fontset, :symbol, font_modifiers)
+            content = tex_layout(args[1], state)
+            sqrt = TeXChar('√', state, :symbol)
 
             relpad = 0.15
 
@@ -148,7 +149,7 @@ function tex_layout(expr, fontset, font_modifiers=Symbol[])
             h += 2ypad
 
             if h > inkheight(sqrt)
-                sqrt = TeXChar('⎷', fontset, :symbol, font_modifiers)
+                sqrt = TeXChar('⎷', state, :symbol)
             end
 
             h = max(inkheight(sqrt), h)
@@ -174,7 +175,7 @@ function tex_layout(expr, fontset, font_modifiers=Symbol[])
             )
 
         elseif head == :underover
-            core, sub, super = tex_layout.(args, Ref(fontset), Ref(font_modifiers))
+            core, sub, super = tex_layout.(args, state)
 
             mid = hmid(core)
             dxsub = mid - hmid(sub) * shrink
@@ -205,7 +206,7 @@ function tex_layout(expr, fontset, font_modifiers=Symbol[])
     @error "Unsupported head $(head) in expr:\n$expr"
 end
 
-tex_layout(::Nothing, fontset, font_modifiers) = Space(0)
+tex_layout(::Nothing, state) = Space(0)
 
 """
     horizontal_layout(elements)
@@ -222,7 +223,7 @@ end
 function layout_text(string, fontset)
     isempty(string) && return Space(0)
 
-    elements = TeXChar.(collect(string), Ref(fontset), Ref(:text), Ref(Symbol[]))
+    elements = TeXChar.(collect(string), LayoutState(fontset), Ref(:text))
     return horizontal_layout(elements)
 end
 

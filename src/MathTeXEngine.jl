@@ -27,6 +27,7 @@ include("parser/commands_registration.jl")
 include("parser/parser.jl")
 
 include("engine/fonts.jl")
+include("engine/layout_context.jl")
 include("engine/texelements.jl")
 include("engine/layout.jl")
 

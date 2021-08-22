@@ -51,7 +51,7 @@ const _default_font_modifiers = Dict(
 )
 
 """
-    Fontset([fonts, font_mapping, font_modifiers, slant_angle])
+    FontSet([fonts, font_mapping, font_modifiers, slant_angle])
 
 A set of font for LaTeX rendering.
 
@@ -77,21 +77,6 @@ FontSet(fonts) = FontSet(fonts, _default_font_mapping, _default_font_modifiers, 
 FontSet() = FontSet(_default_fonts)
 
 Base.getindex(fontset::FontSet, font_id) = load_font(fontset.fonts[font_id])
-
-function get_font(fontset, char_type, font_modifiers)
-    font_id = fontset.font_mapping[char_type]
-
-    for modifier in font_modifiers
-        if haskey(fontset.font_modifiers, modifier)
-            mapping = fontset.font_modifiers[modifier]
-            font_id = get(mapping, font_id, font_id)
-        else
-            throw(ArgumentError("font modifier $modifier not supported for the current fontset."))
-        end
-    end
-
-    return fontset[font_id]
-end
 
 function is_slanted(fontset, char_type)
     font_id = fontset.font_mapping[char_type]
