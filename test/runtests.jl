@@ -12,6 +12,5 @@ import MathTeXEngine: _default_fonts, FontSet, load_font
 import MathTeXEngine: inkheight, inkwidth
 
 include("parser.jl")
-
 include("fonts.jl")
 include("layout.jl")

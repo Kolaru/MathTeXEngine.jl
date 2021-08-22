@@ -46,6 +46,10 @@ end
         # TODO Recursive delim
     end
 
+    @testset "Fonts" begin
+        test_parse(raw"\mathrm{u}", (:font, :rm, (:char, 'u')))
+    end
+
     @testset "Fraction" begin
         test_parse(raw"\frac{1}{n}", (:frac, (:digit, '1'), 'n'))
     end

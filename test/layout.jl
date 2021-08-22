@@ -39,6 +39,18 @@ end
         @test hs[3] >= hs[2]
     end
 
+    @testset "Font" begin
+        expr = manual_texexpr((:char, 'u'))
+        texchar = tex_layout(expr, FontSet())
+        @test isa(texchar, TeXChar)
+        @test texchar.font.style_name == "10 Italic"
+
+        expr = manual_texexpr((:font, :rm, 'u'))
+        texchar = tex_layout(expr, FontSet())
+        @test isa(texchar, TeXChar)
+        @test texchar.font.style_name == "10 Regular"
+    end
+
     @testset "Group" begin
         expr = manual_texexpr((:group, 'a', 'b', 'c'))
         layout = tex_layout(expr, FontSet())
