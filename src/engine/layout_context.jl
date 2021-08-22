@@ -26,5 +26,5 @@ function get_font(state::LayoutState, char_type)
         end
     end
 
-    return fontset[font_id]
+    return get_font(fontset, font_id)
 end

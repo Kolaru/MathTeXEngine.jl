@@ -1,5 +1,9 @@
 const FONTS = RelocatableFolders.@path joinpath(@__DIR__, "..", "..", "assets", "fonts")
-fontpath(fontname) = joinpath(FONTS, fontname)
+
+function full_fontpath(fontname::AbstractString)
+    isfile(fontname) && return fontname
+    return joinpath(FONTS, fontname)
+end
 
 const _cached_fonts = Dict{String, FTFont}()
 
@@ -12,12 +16,7 @@ the package font folder.
 A font at a given location is cached for further use.
 """
 function load_font(str)
-    if isfile(str)
-        path = str
-    elseif isfile(fontpath(str))
-        path = fontpath(str)
-    end
-
+    path = full_fontpath(str)
     get!(_cached_fonts, path) do
         FTFont(path)
     end
@@ -76,7 +75,23 @@ end
 FontSet(fonts) = FontSet(fonts, _default_font_mapping, _default_font_modifiers, 15)
 FontSet() = FontSet(_default_fonts)
 
-Base.getindex(fontset::FontSet, font_id) = load_font(fontset.fonts[font_id])
+"""
+    get_font([fontset=FontSet()], fontstyle)
+
+Get the FTFont object representing a font in the given font family. When called
+with a single argument uses the default font family.
+"""
+get_font(fontset::FontSet, fontstyle::Symbol) = load_font(fontset.fonts[fontstyle])
+get_font(fontstyle::Symbol) = get_font(FontSet(), fontstyle)
+
+"""
+    get_fontpath([fontset::FontSet], fontstyle)
+
+Similar to `get_font` but return the path of the font instead of the FTFont
+object.
+"""
+get_fontpath(fontset::FontSet, fontstyle::Symbol) = full_fontpath(fontset.fonts[fontstyle])
+get_fontpath(fontstyle::Symbol) = get_fontpath(FontSet(), fontstyle)
 
 function is_slanted(fontset, char_type)
     font_id = fontset.font_mapping[char_type]
@@ -98,7 +113,7 @@ thickness(font::FTFont) = font.underline_thickness / font.units_per_EM
 
 The thickness of the underline for the given font set.
 """
-thickness(fontset::FontSet) = thickness(fontset[:math])
+thickness(fontset::FontSet) = thickness(get_font(fontset, :math))
 
 """
     xheight(font::FTFont)
@@ -115,6 +130,6 @@ xheight(font::FTFont) = inkheight(TeXChar('x', font))
 The height of the letter x in the given fontset, i.e. the height of the letters
 without neither ascender nor descender.
 """
-xheight(fontset) = xheight(fontset[:regular])
+xheight(fontset) = xheight(get_font(fontset, :regular))
 
 
