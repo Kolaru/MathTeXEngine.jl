@@ -118,8 +118,8 @@ struct TeXChar <: TeXElement
     slanted::Bool
 end
 
-function TeXChar(char, fontset::FontSet, char_type)
-    return TeXChar(char, get_font(fontset, char_type), is_slanted(fontset, char_type))
+function TeXChar(char, fontset::FontSet, char_type, font_modifiers)
+    return TeXChar(char, get_font(fontset, char_type, font_modifiers), is_slanted(fontset, char_type))
 end
 
 TeXChar(char::Char, font::FTFont) = TeXChar(char, font, false)

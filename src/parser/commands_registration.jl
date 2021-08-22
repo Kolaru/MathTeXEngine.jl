@@ -128,6 +128,10 @@ for symbol in delimiter_symbols
     symbol_to_canonical[symbol] = TeXExpr(:delimiter, symbol)
 end
 
+for name in font_names
+    command = "\\math$name"
+    command_to_canonical[command] = TeXExpr(:argument_gatherer, [:font, 2, Symbol(name)])
+end
 
 ##
 ## Default behavior

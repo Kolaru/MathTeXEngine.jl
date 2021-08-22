@@ -23,10 +23,14 @@ function load_font(str)
     end
 end
 
-# Loading the font directly here lead to FreeTypeAbstraction to fail with error code 35
+# Loading the font directly here lead to FreeTypeAbstraction to fail with error
+# code 35, because handles to fonts are C pointer that cannot be fully
+# serialized at compile time
 const _default_fonts = Dict(
     :regular => joinpath("NewComputerModern", "NewCM10-Regular.otf"),
     :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
+    :bold => joinpath("NewComputerModern", "NewCM10-Bold.otf"),
+    :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
     :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
 )
 
@@ -40,8 +44,14 @@ const _default_font_mapping = Dict(
     :char => :italic
 )
 
+const _default_font_modifiers = Dict(
+    :rm => Dict(:bolditalic => :bold, :italic => :regular),
+    :it => Dict(:bold => :bolditalic, :regular => :italic),
+    :bf => Dict(:italic => :bolditalic, :regular => :bold)
+)
+
 """
-    Fontset([font_mapping, fonts])
+    Fontset([fonts, font_mapping, font_modifiers, slant_angle])
 
 A set of font for LaTeX rendering.
 
@@ -51,19 +61,35 @@ A set of font for LaTeX rendering.
     Default to `MathTeXEngine._default_font_mapping`
   - `fonts` a dict mapping font identifier to a font path. Default to
     `MathTeXEngine._default_fonts` which represents the NewComputerModern font.
+  - `font_modifiers` a dict of dict, one entry per font command supported in the
+    font set. Each entry is a dict that maps a font identifier to another.
+    Default to `MathTeXEngine._default_font_modifiers`.
   - `slant_angle` the angle by which the italic fonts are slanted, in degree
 """
 struct FontSet
     fonts::Dict{Symbol, String}
     font_mapping::Dict{Symbol, Symbol}
+    font_modifiers::Dict{Symbol, Dict{Symbol, Symbol}}
     slant_angle::Float64
 end
 
-FontSet(fonts) = FontSet(fonts, _default_font_mapping, 15)
-FontSet() = FontSet(_default_fonts, _default_font_mapping, 15)
+FontSet(fonts) = FontSet(fonts, _default_font_mapping, _default_font_modifiers, 15)
+FontSet() = FontSet(_default_fonts)
 
-function get_font(fontset, char_type)
+Base.getindex(fontset::FontSet, font_id) = load_font(fontset.fonts[font_id])
+
+function get_font(fontset, char_type, font_modifiers)
     font_id = fontset.font_mapping[char_type]
+
+    for modifier in font_modifiers
+        if haskey(fontset.font_modifiers, modifier)
+            mapping = fontset.font_modifiers[modifier]
+            font_id = get(mapping, font_id, font_id)
+        else
+            throw(ArgumentError("font modifier $modifier not supported for the current fontset."))
+        end
+    end
+
     return fontset[font_id]
 end
 
@@ -71,8 +97,6 @@ function is_slanted(fontset, char_type)
     font_id = fontset.font_mapping[char_type]
     return font_id == :italic
 end
-
-Base.getindex(fontset::FontSet, font_id) = load_font(fontset.fonts[font_id])
 
 slant_angle(fontset) = fontset.slant_angle * π / 180
 

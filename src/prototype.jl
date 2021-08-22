@@ -116,16 +116,8 @@ begin  # Quick test
     fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
     ax = Axis(fig[2, 1])
     ax.aspect = DataAspect()
-    tex = L"\lim_{α →\infty} A^j \vec{v}_{(a + \bar{a})_k} \sqrt{2} x!= \sqrt{\frac{1-2}{4+a+x}}\int_{0}^{2π} \sin(x) dx"
-    tex = L"\vec{L} \quad \vec{A} \quad \vec{x} \quad \vec{v} \quad \vec{m} \quad \vec{\omega}"
-    # tex = L"\dot{L} \quad \dot{A} \quad \dot{x} \quad \dot{v} \quad \dot{m} \quad \dot{\omega}"
-    # tex = L"{\vec{a}}"
-    # tex = L"A_a \quad A_{a_a} \quad A_{a_{a_a}}"
-    makie_tex!(ax, tex, debug=false, size=300)
+    tex = L"\lim_{α →\infty} A^j \vec{v}_{(a + \bar{a})_k} \sqrt{2} x! \quad \mathrm{when} \quad \sqrt{\frac{1-2}{4+a+x}}\int_{0}^{2π} \sin(x) dx"
 
-    # text!(ax, "a", position=(0, 0), textsize=50, font=MathTeXEngine.FontSet()[:italic])
-    # text!(ax, "̄", position=(0, 0), textsize=50, font=MathTeXEngine.FontSet()[:math])
+    makie_tex!(ax, tex, debug=false, size=300)
     fig
 end
-
-#
