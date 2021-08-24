@@ -20,6 +20,7 @@ const re = Automa.RegExp
 
 export TeXExpr, texparse
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
+export get_font, get_fontpath
 
 include("parser/texexpr.jl")
 include("parser/commands_data.jl")
@@ -27,6 +28,7 @@ include("parser/commands_registration.jl")
 include("parser/parser.jl")
 
 include("engine/fonts.jl")
+include("engine/layout_context.jl")
 include("engine/texelements.jl")
 include("engine/layout.jl")
 

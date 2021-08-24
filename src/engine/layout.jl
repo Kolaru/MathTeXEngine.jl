@@ -1,10 +1,13 @@
 """
-    tex_layout(mathexpr::TeXExpr, fontset)
+    tex_layout(mathexpr::TeXExpr, font_family)
 
 Recursively determine the layout of the math expression represented the given
 TeXExpr for the given font set.
 """
-function tex_layout(expr, fontset)
+tex_layout(expr, font_family::FontFamily) = tex_layout(expr, LayoutState(font_family))
+
+function tex_layout(expr, state)
+    font_family = state.font_family
     head = expr.head
     args = [expr.args...]
     shrink = 0.6
@@ -12,14 +15,14 @@ function tex_layout(expr, fontset)
     try
         if head in [:char, :delimiter, :digit, :punctuation, :symbol]
             char = args[1]
-            return TeXChar(char, fontset, head)
+            return TeXChar(char, state, head)
         elseif head == :combining_accent
-            accent, core = tex_layout.(args, Ref(fontset))
+            accent, core = tex_layout.(args, state)
 
-            y = topinkbound(core) - xheight(fontset)
+            y = topinkbound(core) - xheight(font_family)
 
             if core.slanted
-                α = slant_angle(fontset)
+                α = slant_angle(font_family)
                 x = (y + bottominkbound(accent)) * tan(α) / 2
             else
                 x = 0.0
@@ -34,7 +37,7 @@ function tex_layout(expr, fontset)
                 [1, 1]
             )
         elseif head == :decorated
-            core, sub, super = tex_layout.(args, Ref(fontset))
+            core, sub, super = tex_layout.(args, state)
             
             core_width = advance(core)
 
@@ -47,7 +50,7 @@ function tex_layout(expr, fontset)
                 [1, shrink, shrink]
             )
         elseif head == :delimited
-            elements = tex_layout.(args, Ref(fontset))
+            elements = tex_layout.(args, state)
             left, content, right = elements
 
             height = inkheight(content)
@@ -70,17 +73,18 @@ function tex_layout(expr, fontset)
                 scales
             )
         elseif head == :font
-            # TODO
+            modifier, content = args
+            return tex_layout(content, add_font_modifier(state, modifier))
         elseif head == :frac
-            numerator = tex_layout(args[1], fontset)
-            denominator = tex_layout(args[2], fontset)
+            numerator = tex_layout(args[1], state)
+            denominator = tex_layout(args[2], state)
 
             # extend fraction line by half an xheight
-            xh = xheight(fontset)
+            xh = xheight(font_family)
             w = max(inkwidth(numerator), inkwidth(denominator)) + xh/2
 
             # fixed width fraction line
-            lw = thickness(fontset)
+            lw = thickness(font_family)
 
             line = HLine(w, lw)
             y0 = xh/2 - lw/2
@@ -98,14 +102,14 @@ function tex_layout(expr, fontset)
             )
         elseif head == :function
             name = args[1]
-            elements = TeXChar.(collect(name), Ref(fontset), Ref(:function))
+            elements = TeXChar.(collect(name), state, Ref(:function))
             return horizontal_layout(elements)
         elseif head == :group || head == :expr
-            elements = tex_layout.(args, Ref(fontset))
+            elements = tex_layout.(args, state)
             return horizontal_layout(elements)
         elseif head == :integral
             pad = 0.1
-            sub, super = tex_layout.(args[2:3], Ref(fontset))
+            sub, super = tex_layout.(args[2:3], state)
 
             # Always use ComputerModern fallback for the integral sign
             # as the Unicode LaTeX approach requires to use glyph variant
@@ -117,14 +121,14 @@ function tex_layout(expr, fontset)
             return Group(
                 [int, sub, super],
                 Point2f[
-                    (0, h/2 + xheight(fontset)/2),
+                    (0, h/2 + xheight(font_family)/2),
                     (
                         0.15 - inkwidth(sub)*shrink/2,
-                        -h/2 + xheight(fontset)/2 - topinkbound(sub)*shrink - pad
+                        -h/2 + xheight(font_family)/2 - topinkbound(sub)*shrink - pad
                     ),
                     (
                         0.85 - inkwidth(super)*shrink/2,
-                        h/2 + xheight(fontset)/2 + pad
+                        h/2 + xheight(font_family)/2 + pad
                     )
                 ],
                 [1, shrink, shrink]
@@ -132,11 +136,11 @@ function tex_layout(expr, fontset)
         elseif head == :space
             return Space(args[1])
         elseif head == :spaced
-            sym = tex_layout(args[1], fontset)
+            sym = tex_layout(args[1], state)
             return horizontal_layout([Space(0.2), sym, Space(0.2)])
         elseif head == :sqrt
-            content = tex_layout(args[1], fontset)
-            sqrt = TeXChar('√', fontset, :symbol)
+            content = tex_layout(args[1], state)
+            sqrt = TeXChar('√', state, :symbol)
 
             relpad = 0.15
 
@@ -145,7 +149,7 @@ function tex_layout(expr, fontset)
             h += 2ypad
 
             if h > inkheight(sqrt)
-                sqrt = TeXChar('⎷', fontset, :symbol)
+                sqrt = TeXChar('⎷', state, :symbol)
             end
 
             h = max(inkheight(sqrt), h)
@@ -156,7 +160,7 @@ function tex_layout(expr, fontset)
             xpad = advance(sqrt) - inkwidth(sqrt)
             w =  inkwidth(content) + 2xpad
 
-            lw = thickness(fontset)
+            lw = thickness(font_family)
             hline = HLine(w, lw)
             vline = VLine(inkheight(sqrt) - h, lw)
 
@@ -171,7 +175,7 @@ function tex_layout(expr, fontset)
             )
 
         elseif head == :underover
-            core, sub, super = tex_layout.(args, Ref(fontset))
+            core, sub, super = tex_layout.(args, state)
 
             mid = hmid(core)
             dxsub = mid - hmid(sub) * shrink
@@ -202,7 +206,7 @@ function tex_layout(expr, fontset)
     @error "Unsupported head $(head) in expr:\n$expr"
 end
 
-tex_layout(::Nothing, fontset) = Space(0)
+tex_layout(::Nothing, state) = Space(0)
 
 """
     horizontal_layout(elements)
@@ -216,10 +220,10 @@ function horizontal_layout(elements)
     return Group(elements, Point2f.(xs, 0))
 end
 
-function layout_text(string, fontset)
+function layout_text(string, font_family)
     isempty(string) && return Space(0)
 
-    elements = TeXChar.(collect(string), Ref(fontset), Ref(:text))
+    elements = TeXChar.(collect(string), LayoutState(font_family), Ref(:text))
     return horizontal_layout(elements)
 end
 
@@ -256,21 +260,21 @@ The elments are of one of the following types
     - `HLine` a horizontal line.
     - `VLine` a vertical line.
 """
-function generate_tex_elements(str, fontset=FontSet())
+function generate_tex_elements(str, font_family=FontFamily())
     expr = texparse(str)
-    layout = tex_layout(expr, fontset)
+    layout = tex_layout(expr, font_family)
     return unravel(layout)
 end
 
 # Still hacky as hell
-function generate_tex_elements(str::LaTeXString, fontset=FontSet())
+function generate_tex_elements(str::LaTeXString, font_family=FontFamily())
     parts = String.(split(str, raw"$"))
     groups = Vector{TeXElement}(undef, length(parts))
     texts = parts[1:2:end]
     maths = parts[2:2:end]
 
-    groups[1:2:end] = layout_text.(texts, Ref(fontset))
-    groups[2:2:end] = tex_layout.(texparse.(maths), Ref(fontset))
+    groups[1:2:end] = layout_text.(texts, Ref(font_family))
+    groups[2:2:end] = tex_layout.(texparse.(maths), Ref(font_family))
 
     return unravel(horizontal_layout(groups))
 end
