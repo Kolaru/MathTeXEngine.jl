@@ -45,7 +45,7 @@ latex_symbols[raw"\neq"] = "≠"
 
 function get_symbol_char(command)
     if !haskey(latex_symbols, command)
-        @warn "unkown command $command"
+        @warn "unknown command $command"
         return '?'
     end
 
