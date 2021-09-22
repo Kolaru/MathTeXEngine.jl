@@ -3,6 +3,8 @@
 
 Recursively determine the layout of the math expression represented the given
 TeXExpr for the given font set.
+
+Return a set of nested objects, positionned and scaled relative to their parent.
 """
 tex_layout(expr, font_family::FontFamily) = tex_layout(expr, LayoutState(font_family))
 
@@ -256,7 +258,8 @@ of LaTeX math mode code. The elements' positions and scales are such as to
 approximatively reproduce the LaTeX output.
 
 The elments are of one of the following types
-    - `TeXChar` a (unicode) character, in a specific font.
+
+    - `TeXChar` a (unicode) character with a specific font.
     - `HLine` a horizontal line.
     - `VLine` a vertical line.
 """
