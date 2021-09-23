@@ -166,7 +166,7 @@ TeXExpr :expr
    └─ nothing
 ```
 
-`TeXExpr` have the same `head` - `args` structure than the built-in `Expr`.
+`TeXExpr` have the same `head` - `args` structure as the built-in `Expr`.
 
 ```julia
 julia> expr.args[1].head

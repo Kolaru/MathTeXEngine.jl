@@ -4,7 +4,7 @@
 Recursively determine the layout of the math expression represented the given
 TeXExpr for the given font set.
 
-Return a set of nested objects, positionned and scaled relative to their parent.
+Return a set of nested objects, positioned and scaled relative to their parent.
 """
 tex_layout(expr, font_family::FontFamily) = tex_layout(expr, LayoutState(font_family))
 

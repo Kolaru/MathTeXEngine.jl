@@ -114,7 +114,7 @@ A MathTeX character with an associated font.
 
 Fields
 ======
-    - char::Char The unicode character represented by this TeXChar
+    - char::Char The unicode character represented by this TeXChar.
     - font::FTFont The font that should be used to display this character.
     - slanted::Bool Whether this char is considered italic.
 """
