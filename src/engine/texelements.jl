@@ -111,6 +111,12 @@ inkheight(x::TeXElement) = topinkbound(x) - bottominkbound(x)
     TeXChar(char, font)
 
 A MathTeX character with an associated font.
+
+Fields
+======
+    - char::Char The unicode character represented by this TeXChar.
+    - font::FTFont The font that should be used to display this character.
+    - slanted::Bool Whether this char is considered italic.
 """
 struct TeXChar <: TeXElement
     char::Char
@@ -141,6 +147,10 @@ Base.show(io::IO, tc::TeXChar) =
     Space
 
 A MathTeX space of a given width.
+
+Fields
+======
+    - width::Real The width of the space.
 """
 struct Space{T} <: TeXElement
     width::T
@@ -155,6 +165,11 @@ topinkbound(::Space) = 0
     Vline
 
 A vertical line.
+
+Fields
+======
+    - height::Real The span of the line in the vertical direction.
+    - thickness::Real The thickness of the line.
 """
 struct VLine{T} <: TeXElement
     height::T
@@ -172,6 +187,11 @@ topinkbound(line::VLine{T}) where T = max(line.height, zero(T))
     Hline
 
 A horizontal line.
+
+Fields
+======
+    - width::Real The span of the line in the horizontal direction.
+    - thickness::Real The thickness of the line.
 """
 struct HLine{T} <: TeXElement
     width::T
@@ -191,6 +211,12 @@ topinkbound(line::HLine) = line.thickness/2
 A group of TeXElements.
 
 Positions and scales are relative to the group.
+
+Fields
+======
+    - elements::Vector{<:TeXElement} Vector of the elements contained in the group.
+    - positions::Vector{Point2f} Vector of the relative positions of the contained elements.
+    - scales::Vector Vector of the relative scales of the contained elements.
 """
 struct Group{T} <: TeXElement
     elements::Vector{<:TeXElement}
