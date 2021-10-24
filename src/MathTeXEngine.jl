@@ -22,6 +22,9 @@ export TeXExpr, texparse
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
 export get_font, get_fontpath
 
+# Reexport from LaTeXStrings
+export @L_str
+
 include("parser/texexpr.jl")
 include("parser/commands_data.jl")
 include("parser/commands_registration.jl")

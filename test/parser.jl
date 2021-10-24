@@ -90,6 +90,10 @@ end
         )
     end
 
+    @testset "LaTeXString input" begin
+        @test texparse(raw"\gamma") == texparse(L"\gamma")
+    end
+
     @testset "Overunder" begin
         test_parse(
             raw"\sum",
@@ -142,7 +146,16 @@ end
     end
 
     @testset "Symbol" begin
-        for (char, sym) in zip(split("ϕ φ Φ"), split(raw"\phi \varphi \Phi"))
+        test_symbols = [
+            ("ϕ", raw"\phi"),
+            ("φ", raw"\varphi"),
+            ("Φ", raw"\Phi"),
+            # The following test symbols with multiple commands
+            ("ε", raw"\varepsilon"),
+            ("ε", raw"\upepsilon")
+        ]
+
+        for (char, sym) in test_symbols
             test_parse(sym, (:symbol, first(char)))
             @test texparse(char) == texparse(sym)
         end
