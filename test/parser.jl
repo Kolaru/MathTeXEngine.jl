@@ -74,6 +74,7 @@ end
             raw"{a{b{cd}}}",
             (:group, 'a', (:group, 'b', (:group, 'c', 'd')))
         )
+        test_parse(raw"{}", (:space, 0.0))
 
         @test_throws TeXParseError texparse(raw"{v")
         @test_throws TeXParseError texparse(raw"w}")
@@ -142,7 +143,8 @@ end
     end
 
     @testset "Subscript and superscript" begin
-        @test texparse(raw"a^2_3") == texparse("a_3^2")
+        @test texparse(raw"a^2_3") == texparse(raw"a_3^2")
+        @test texparse(raw"^7_b") == texparse(raw"{}^7_b")
     end
 
     @testset "Symbol" begin
