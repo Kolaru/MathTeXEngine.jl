@@ -140,8 +140,11 @@ function _end_group!(stack, p, data)
         TeXParseError("Unexpected '}' at position $(p-1)", stack, p, data))
     group = pop!(stack)
 
+    # Remplace empty groups by a zero-width space
+    if isempty(group.args)
+        group = TeXExpr(:space, 0.0)
     # Remove nestedness for group with a single element
-    if length(group.args) == 1
+    elseif length(group.args) == 1
         group = first(group.args)
     end
 
@@ -264,6 +267,11 @@ actions = Dict(actions...)
 
 context = Automa.CodeGenContext()
 @eval function texparse(data ; showdebug=false)
+    # Allows string to start with _ or ^
+    if !isempty(data) && (data[1] == '_' || data[1] == '^')
+        data = "{}" * data
+    end
+
     $(Automa.generate_init_code(context, machine))
     p_end = p_eof = lastindex(data)
 
@@ -288,7 +296,12 @@ context = Automa.CodeGenContext()
         throw(err)
     end
 
-    return current(stack)
+    final_expr = current(stack)
+    # Never return an empty expression
+    if isempty(final_expr.args)
+        push!(final_expr.args, TeXExpr(:space, 0.0))
+    end
+    return final_expr
 end
 
 @doc """

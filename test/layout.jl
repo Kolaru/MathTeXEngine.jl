@@ -28,6 +28,9 @@ end
         expr = manual_texexpr((:decorated, 'z', 'b', nothing))
         layout = tex_layout(expr, FontFamily())
         @test layout.elements[3] == Space(0)
+
+        @test length(generate_tex_elements(L"a_b^c")) == 3
+        @test length(generate_tex_elements(L"_b^c")) == 2
     end
 
     @testset "Delimited" begin
@@ -68,6 +71,9 @@ end
         @test length(layout.positions) == 2
         @test length(layout.scales) == 2
         test_same_layout(sublayout, layout.elements[2])
+
+        @test isempty(generate_tex_elements(L"{}"))
+        @test isempty(generate_tex_elements(L""))
     end
 
     @testset "Space" begin
