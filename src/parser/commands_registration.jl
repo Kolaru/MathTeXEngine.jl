@@ -140,12 +140,14 @@ end
 
 for (command, symbol) in latex_symbols
     symbol = first(symbol)  # Convert String to Char
+    symbol_expr = TeXExpr(:symbol, [symbol])
     
-    if haskey(command_to_canonical, command) || haskey(symbol_to_canonical, symbol)
-        continue
+    if !haskey(symbol_to_canonical, symbol)
+        symbol_to_canonical[symbol] = symbol_expr
     end
 
-    symbol_expr = TeXExpr(:symbol, [symbol])
-    symbol_to_canonical[symbol] = symbol_expr
-    command_to_canonical[command] = symbol_expr
+    # Separate case for symbols that have multiple valid commands
+    if !haskey(command_to_canonical, command)
+        command_to_canonical[command] = symbol_expr
+    end
 end
