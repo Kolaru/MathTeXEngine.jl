@@ -26,11 +26,11 @@ end
 # code 35, because handles to fonts are C pointer that cannot be fully
 # serialized at compile time
 const _default_fonts = Dict(
-    :regular => joinpath("NewComputerModern", "NewCM10-Regular.otf"),
-    :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
-    :bold => joinpath("NewComputerModern", "NewCM10-Bold.otf"),
-    :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
-    :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
+    :regular => joinpath("ComputerModern", "cmr10.ttf"),
+    :italic => joinpath("ComputerModern", "cmmi10.ttf"),
+    :bold => joinpath("ComputerModern", "cmb10.ttf"),
+    :bolditalic => joinpath("ComputerModern", "cmmib10.ttf"),
+    :math => joinpath("ComputerModern", "cmmi10.ttf")
 )
 
 const _default_font_mapping = Dict(
@@ -69,10 +69,16 @@ struct FontFamily
     fonts::Dict{Symbol, String}
     font_mapping::Dict{Symbol, Symbol}
     font_modifiers::Dict{Symbol, Dict{Symbol, Symbol}}
+    special_chars::Dict{Char, Tuple{String, Char}}
     slant_angle::Float64
 end
 
-FontFamily(fonts) = FontFamily(fonts, _default_font_mapping, _default_font_modifiers, 15)
+FontFamily(fonts) = FontFamily(
+    fonts,
+    _default_font_mapping,
+    _default_font_modifiers,
+    _symbol_to_computer_modern,
+    15)
 FontFamily() = FontFamily(_default_fonts)
 
 """
@@ -81,7 +87,9 @@ FontFamily() = FontFamily(_default_fonts)
 Get the FTFont object representing a font in the given font family. When called
 with a single argument uses the default font family.
 """
-get_font(font_family::FontFamily, fontstyle::Symbol) = load_font(font_family.fonts[fontstyle])
+function get_font(font_family::FontFamily, fontstyle::Symbol)
+    return load_font(font_family.fonts[fontstyle])
+end
 get_font(fontstyle::Symbol) = get_font(FontFamily(), fontstyle)
 
 """
@@ -113,7 +121,7 @@ thickness(font::FTFont) = font.underline_thickness / font.units_per_EM
 
 The thickness of the underline for the given font set.
 """
-thickness(font_family::FontFamily) = thickness(get_font(font_family, :math))
+thickness(font_family::FontFamily) = thickness(get_font(font_family, :regular))
 
 """
     xheight(font::FTFont)

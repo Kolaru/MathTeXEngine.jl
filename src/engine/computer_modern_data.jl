@@ -1,8 +1,8 @@
-# Currently unsupported
-# Probably need to parse the associated .afm files to make this work
-
-_latex_to_bakoma = Dict(
-    raw"\sqrt"                     => ("cmex10", 0x70),
+_latex_to_computer_modern = Dict(
+    # NOTE there are 4 different size for sqrt from 0x70 to 0x73
+    # Maybe we should use them
+    raw"√"                         => ("cmex10", 0x70),
+    raw"⎷"                         => ("cmex10", 0x73),
     raw"\bigcap"                   => ("cmex10", 0x5c),
     raw"\bigcup"                   => ("cmex10", 0x5b),
     raw"\bigodot"                  => ("cmex10", 0x4b),
@@ -13,21 +13,9 @@ _latex_to_bakoma = Dict(
     raw"\bigwedge"                 => ("cmex10", 0x5e),
     raw"\coprod"                   => ("cmex10", 0x61),
     raw"\int"                      => ("cmex10", 0x5a),
-    raw"\langle"                   => ("cmex10", 0xad),
-    raw"\leftangle"                => ("cmex10", 0xad),
-    raw"\leftbrace"                => ("cmex10", 0xa9),
     raw"\oint"                     => ("cmex10", 0x49),
     raw"\prod"                     => ("cmex10", 0x59),
-    raw"\rangle"                   => ("cmex10", 0xae),
-    raw"\rightangle"               => ("cmex10", 0xae),
-    raw"\rightbrace"               => ("cmex10", 0xaa),
     raw"\sum"                      => ("cmex10", 0x58),
-    raw"\widehat"                  => ("cmex10", 0x62),
-    raw"\widetilde"                => ("cmex10", 0x65),
-    raw"\{"                        => ("cmex10", 0xa9),
-    raw"\}"                        => ("cmex10", 0xaa),
-    raw"{"                         => ("cmex10", 0xa9),
-    raw"}"                         => ("cmex10", 0xaa),
 
     raw","                         => ("cmmi10", 0x3b),
     raw"."                         => ("cmmi10", 0x3a),
@@ -37,7 +25,6 @@ _latex_to_bakoma = Dict(
     raw"\alpha"                    => ("cmmi10", 0xae),
     raw"\beta"                     => ("cmmi10", 0xaf),
     raw"\chi"                      => ("cmmi10", 0xc2),
-    raw"\combiningrightarrowabove" => ("cmmi10", 0x7e),
     raw"\delta"                    => ("cmmi10", 0xb1),
     raw"\ell"                      => ("cmmi10", 0x60),
     raw"\epsilon"                  => ("cmmi10", 0xb2),
@@ -79,6 +66,9 @@ _latex_to_bakoma = Dict(
     raw"\xi"                       => ("cmmi10", 0xbb),
     raw"\zeta"                     => ("cmmi10", 0xb3),
 
+       "\\"                        => ("cmsy10", 0x6e),
+    raw"/"                         => ("cmsy10", 0x36),
+
     raw"!"                         => ("cmr10", 0x21),
     raw"%"                         => ("cmr10", 0x25),
     raw"&"                         => ("cmr10", 0x26),
@@ -100,10 +90,9 @@ _latex_to_bakoma = Dict(
     raw"="                         => ("cmr10", 0x3d),
     raw"?"                         => ("cmr10", 0x3f),
     raw"@"                         => ("cmr10", 0x40),
-    raw"["                         => ("cmr10", 0x5b),
-    raw"\#"                        => ("cmr10", 0x23),
-    raw"\$"                        => ("cmr10", 0x24),
-    raw"\%"                        => ("cmr10", 0x25),
+    raw"#"                         => ("cmr10", 0x23),
+    raw"$"                         => ("cmr10", 0x24),
+    raw"%"                         => ("cmr10", 0x25),
     raw"\Delta"                    => ("cmr10", 0xa2),
     raw"\Gamma"                    => ("cmr10", 0xa1),
     raw"\Lambda"                   => ("cmr10", 0xa4),
@@ -115,23 +104,34 @@ _latex_to_bakoma = Dict(
     raw"\Theta"                    => ("cmr10", 0xa3),
     raw"\Upsilon"                  => ("cmr10", 0xa8),
     raw"\Xi"                       => ("cmr10", 0xa5),
-    raw"\circumflexaccent"         => ("cmr10", 0x5e),
-    raw"\combiningacuteaccent"     => ("cmr10", 0xb6),
-    raw"\combiningbreve"           => ("cmr10", 0xb8),
-    raw"\combiningdiaeresis"       => ("cmr10", 0xc4),
-    raw"\combiningdotabove"        => ("cmr10", 0x5f),
-    raw"\combininggraveaccent"     => ("cmr10", 0xb5),
-    raw"\combiningoverline"        => ("cmr10", 0xb9),
-    raw"\combiningtilde"           => ("cmr10", 0x7e),
-    raw"\leftbracket"              => ("cmr10", 0x5b),
-    raw"\leftparen"                => ("cmr10", 0x28),
-    raw"\rightbracket"             => ("cmr10", 0x5d),
-    raw"\rightparen"               => ("cmr10", 0x29),
-    raw"\widebar"                  => ("cmr10", 0xb9),
+
+    raw"\bar"                      => ("cmr10", 0xb9),
+    raw"\hat"                      => ("cmr10", 0x5e),
+    raw"\tilde"                    => ("cmr10", 0x7e),
+    raw"\vec"                      => ("cmmi10", 0x7e),
+    # raw"\combiningacuteaccent"     => ("cmr10", 0xb6),
+    # raw"\combiningbreve"           => ("cmr10", 0xb8),
+    # raw"\combiningdiaeresis"       => ("cmr10", 0xc4),
+    # raw"\combiningdotabove"        => ("cmr10", 0x5f),
+    # raw"\combininggraveaccent"     => ("cmr10", 0xb5),
+    # raw"\widebar"                  => ("cmr10", 0xb9),
+    # raw"\widehat"                  => ("cmex10", 0x62),
+    # raw"\widetilde"                => ("cmex10", 0x65),
+
+    raw"["                         => ("cmr10", 0x5b),
     raw"]"                         => ("cmr10", 0x5d),
+    raw"("                         => ("cmr10", 0x28),
+    raw")"                         => ("cmr10", 0x29),
+    raw"{"                         => ("cmex10", 0xa9),
+    raw"}"                         => ("cmex10", 0xaa),
+    raw"\rceil"                    => ("cmsy10", 0x65),
+    raw"\rfloor"                   => ("cmsy10", 0x63),
+    raw"\langle"                   => ("cmex10", 0xad),
+    raw"\rangle"                   => ("cmex10", 0xae),
 
     raw"*"                         => ("cmsy10", 0xa4),
-    raw"-"                         => ("cmsy10", 0xa1),
+    # This is the math minus and not the dash
+    raw"−"                         => ("cmsy10", 0xa1),
     raw"\Downarrow"                => ("cmsy10", 0x2b),
     raw"\Im"                       => ("cmsy10", 0x3d),
     raw"\Leftarrow"                => ("cmsy10", 0x28),
@@ -147,7 +147,6 @@ _latex_to_bakoma = Dict(
     raw"\approx"                   => ("cmsy10", 0xbc),
     raw"\ast"                      => ("cmsy10", 0xa4),
     raw"\asymp"                    => ("cmsy10", 0xb3),
-    raw"\backslash"                => ("cmsy10", 0x6e),
     raw"\bigcirc"                  => ("cmsy10", 0xb0),
     raw"\bigtriangledown"          => ("cmsy10", 0x35),
     raw"\bigtriangleup"            => ("cmsy10", 0x34),
@@ -158,9 +157,9 @@ _latex_to_bakoma = Dict(
     raw"\circ"                     => ("cmsy10", 0xb1),
     raw"\clubsuit"                 => ("cmsy10", 0x7c),
     raw"\cup"                      => ("cmsy10", 0x5b),
-    raw"\dag"                      => ("cmsy10", 0x79),
+    # raw"\dag"                      => ("cmsy10", 0x79),
+    # raw"\ddag"                     => ("cmsy10", 0x7a),
     raw"\dashv"                    => ("cmsy10", 0x61),
-    raw"\ddag"                     => ("cmsy10", 0x7a),
     raw"\diamond"                  => ("cmsy10", 0xa6),
     raw"\diamondsuit"              => ("cmsy10", 0x7d),
     raw"\div"                      => ("cmsy10", 0xa5),
@@ -174,7 +173,6 @@ _latex_to_bakoma = Dict(
     raw"\heartsuit"                => ("cmsy10", 0x7e),
     raw"\in"                       => ("cmsy10", 0x32),
     raw"\infty"                    => ("cmsy10", 0x31),
-    raw"\lbrace"                   => ("cmsy10", 0x66),
     raw"\lceil"                    => ("cmsy10", 0x64),
     raw"\leftarrow"                => ("cmsy10", 0xc3),
     raw"\leftrightarrow"           => ("cmsy10", 0x24),
@@ -198,14 +196,10 @@ _latex_to_bakoma = Dict(
     raw"\preceq"                   => ("cmsy10", 0xb9),
     raw"\prime"                    => ("cmsy10", 0x30),
     raw"\propto"                   => ("cmsy10", 0x2f),
-    raw"\rbrace"                   => ("cmsy10", 0x67),
-    raw"\rceil"                    => ("cmsy10", 0x65),
-    raw"\rfloor"                   => ("cmsy10", 0x63),
     raw"\rightarrow"               => ("cmsy10", 0x21),
     raw"\searrow"                  => ("cmsy10", 0x26),
     raw"\sim"                      => ("cmsy10", 0xbb),
     raw"\simeq"                    => ("cmsy10", 0x27),
-    raw"\slash"                    => ("cmsy10", 0x36),
     raw"\spadesuit"                => ("cmsy10", 0xc4),
     raw"\sqcap"                    => ("cmsy10", 0x75),
     raw"\sqcup"                    => ("cmsy10", 0x74),
@@ -226,17 +220,22 @@ _latex_to_bakoma = Dict(
     raw"\uplus"                    => ("cmsy10", 0x5d),
     raw"\vdash"                    => ("cmsy10", 0x60),
     raw"\vee"                      => ("cmsy10", 0x5f),
-    raw"\vert"                     => ("cmsy10", 0x6a),
     raw"\wedge"                    => ("cmsy10", 0x5e),
     raw"\wr"                       => ("cmsy10", 0x6f),
-    raw"\|"                        => ("cmsy10", 0x6b),
     raw"|"                         => ("cmsy10", 0x6a),
-    raw"\_"                        => ("cmtt10", 0x5f)
+    raw"_"                         => ("cmtt10", 0x5f)
 )
 
 
-const BakomaSymbolSet = SymbolSet(
-    "Bakoma (Computer Modern)",
-    Dict([sym => TeXChar(Char(code), join("assets/fonts/$font.ttf"))
-          for (sym, (font, code)) in _latex_to_bakoma])
-)
+_symbol_to_computer_modern = Dict{Char, Tuple{String, Char}}()
+
+for (symbol, (fontname, id)) in _latex_to_computer_modern
+    if haskey(latex_symbols, symbol)
+        symbol = only(latex_symbols[symbol])
+    else
+        symbol = only(symbol)
+    end
+    
+    fontpath = joinpath("ComputerModern", "$fontname.ttf")
+    _symbol_to_computer_modern[symbol] = (fontpath, Char(id))
+end

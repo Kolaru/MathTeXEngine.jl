@@ -116,7 +116,7 @@ begin  # Quick test
     fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
     ax = Axis(fig[2, 1])
     ax.aspect = DataAspect()
-    tex = L"\lim_{α →\infty} \gamma A^j = \vec{v}_{(a + \bar{a})_k} + \sqrt{2} x! \quad \mathrm{when} \quad \sqrt{\frac{1-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
+    tex = L"\lim_{L →\infty} \gamma A^j = \vec{v}_{(a + \bar{a})_k} + \sqrt{2T} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
 
     makie_tex!(ax, tex, debug=false, size=300)
     fig

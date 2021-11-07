@@ -152,25 +152,24 @@ function tex_layout(expr, state)
 
             if h > inkheight(sqrt)
                 sqrt = TeXChar('⎷', state, :symbol)
+                h = inkheight(sqrt)
+                y0 = (topinkbound(sqrt) - bottominkbound(sqrt))/2 + xheight(font_family)/2
+            else
+                y0 = bottominkbound(content) - bottominkbound(sqrt) - 0.2
             end
 
-            h = max(inkheight(sqrt), h)
+            lw = thickness(font_family)
 
-            # The root symbol must be manually placed
-            y0 = bottominkbound(content) - bottominkbound(sqrt) - ypad/2
-            y = y0 + bottominkbound(sqrt) + h
+            y = y0 + topinkbound(sqrt) - lw
             xpad = advance(sqrt) - inkwidth(sqrt)
             w =  inkwidth(content) + 2xpad
 
-            lw = thickness(font_family)
             hline = HLine(w, lw)
-            vline = VLine(inkheight(sqrt) - h, lw)
 
             return Group(
-                [sqrt, vline, hline, content],
+                [sqrt, hline, content],
                 Point2f[
                     (0, y0),
-                    (rightinkbound(sqrt) - lw/2, y),
                     (rightinkbound(sqrt) - lw/2, y - lw/2),
                     (advance(sqrt), 0)
                 ]
@@ -183,7 +182,7 @@ function tex_layout(expr, state)
             dxsub = mid - hmid(sub) * shrink
             dxsuper = mid - hmid(super) * shrink
 
-            under_offset = bottominkbound(core) - (ascender(sub) - xheight(sub)/2) * shrink
+            under_offset = bottominkbound(core) - 0.1 - ascender(sub) * shrink
             over_offset = topinkbound(core) - descender(super)
 
             # The leftmost element must have x = 0
@@ -202,7 +201,7 @@ function tex_layout(expr, state)
     catch
         # TODO Better error
         rethrow()
-        @error "Error while processing expr"
+        @error "Error while layouting expr"
     end
 
     @error "Unsupported head $(head) in expr:\n$expr"
