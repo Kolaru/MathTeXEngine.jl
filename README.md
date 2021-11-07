@@ -22,7 +22,7 @@ Positions and scales are given for a font size of `1`. For bigger font size they
 
 The engine should support every construction the parser does (see below).
 
-Currently the only font set supported is New Computer Modern.
+Currently the only font set supported is Computer Modern.
 
 ## Engine examples
 
@@ -31,64 +31,53 @@ Currently the only font set supported is New Computer Modern.
 ```julia
 julia> using MathTeXEngine
 
-julia> using LaTeXStrings
-
 julia> generate_tex_elements(L"\beta_2")
 2-element Vector{Any}:
- (TeXChar 'β' [U+03B2 in NewComputerModern Math - Regular], [0.0, 0.0], 1.0)
- (TeXChar '2' [U+0032 in NewComputerModern - 10 Regular], [0.5580000281333923, -0.20000000298023224], 0.6)
+ (TeXChar 'β' [U+00AF in cmmi10 - Regular], [0.0, 0.0], 1.0)
+ (TeXChar '2' [U+0032 in cmr10 - Regular], [0.56494140625, -0.20000000298023224], 0.6)
 ```
 
-Note that the `LaTeXStrings` package must be loaded for the use of the `L"..."` macro. MathTeXEngine can work with strings directly too.
-
-```julia
-julia> generate_tex_elements(raw"\beta_2")
-2-element Vector{Any}:
- (TeXChar 'β' [U+03B2 in NewComputerModern Math - Regular], [0.0, 0.0], 1.0)
- (TeXChar '2' [U+0032 in NewComputerModern - 10 Regular], [0.5580000281333923, -0.20000000298023224], 0.6)  
-```
-
-The `raw"..."` macro is used to avoid having to repeat backslash, but generate normal strings. Using `LaTeXString` can be useful to convey the information these strings are expected to be parsed as LaTeX.
+The `L"..."` macro is reexported from LaTeXStrings.jl and used to convey the information that we want the given string to be interpreted as LaTeX. Note that since we are using Computer Modern, which is a pre-unicode font family, the characters are distributed across a bunch of different fonts.
 
 Also note that Unicode character can be used directly and are equivalent to their command.
 
 ```julia
-julia> generate_tex_elements(raw"β_2")
+julia> generate_tex_elements(L"β_2")
 2-element Vector{Any}:
- (TeXChar 'β' [U+03B2 in NewComputerModern Math - Regular], [0.0, 0.0], 1.0)
- (TeXChar '2' [U+0032 in NewComputerModern - 10 Regular], [0.5580000281333923, -0.20000000298023224], 0.6)
+ (TeXChar 'β' [U+00AF in cmmi10 - Regular], [0.0, 0.0], 1.0)
+ (TeXChar '2' [U+0032 in cmr10 - Regular], [0.56494140625, -0.20000000298023224], 0.6)
 ```
 
-Using the inline math mode with `$...$` is supported. However, currently, line breaks or line wraps are not supported.
+Using the inline math mode with `$...$` is supported. However, currently, line breaks or line wraps are not.
 
 ```julia
 julia> generate_tex_elements(L"b $β_2$")
 4-element Vector{Any}:
- (TeXChar 'b' [U+0062 in NewComputerModern - 10 Regular], [0.0, 0.0], 1.0)
- (TeXChar ' ' [U+0020 in NewComputerModern - 10 Regular], [0.5559999942779541, 0.0], 1.0)
- (TeXChar 'β' [U+03B2 in NewComputerModern Math - Regular], [0.8889999985694885, 0.0], 1.0)
- (TeXChar '2' [U+0032 in NewComputerModern - 10 Regular], [1.4470000267028809, -0.20000000298023224], 0.6)
+ (TeXChar 'b' [U+0062 in cmr10 - Regular], [0.0, 0.0], 1.0)
+ (TeXChar ' ' [U+0020 in cmr10 - Regular], [0.55517578125, 0.0], 1.0)
+ (TeXChar 'β' [U+00AF in cmmi10 - Regular], [0.88818359375, 0.0], 1.0)
+ (TeXChar '2' [U+0032 in cmr10 - Regular], [1.453125, -0.20000000298023224], 0.6)
 ```
 
 ### VLine and Hline
 
-Some LaTeX construct, mainly square roots and fractions generate additional lines that are not representing a character. The `HLine` or `VLine` object contain all information needed to draw the line correctly.
+Some LaTeX constructs, mainly square roots and fractions generate additional lines that are not representing a character. The `HLine` or `VLine` object contain all information needed to draw the line correctly.
 
 ```julia
 julia> elements = generate_tex_elements(L"\frac{1}{2}")
 3-element Vector{Any}:
- (HLine{Float64}(0.6144999861717224, 0.04), [0.0, 0.19550000131130219], 1.0)
- (TeXChar '1' [U+0031 in NewComputerModern - 10 Regular], [0.1422499716281891, 0.41099998354911804], 1.0)
- (TeXChar '2' [U+0032 in NewComputerModern - 10 Regular], [0.10774999856948853, -0.6859999895095825], 1.0)
+ (HLine{Float64}(0.614990234375, 0.009765625), [0.0, 0.210693359375], 1.0)
+ (TeXChar '1' [U+0031 in cmr10 - Regular], [0.1405029296875, 0.42626953125], 1.0)
+ (TeXChar '2' [U+0032 in cmr10 - Regular], [0.1077880859375, -0.6708984375], 1.0)
 
 julia> hline = elements[1][1]
-HLine{Float64}(0.6144999861717224, 0.04)
+HLine{Float64}(0.614990234375, 0.009765625)
 
 julia> hline.width
-0.6144999861717224
+0.614990234375
 
 julia> hline.thickness
-0.04
+0.009765625
 ```
 
 ### Nested expressions
@@ -98,10 +87,10 @@ A flat list is always returned even if the LaTeX expression is deeply nested.
 ```julia
 julia> generate_tex_elements(L"A_{B_{C_D}}")
 4-element Vector{Any}:
- (TeXChar 'A' [U+0041 in NewComputerModern - 10 Italic], [0.0, 0.0], 1.0)
- (TeXChar 'B' [U+0042 in NewComputerModern - 10 Italic], [0.7429999709129333, -0.20000000298023224], 0.6)
- (TeXChar 'C' [U+0043 in NewComputerModern - 10 Italic], [1.165399968624115, -0.3200000047683716], 0.36)
- (TeXChar 'D' [U+0044 in NewComputerModern - 10 Italic], [1.4231599760055542, -0.3920000058412552], 0.216)
+ (TeXChar 'A' [U+0041 in cmmi10 - Regular], [0.0, 0.0], 1.0)
+ (TeXChar 'B' [U+0042 in cmmi10 - Regular], [0.75, -0.20000000298023224], 0.6)
+ (TeXChar 'C' [U+0043 in cmmi10 - Regular], [1.2046875, -0.3200000047683716], 0.36)
+ (TeXChar 'D' [U+0044 in cmmi10 - Regular], [1.4616796874999998, -0.3920000058412552], 0.216)
 ```
 
 

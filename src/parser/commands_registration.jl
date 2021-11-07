@@ -74,6 +74,7 @@ for symbol in spaced_symbols
 end
 
 # Special case for hyphen that must be replaced by a minus sign
+# TODO Make sure it is not replaced outside of math mode
 symbol_to_canonical['-'] = TeXExpr(:spaced, TeXExpr(:symbol, '−'))
 
 for command in spaced_commands

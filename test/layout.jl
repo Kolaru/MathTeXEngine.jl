@@ -46,12 +46,10 @@ end
         expr = manual_texexpr((:char, 'u'))
         texchar = tex_layout(expr, FontFamily())
         @test isa(texchar, TeXChar)
-        @test texchar.font.style_name == "10 Italic"
 
         expr = manual_texexpr((:font, :rm, 'u'))
         texchar = tex_layout(expr, FontFamily())
         @test isa(texchar, TeXChar)
-        @test texchar.font.style_name == "10 Regular"
     end
 
     @testset "Group" begin

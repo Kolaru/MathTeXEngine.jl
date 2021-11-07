@@ -114,21 +114,36 @@ A MathTeX character with an associated font.
 
 Fields
 ======
-    - char::Char The unicode character represented by this TeXChar.
+    - char::Char The code point of the glyph representing the char.
     - font::FTFont The font that should be used to display this character.
     - slanted::Bool Whether this char is considered italic.
+    - represented_char::Char The char represented by this char.
+        Different from char for non-unicode fonts.
 """
 struct TeXChar <: TeXElement
     char::Char
     font::FTFont
     slanted::Bool
+    represented_char::Char
 end
 
 function TeXChar(char, state::LayoutState, char_type)
-    return TeXChar(char, get_font(state, char_type), is_slanted(state.font_family, char_type))
+    font_family = state.font_family
+
+    if haskey(font_family.special_chars, char)
+        fontpath, id = font_family.special_chars[char]
+        font = load_font(fontpath)
+        return TeXChar(id, font, false, char)
+    end
+
+    return TeXChar(
+        char,
+        get_font(state, char_type),
+        is_slanted(state.font_family, char_type),
+        char)
 end
 
-TeXChar(char::Char, font::FTFont) = TeXChar(char, font, false)
+TeXChar(char::Char, font::FTFont) = TeXChar(char, font, false, char)
 
 for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
@@ -140,7 +155,7 @@ descender(char::TeXChar) = descender(char.font)
 xheight(char::TeXChar) = xheight(char.font)
 
 Base.show(io::IO, tc::TeXChar) =
-    print(io, "TeXChar '$(tc.char)' [U+$(uppercase(string(codepoint(tc.char), base=16, pad=4))) in $(tc.font.family_name) - $(tc.font.style_name)]")
+    print(io, "TeXChar '$(tc.represented_char)' [U+$(uppercase(string(codepoint(tc.char), base=16, pad=4))) in $(tc.font.family_name) - $(tc.font.style_name)]")
 
 
 """
