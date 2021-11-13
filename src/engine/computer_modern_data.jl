@@ -231,9 +231,9 @@ _symbol_to_computer_modern = Dict{Char, Tuple{String, Char}}()
 
 for (symbol, (fontname, id)) in _latex_to_computer_modern
     if haskey(latex_symbols, symbol)
-        symbol = only(latex_symbols[symbol])
+        symbol = latex_symbols[symbol][1]
     else
-        symbol = only(symbol)
+        symbol = symbol[1]
     end
     
     fontpath = joinpath("ComputerModern", "$fontname.ttf")
