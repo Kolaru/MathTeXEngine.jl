@@ -16,7 +16,7 @@ jobs:
       matrix:
         version:
           - '1.6'
-          - '1.5'
+          - '1.3'
         os:
           - ubuntu-latest
         arch:
