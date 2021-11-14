@@ -1,4 +1,13 @@
 """
+Return the y value needed for the element to be vertically centered in the
+middle of the xheight.
+"""
+function y_for_centered(font_family, elem)
+    h = inkheight(elem)
+    return h/2 + xheight(font_family)/2
+end
+
+"""
     tex_layout(mathexpr::TeXExpr, font_family)
 
 Recursively determine the layout of the math expression represented the given
@@ -48,7 +57,7 @@ function tex_layout(expr, state)
                 Point2f[
                     (0, 0),
                     (core_width, -0.2),
-                    (core_width, xheight(core) - 0.5 * descender(super))],
+                    (core_width, 0.8 * xheight(core))],
                 [1, shrink, shrink]
             )
         elseif head == :delimited
@@ -100,7 +109,7 @@ function tex_layout(expr, state)
 
             return Group(
                 [line, numerator, denominator],
-                Point2f[(0,y0), (x1, ytop), (x2, ybottom)]
+                Point2f[(0, y0), (x1, ytop), (x2, ybottom)]
             )
         elseif head == :function
             name = args[1]
@@ -123,7 +132,7 @@ function tex_layout(expr, state)
             return Group(
                 [int, sub, super],
                 Point2f[
-                    (0, h/2 + xheight(font_family)/2),
+                    (0, y_for_centered(font_family, int)),
                     (
                         0.15 - inkwidth(sub)*shrink/2,
                         -h/2 + xheight(font_family)/2 - topinkbound(sub)*shrink - pad
@@ -155,23 +164,22 @@ function tex_layout(expr, state)
                 h = inkheight(sqrt)
                 y0 = (topinkbound(sqrt) - bottominkbound(sqrt))/2 + xheight(font_family)/2
             else
-                y0 = bottominkbound(content) - bottominkbound(sqrt) - 0.2
+                y0 = bottominkbound(content) - bottominkbound(sqrt) - 0.1
             end
 
             lw = thickness(font_family)
 
             y = y0 + topinkbound(sqrt) - lw
-            xpad = advance(sqrt) - inkwidth(sqrt)
-            w =  inkwidth(content) + 2xpad
 
-            hline = HLine(w, lw)
+            hline = HLine(inkwidth(content) + 0.1, lw)
 
             return Group(
-                [sqrt, hline, content],
+                [sqrt, hline, content, Space(1.2)],
                 Point2f[
                     (0, y0),
                     (rightinkbound(sqrt) - lw/2, y - lw/2),
-                    (advance(sqrt), 0)
+                    (rightinkbound(sqrt), 0),
+                    (rightinkbound(content), 0)
                 ]
             )
 
@@ -188,12 +196,20 @@ function tex_layout(expr, state)
             # The leftmost element must have x = 0
             x0 = -min(0, dxsub, dxsuper)
 
+            # Special case to deal with sum symbols and the like that do not
+            # have their baseline properly set in the font
+            if core isa TeXChar
+                y0 = y_for_centered(font_family, core)
+            else
+                y0 = 0.0
+            end
+
             return Group(
                 [core, sub, super],
                 Point2f[
-                    (x0, 0),
-                    (x0 + dxsub, under_offset),
-                    (x0 + dxsuper, over_offset)
+                    (x0, y0),
+                    (x0 + dxsub, y0 + under_offset),
+                    (x0 + dxsuper, y0 + over_offset)
                 ],
                 [1, shrink, shrink]
             )

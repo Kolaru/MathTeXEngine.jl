@@ -23,7 +23,7 @@ function draw_texelement!(ax, line::VLine, position, scale ; size=64)
     xmid, y0 = position
     x0 = xmid - lw
     x1 = xmid + lw
-    y1 = y0 + line.height
+    y1 = y0 + line.height * scale
     points = Point2f[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
     poly!(ax, points .* size, color=:black, shading=false, linewidth=0)
 end
@@ -31,7 +31,7 @@ end
 function draw_texelement!(ax, line::HLine, position, scale ; size=64)
     lw = line.thickness * scale / 2
     x0, ymid = position
-    x1 = x0 + line.width
+    x1 = x0 + line.width * scale
     y0 = ymid - lw
     y1 = ymid + lw
     points = Point2f[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
@@ -116,7 +116,7 @@ begin  # Quick test
     fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
     ax = Axis(fig[2, 1])
     ax.aspect = DataAspect()
-    tex = L"\lim_{L →\infty} \gamma A^j = \vec{v}_{(a + \bar{a})_k} + \sqrt{2T} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
+    tex = L"\lim_{L →\infty} \gamma A^\sqrt{2 + 3 + 2} z^2 = \sum_{k = 1}^N \vec{v}_{(a + \bar{a})_k} + \sqrt{j} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
 
     makie_tex!(ax, tex, debug=false, size=300)
     fig
