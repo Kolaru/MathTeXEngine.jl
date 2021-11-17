@@ -5,7 +5,7 @@ using GeometryBasics
 using LaTeXStrings
 
 import MathTeXEngine: TeXChar, VLine, HLine, leftinkbound, descender, inkwidth,
-    topinkbound, advance, bottominkbound, rightinkbound
+    topinkbound, advance, bottominkbound, rightinkbound, ascender
 
 draw_texelement!(args... ; size=64) = nothing
 
@@ -47,19 +47,22 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=6
     # their position is relative to the baseline, so we need to offset them
     y = position[2] * size
     w = inkwidth(texchar) * size * scale
-    h = topinkbound(texchar) * size * scale
     a = advance(texchar) * size * scale
-    d = bottominkbound(texchar) * size * scale
+    top = topinkbound(texchar) * size * scale
+    bottom = bottominkbound(texchar) * size * scale
     left = leftinkbound(texchar) * size * scale
     right = rightinkbound(texchar) * size * scale
+
+    asc = ascender(texchar) * size * scale
+    desc = descender(texchar) * size * scale
 
     # The space between th origin and the left ink bound
     mesh!(ax,
         Point2f[
-            (x, y + d),
-            (x + left, y + d),
-            (x + left, y + h),
-            (x, y + h)
+            (x, y + bottom),
+            (x + left, y + bottom),
+            (x + left, y + top),
+            (x, y + top)
         ],
         color=RGBA(1, 1, 0, 0.6),
         shading=false
@@ -68,10 +71,10 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=6
     # The advance after the right inkbound
     mesh!(ax,
         Point2f[
-            (x + right, y + d),
-            (x + a, y + d),
-            (x + a, y + h),
-            (x + right, y + h)
+            (x + right, y + bottom),
+            (x + a, y + bottom),
+            (x + a, y + top),
+            (x + right, y + top)
         ],
         color=RGBA(0, 1, 0, 0.3),
         shading=false
@@ -82,8 +85,8 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=6
         Point2f[
             (x + left, y),
             (x + right, y),
-            (x + right, y + d),
-            (x + left, y + d)
+            (x + right, y + bottom),
+            (x + left, y + bottom)
         ],
         color=RGBA(0, 0, 1, 0.3),
         shading=false
@@ -94,30 +97,50 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=6
         Point2f[
             (x + left, y),
             (x + right, y),
-            (x + right, y + h),
-            (x + left, y + h)
+            (x + right, y + top),
+            (x + left, y + top)
         ],
         color=RGBA(1, 0, 0, 0.5),
         shading=false
     )
+
+    # Descender
+    lines!(ax,
+        [x + left, x + a],
+        [y + desc, y + desc],
+        color=:green
+    )
+
+    # Ascender
+    lines!(ax,
+        [x + left, x + a],
+        [y + asc, y + asc],
+        color=:blue
+    )
 end
 
-function makie_tex!(ax, latex::LaTeXString ; debug=false, size=64)
+function makie_tex!(
+        ax, latex::LaTeXString ;
+        debug=false,
+        size=64,
+        position=[0, 0])
+
     for (elem, pos, scale) in generate_tex_elements(latex)
-        draw_texelement!(ax, elem, pos, scale ; size=size)
+        draw_texelement!(ax, elem, pos .+ position, scale ; size=size)
         if debug
-            draw_texelement_helpers!(ax, elem, pos, scale ; size=size)
+            draw_texelement_helpers!(ax, elem, pos .+ position, scale ; size=size)
         end
     end
 end
 
 begin  # Quick test
-    fig = Figure()
+    fig = Figure(resolution=(1800, 600))
     fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
     ax = Axis(fig[2, 1])
     ax.aspect = DataAspect()
     tex = L"\lim_{L →\infty} \gamma A^\sqrt{2 + 3 + 2} z^2 = \sum_{k = 1}^N \vec{v}_{(a + \bar{a})_k} + \sqrt{j} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
 
-    makie_tex!(ax, tex, debug=false, size=300)
+    makie_tex!(ax, tex, debug=true, size=300)
+    makie_tex!(ax, L"\sum x_k y_k", debug=true, size=300, position=(0, -5))
     fig
 end

@@ -150,9 +150,35 @@ for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
 end
 
 advance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
-ascender(char::TeXChar) = ascender(char.font)
-descender(char::TeXChar) = descender(char.font)
 xheight(char::TeXChar) = xheight(char.font)
+
+function ascender(char::TeXChar)
+    # Special cases for symbol fonts
+    if char.font.family_name == "cmsy10"
+        regular_font = load_font(_default_fonts[:regular])
+        return max(topinkbound(char), ascender(regular_font))
+    end
+
+    if char.font.family_name == "cmex10"
+        return topinkbound(char)
+    end
+
+    return ascender(char.font)
+end
+
+function descender(char::TeXChar)
+    # Special cases for symbol fonts
+    if char.font.family_name == "cmsy10"
+        regular_font = load_font(_default_fonts[:regular])
+        return min(bottominkbound(char), descender(regular_font))
+    end
+
+    if char.font.family_name == "cmex10"
+        return bottominkbound(char)
+    end
+
+    return descender(char.font)
+end
 
 Base.show(io::IO, tc::TeXChar) =
     print(io, "TeXChar '$(tc.represented_char)' [U+$(uppercase(string(codepoint(tc.char), base=16, pad=4))) in $(tc.font.family_name) - $(tc.font.style_name)]")

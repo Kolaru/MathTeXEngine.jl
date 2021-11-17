@@ -139,5 +139,3 @@ The height of the letter x in the given font family, i.e. the height of the lett
 without neither ascender nor descender.
 """
 xheight(font_family) = xheight(get_font(font_family, :regular))
-
-
