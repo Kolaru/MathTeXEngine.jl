@@ -28,8 +28,7 @@ function Base.get(d::CanonicalDict, key, default)
 end
 
 
-# Each symbol or command has a unique canonical representation, either
-# as a TeXExpr
+# Each symbol or command has a unique canonical representation
 const symbol_to_canonical = CanonicalDict{Char}()
 const command_to_canonical = CanonicalDict{String}()
 
