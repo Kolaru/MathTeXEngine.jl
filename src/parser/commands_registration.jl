@@ -65,6 +65,8 @@ command_to_canonical[raw"\sqrt"] = TeXExpr(:argument_gatherer, [:sqrt, 1])
 command_to_canonical[raw"\overline"] = TeXExpr(:argument_gatherer, [:overline, 1])
 command_to_canonical[raw"\{"] = TeXExpr(:delimiter, '{')
 command_to_canonical[raw"\}"] = TeXExpr(:delimiter, '}')
+command_to_canonical[raw"\begin"] = TeXExpr(:argument_gatherer, [:begin_env, 1])
+command_to_canonical[raw"\end"] = TeXExpr(:argument_gatherer, [:end_env, 1])
 
 ##
 ## Commands from the commands_data.jl file
