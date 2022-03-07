@@ -148,28 +148,47 @@ function _end_group!(stack, p, data)
         group = first(group.args)
     end
 
-    if requirement(stack) == :argument
-        push_to_current!(stack, group)
+    push_to_current!(stack, group)
 
+    if requirement(stack) == :argument
         command_builder = current(stack)
         head, required_n_args = command_builder.args[1:2]
         args = command_builder.args[3:end]
 
         if required_n_args == length(args)
             pop!(stack)
-            command = TeXExpr(head, args)
-            push_to_current!(stack, command)
+            if head == :begin_env
+                # Transform the content of the argument back to a single string
+                env_name = String(Char.(first(args).args))
+                push!(stack, TeXExpr(:env, Any[env_name]))
+            elseif head == :end_env
+                env_name = String(Char.(args[1].args))
+                current_env_name = current(stack).args[1]
+                env_name != current_env_name && throw(
+                    TeXParseError(
+                        "Found an end for environnement '$env_name', but it is \
+                        not matching the currently open env '$current_env_name'",
+                    stack, p, data))
+                env = pop!(stack)
+                push_to_current!(stack, env)
+            else
+                command = TeXExpr(head, args)
+                push_to_current!(stack, command)
+            end
         end
-    else
-        push_to_current!(stack, group)
     end
 end
 
 function _push_char!(stack, p, data)
-    if current_head(stack) == :skip_char
-        pop!(stack)
-    elseif isvalid(data, p-1)
-        char = data[prevind(data, p)]
+    current_head(stack) == :skip_char && return pop!(stack)
+    !isvalid(data, p-1) && return
+
+    char = data[prevind(data, p)]
+
+    if current_head(stack) == :env_cell && char == '&'
+        push_to_current!(stack, pop!(stack))
+        push!(stack, TeXExpr(:env_cell))
+    else
         push_to_current!(stack, canonical_expr(char))
     end
 end

@@ -25,7 +25,7 @@ relation_commands = split(raw"""
     \preceq     \succeq     \simeq   \mid
     \ll         \gg         \asymp   \parallel
     \subset     \supset     \approx  \bowtie
-    \subseteq   \supseteq   \cong    \Join
+    \subseteq   \supseteq   \cong    \join
     \sqsubset   \sqsupset   \neq     \smile
     \sqsubseteq \sqsupseteq \doteq   \frown
     \in         \ni         \propto  \vdash

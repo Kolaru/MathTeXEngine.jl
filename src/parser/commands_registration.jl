@@ -62,6 +62,7 @@ end
 
 command_to_canonical[raw"\frac"] = TeXExpr(:argument_gatherer, [:frac, 2])
 command_to_canonical[raw"\sqrt"] = TeXExpr(:argument_gatherer, [:sqrt, 1])
+
 command_to_canonical[raw"\begin"] = TeXExpr(:argument_gatherer, [:begin_env, 1])
 command_to_canonical[raw"\end"] = TeXExpr(:argument_gatherer, [:end_env, 1])
 
