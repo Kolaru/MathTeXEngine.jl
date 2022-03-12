@@ -137,7 +137,7 @@ _begin_group!(stack, p, data) = push!(stack, TeXExpr(:group))
 
 function _end_group!(stack, p, data)
     current_head(stack) != :group && throw(
-        TeXParseError("Unexpected '}' at position $(p-1)", stack, p, data))
+        TeXParseError("unexpected '}'", stack, p, data))
     group = pop!(stack)
 
     # Remplace empty groups by a zero-width space
@@ -163,11 +163,16 @@ function _end_group!(stack, p, data)
                 push!(stack, TeXExpr(:env, Any[env_name]))
             elseif head == :end_env
                 env_name = String(Char.(args[1].args))
-                current_env_name = current(stack).args[1]
-                env_name != current_env_name && throw(
+                current(stack).head != :env && throw(
                     TeXParseError(
-                        "Found an end for environnement '$env_name', but it is \
-                        not matching the currently open env '$current_env_name'",
+                        "unexpected end of environnement '$env_name'",
+                    stack, p, data))
+
+                open_env_name = current(stack).args[1]
+                env_name != open_env_name && throw(
+                    TeXParseError(
+                        "found an end for environnement '$env_name', but it is \
+                        not matching the currently open env '$open_env_name'",
                     stack, p, data))
                 env = pop!(stack)
                 push_to_current!(stack, env)
