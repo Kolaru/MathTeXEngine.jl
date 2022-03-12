@@ -16,7 +16,7 @@ function show_state(io::IO, stack, position, data)
     if position > lastindex(data)
         println(io, "after the end of the data")
         println(io, data)
-    else
+    elseif position > 0
         # Compute the index of the char from the byte index
         position_to_id = zeros(Int, lastindex(data))
         id = 0
