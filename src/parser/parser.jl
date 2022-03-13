@@ -160,18 +160,24 @@ function _end_group!(stack, p, data)
                 # Transform the content of the argument back to a single string
                 env_name = String(Char.(first(args).args))
                 push!(stack, TeXExpr(:env, Any[env_name]))
+                push!(stack, TeXExpr(:env_row))
+                push!(stack, TeXExpr(:env_cell))
             elseif head == :end_env
                 env_name = String(Char.(args[1].args))
-                current(stack).head != :env && throw(
+                current(stack).head != :env_cell && throw(
                     TeXParseError(
                         "unexpected end of environnement '$env_name'",
                     stack, p, data))
 
+                cell = pop!(stack)
+                push_to_current!(stack, cell)
+                row = pop!(stack)
+                push_to_current!(stack, row)
                 open_env_name = current(stack).args[1]
                 env_name != open_env_name && throw(
                     TeXParseError(
                         "found an end for environnement '$env_name', but it is \
-                        not matching the currently open env '$open_env_name'",
+                        not matching the currently open env",
                     stack, p, data))
                 env = pop!(stack)
                 push_to_current!(stack, env)
@@ -227,7 +233,10 @@ function _setup_decorated!(stack, p, data)
     end
 end
 
-_begin_command_builder!(stack, p, data) = push!(stack, TeXExpr(:command_builder))
+function _begin_command_builder!(stack, p, data)
+    current_head(stack) == :skip_char && return pop!(stack)
+    push!(stack, TeXExpr(:command_builder))
+end
 
 function _end_command_builder!(stack, p, data)
     if current_head(stack) == :command_builder
@@ -255,6 +264,16 @@ function _end_command_builder!(stack, p, data)
                 TeXParseError("unexpected '\\right' at position $(p-1)",
                 stack, p, data))
             push!(stack, TeXExpr(:right_delimiter))
+        elseif command_name == "\\"
+            current(stack).head != :env_cell && throw(
+                TeXParseError("'\\' for newline is only supported inside env",
+                stack, p, data))
+            current_cell = pop!(stack)
+            push_to_current!(stack, current_cell)
+            current_row = pop!(stack)
+            push_to_current!(stack, current_row)
+            push!(stack, TeXExpr(:env_row))
+            push!(stack, TeXExpr(:env_cell))
         elseif haskey(command_to_canonical, command)
             expr = command_to_canonical[command]
 
@@ -270,7 +289,7 @@ function _end_command_builder!(stack, p, data)
                 stack, p, data))
         end
 
-        if skip_char 
+        if skip_char
             push!(stack, TeXExpr(:skip_char))
         end
     end
