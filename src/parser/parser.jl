@@ -177,8 +177,7 @@ function _end_group!(stack, p, data)
                 open_env_name = current(stack).args[1]
                 env_name != open_env_name && throw(
                     TeXParseError(
-                        "found an end for environnement '$env_name', but it is \
-                        not matching the currently open env",
+                        "found an end for environnement '$env_name', but it is not matching the currently open env",
                     stack, p, data))
                 env = pop!(stack)
                 push_to_current!(stack, env)
