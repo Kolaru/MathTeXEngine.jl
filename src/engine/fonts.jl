@@ -71,6 +71,7 @@ struct FontFamily
     font_modifiers::Dict{Symbol, Dict{Symbol, Symbol}}
     special_chars::Dict{Char, Tuple{String, Char}}
     slant_angle::Float64
+    thickness::Float64
 end
 
 FontFamily(fonts) = FontFamily(
@@ -78,7 +79,8 @@ FontFamily(fonts) = FontFamily(
     _default_font_mapping,
     _default_font_modifiers,
     _symbol_to_computer_modern,
-    15)
+    15,
+    0.0375)
 FontFamily() = FontFamily(_default_fonts)
 
 """
@@ -110,18 +112,11 @@ slant_angle(font_family) = font_family.slant_angle * π / 180
 
 # Few helper functions
 """
-    thickness(font::FTFont)
-
-The thickness of the underline for the given font.
-"""
-thickness(font::FTFont) = font.underline_thickness / font.units_per_EM
-
-"""
     thickness(font::FontFamily)
 
 The thickness of the underline for the given font set.
 """
-thickness(font_family::FontFamily) = thickness(get_font(font_family, :regular))
+thickness(font_family::FontFamily) = font_family.thickness
 
 """
     xheight(font::FTFont)

@@ -177,7 +177,7 @@ function tex_layout(expr, state)
                 [sqrt, hline, content, Space(1.2)],
                 Point2f[
                     (0, y0),
-                    (rightinkbound(sqrt) - lw/2, y - lw/2),
+                    (rightinkbound(sqrt) - lw/2, y + lw/2),
                     (rightinkbound(sqrt), 0),
                     (rightinkbound(content), 0)
                 ]

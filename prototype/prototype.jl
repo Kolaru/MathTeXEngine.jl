@@ -1,3 +1,7 @@
+using Pkg
+
+Pkg.activate("prototype")
+
 using MathTeXEngine
 using CairoMakie
 using Colors
@@ -10,13 +14,15 @@ import MathTeXEngine: TeXChar, VLine, HLine, leftinkbound, descender, inkwidth,
 draw_texelement!(args... ; size=64) = nothing
 
 function draw_texelement!(ax, texchar::TeXChar, position, scale ; size=64)
-    x = (position[1] + leftinkbound(texchar)) * size
-    y = (position[2] + descender(texchar.font) * scale) * size
+    x = position[1] * size
+    y = position[2] * size
     text!(ax, string(texchar.char), font=texchar.font,
         position=Point2f(x, y),
         textsize=size*scale,
         space=:data,
-        markerspace=:data)
+        markerspace=:data,
+        align=(:left, :baseline),
+        offset=(0, 0))
 end
 
 function draw_texelement!(ax, line::VLine, position, scale ; size=64)
@@ -140,9 +146,9 @@ begin  # Quick test
     ax = Axis(fig[2, 1])
     hidedecorations!(ax)
     ax.aspect = DataAspect()
-    tex = L"\lim_{L →\infty} \gamma A^\sqrt{2 + 3 + 2} z^2 = \sum_{k = 1}^N \vec{v}_{(a + \bar{a})_k} + \sqrt{j} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
+    tex = L"\lim_{L →\infty} \gamma A^\sqrt{2 + 3 + 2 + 3 + 2 + 3} z^2 = \sum_{k = 1}^N \vec{v}_{(a + \bar{a})_k} + \sqrt{j} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
 
-    makie_tex!(ax, tex, debug=true, size=64)
+    makie_tex!(ax, tex, debug=false, size=64)
     fig[3, 1] = Label(fig, tex, tellwidth=false, tellheight=false, textsize=40)
     fig
 end
