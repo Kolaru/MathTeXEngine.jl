@@ -15,7 +15,8 @@ function draw_texelement!(ax, texchar::TeXChar, position, scale ; size=64)
     text!(ax, string(texchar.char), font=texchar.font,
         position=Point2f(x, y),
         textsize=size*scale,
-        space=:data)
+        space=:data,
+        markerspace=:data)
 end
 
 function draw_texelement!(ax, line::VLine, position, scale ; size=64)
@@ -25,7 +26,7 @@ function draw_texelement!(ax, line::VLine, position, scale ; size=64)
     x1 = xmid + lw
     y1 = y0 + line.height * scale
     points = Point2f[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
-    poly!(ax, points .* size, color=:black, shading=false, linewidth=0)
+    poly!(ax, points .* size, color=:black, shading=false)
 end
 
 function draw_texelement!(ax, line::HLine, position, scale ; size=64)
@@ -35,7 +36,7 @@ function draw_texelement!(ax, line::HLine, position, scale ; size=64)
     y0 = ymid - lw
     y1 = ymid + lw
     points = Point2f[(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
-    mesh!(ax, points .* size, color=:black, shading=false)
+    poly!(ax, points .* size, color=:black, shading=false)
 end
 
 draw_texelement_helpers!(args... ; size=64) = nothing
@@ -57,7 +58,7 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=6
     desc = descender(texchar) * size * scale
 
     # The space between th origin and the left ink bound
-    mesh!(ax,
+    poly!(ax,
         Point2f[
             (x, y + bottom),
             (x + left, y + bottom),
@@ -69,7 +70,7 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=6
     )
 
     # The advance after the right inkbound
-    mesh!(ax,
+    poly!(ax,
         Point2f[
             (x + right, y + bottom),
             (x + a, y + bottom),
@@ -81,7 +82,7 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=6
     )
 
     # The descender
-    mesh!(ax,
+    poly!(ax,
         Point2f[
             (x + left, y),
             (x + right, y),
@@ -93,7 +94,7 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=6
     )
 
     # The inkbound above the baseline
-    mesh!(ax,
+    poly!(ax,
         Point2f[
             (x + left, y),
             (x + right, y),
@@ -134,13 +135,14 @@ function makie_tex!(
 end
 
 begin  # Quick test
-    fig = Figure(resolution=(1800, 600))
+    fig = Figure(resolution=(1800, 1000))
     fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
     ax = Axis(fig[2, 1])
+    hidedecorations!(ax)
     ax.aspect = DataAspect()
     tex = L"\lim_{L →\infty} \gamma A^\sqrt{2 + 3 + 2} z^2 = \sum_{k = 1}^N \vec{v}_{(a + \bar{a})_k} + \sqrt{j} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
 
-    makie_tex!(ax, tex, debug=true, size=300)
-    makie_tex!(ax, L"\sum x_k y_k", debug=true, size=300, position=(0, -5))
+    makie_tex!(ax, tex, debug=true, size=64)
+    fig[3, 1] = Label(fig, tex, tellwidth=false, tellheight=false, textsize=40)
     fig
 end
