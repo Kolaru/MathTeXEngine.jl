@@ -40,12 +40,12 @@ Return the position of the highest position the ink of the element uses.
 function topinkbound end
 
 """
-    advance(elem::TeXElement)
+    hadvance(elem::TeXElement)
 
 Return the horizontal distance between the origin of the element and the origin of the
 next element to be drawn, without kerning.
 """
-advance(x::TeXElement) = inkwidth(x)
+hadvance(x::TeXElement) = inkwidth(x)
 
 """
     ascender(elem::TeXElement)
@@ -112,6 +112,13 @@ inkheight(x::TeXElement) = topinkbound(x) - bottominkbound(x)
 
 A MathTeX character with an associated font.
 
+TeXChar implement all functions defined for FreeTypeAbstraction.FontExtents
+and can be used instead to get all geometric information about the
+character.
+
+This is especially useful since for fonts that require some adjustement for the
+proper positioning of math symbols.
+
 Fields
 ======
     - char::Char The code point of the glyph representing the char.
@@ -143,13 +150,14 @@ function TeXChar(char, state::LayoutState, char_type)
         char)
 end
 
-TeXChar(char::Char, font::FTFont) = TeXChar(char, font, false, char)
+TeXChar(char::Char, font::FTFont) =
+    TeXChar(char, font, false, char)
 
 for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
     @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
 end
 
-advance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
+hadvance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
 xheight(char::TeXChar) = xheight(char.font)
 
 function ascender(char::TeXChar)
@@ -178,6 +186,13 @@ function descender(char::TeXChar)
     end
 
     return descender(char.font)
+end
+
+function FreeTypeAbstraction.height_insensitive_boundingbox(char::TeXChar, font)
+    return Rect2f(
+        leftinkbound(char), descender(char),
+        inkwidth(char), ascender(char) - descender(char)
+    )
 end
 
 Base.show(io::IO, tc::TeXChar) =
@@ -290,8 +305,8 @@ function topinkbound(g::Group)
     return maximum(tops)
 end
 
-function advance(g::Group)
-    adv = xpositions(g) .+ advance.(g.elements) .* g.scales
+function hadvance(g::Group)
+    adv = xpositions(g) .+ hadvance.(g.elements) .* g.scales
     return maximum(adv)
 end
 

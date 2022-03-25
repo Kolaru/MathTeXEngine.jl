@@ -9,7 +9,8 @@ using GeometryBasics
 using LaTeXStrings
 
 import MathTeXEngine: TeXChar, VLine, HLine, leftinkbound, descender, inkwidth,
-    topinkbound, advance, bottominkbound, rightinkbound, ascender
+    topinkbound, hadvance, bottominkbound, rightinkbound, ascender,
+    height_insensitive_boundingbox
 
 draw_texelement!(args... ; size=64) = nothing
 
@@ -54,14 +55,18 @@ function draw_texelement_helpers!(ax, texchar::TeXChar, position, scale ; size=6
     # their position is relative to the baseline, so we need to offset them
     y = position[2] * size
     w = inkwidth(texchar) * size * scale
-    a = advance(texchar) * size * scale
+    a = hadvance(texchar) * size * scale
     top = topinkbound(texchar) * size * scale
     bottom = bottominkbound(texchar) * size * scale
     left = leftinkbound(texchar) * size * scale
     right = rightinkbound(texchar) * size * scale
 
-    asc = ascender(texchar) * size * scale
-    desc = descender(texchar) * size * scale
+    hbbox = height_insensitive_boundingbox(texchar, nothing)
+    asc = (origin(hbbox)[2] + widths(hbbox)[2]) * size * scale
+    desc = origin(hbbox)[2] * size * scale
+
+    # asc = ascender(texchar) * size * scale
+    # desc = descender(texchar) * size * scale
 
     # The space between th origin and the left ink bound
     poly!(ax,
@@ -146,9 +151,9 @@ begin  # Quick test
     ax = Axis(fig[2, 1])
     hidedecorations!(ax)
     ax.aspect = DataAspect()
-    tex = L"\lim_{L →\infty} \gamma A^\sqrt{2 + 3 + 2 + 3 + 2 + 3} z^2 = \sum_{k = 1}^N \vec{v}_{(a + \bar{a})_k} + \sqrt{j} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
+    tex = L"\sum \lim_{L →\infty} \gamma A^\sqrt{A + j + 2 + 3 + 2 + L} z^2 = \sum_{k = 1}^N \vec{v}_{(a + \bar{a})_k} + \sqrt{j} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
 
-    makie_tex!(ax, tex, debug=false, size=64)
+    makie_tex!(ax, tex, debug=true, size=64)
     fig[3, 1] = Label(fig, tex, tellwidth=false, tellheight=false, textsize=40)
     fig
 end

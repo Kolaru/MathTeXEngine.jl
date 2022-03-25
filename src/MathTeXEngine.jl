@@ -7,14 +7,16 @@ using Automa
 using FreeTypeAbstraction
 using LaTeXStrings
 
-import Automa.RegExp: @re_str
-import DataStructures: Stack
+using Automa.RegExp: @re_str
+using DataStructures: Stack
+using GeometryBasics: Point2f, Rect2f
+using REPL.REPLCompletions: latex_symbols
+using RelocatableFolders
+
 import FreeTypeAbstraction:
     ascender, boundingbox, descender, get_extent, hadvance, inkheight, inkwidth,
-    leftinkbound, rightinkbound, topinkbound, bottominkbound
-import GeometryBasics: Point2f
-import REPL.REPLCompletions: latex_symbols
-import RelocatableFolders
+    height_insensitive_boundingbox, leftinkbound, rightinkbound,
+    topinkbound, bottominkbound
 
 const re = Automa.RegExp
 
