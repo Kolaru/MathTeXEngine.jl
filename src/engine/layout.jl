@@ -50,7 +50,7 @@ function tex_layout(expr, state)
         elseif head == :decorated
             core, sub, super = tex_layout.(args, state)
             
-            core_width = advance(core)
+            core_width = hadvance(core)
 
             return Group(
                 [core, sub, super],
@@ -69,7 +69,7 @@ function tex_layout(expr, state)
             right_scale = max(1, height / inkheight(right))
             scales = [left_scale, 1, right_scale]
                 
-            dxs = advance.(elements) .* scales
+            dxs = hadvance.(elements) .* scales
             xs = [0, cumsum(dxs[1:end-1])...]
 
             # TODO Height calculation for the parenthesis looks wrong
@@ -177,7 +177,7 @@ function tex_layout(expr, state)
                 [sqrt, hline, content, Space(1.2)],
                 Point2f[
                     (0, y0),
-                    (rightinkbound(sqrt) - lw/2, y - lw/2),
+                    (rightinkbound(sqrt) - lw/2, y + lw/2),
                     (rightinkbound(sqrt), 0),
                     (rightinkbound(content), 0)
                 ]
@@ -231,7 +231,7 @@ tex_layout(::Nothing, state) = Space(0)
 Layout the elements horizontally, like normal text.
 """
 function horizontal_layout(elements)
-    dxs = advance.(elements)
+    dxs = hadvance.(elements)
     xs = [0, cumsum(dxs[1:end-1])...]
 
     return Group(elements, Point2f.(xs, 0))
