@@ -160,6 +160,10 @@ function _end_group!(stack, p, data)
             if head == :begin_env
                 # Transform the content of the argument back to a single string
                 env_name = String(Char.(first(args).args))
+                !is_supported(env_name) && throw(
+                    TeXParseError(
+                        "env '$env_name' is not supported",
+                        stack, p, data))
                 push!(stack, TeXExpr(:env, Any[env_name]))
                 push!(stack, TeXExpr(:env_row))
                 push!(stack, TeXExpr(:env_cell))
@@ -168,7 +172,7 @@ function _end_group!(stack, p, data)
                 current(stack).head != :env_cell && throw(
                     TeXParseError(
                         "unexpected end of environnement '$env_name'",
-                    stack, p, data))
+                        stack, p, data))
 
                 cell = pop!(stack)
                 push_to_current!(stack, cell)
