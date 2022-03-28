@@ -182,7 +182,24 @@ function _end_group!(stack, p, data)
                     TeXParseError(
                         "found an end for environnement '$env_name', but it is not matching the currently open env",
                     stack, p, data))
-                env = pop!(stack)
+
+                # Make a matrix of the arguments
+                env_data = pop!(stack)
+                rows = env_data.args[2:end]
+                n_cols = maximum([length(row.args) for row in rows])
+                matrix = fill(TeXExpr(:space, 0), length(rows), n_cols)
+                for (i, row) in enumerate(rows)
+                    for (j, cell) in enumerate(row.args)
+                        # Remove the :env_cell wrapper
+                        if length(cell.args) == 1
+                            matrix[i, j] = first(cell.args)
+                        else
+                            matrix[i, j] = TeXExpr(:group, cell.args)
+                        end
+                    end
+                end
+
+                env = TeXExpr(:env, [env_name, matrix])
                 push_to_current!(stack, env)
             else
                 command = TeXExpr(head, args)
