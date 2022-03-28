@@ -51,6 +51,8 @@ function get_symbol_char(command)
     return first(latex_symbols[command])
 end
 
+is_supported(env) = env in supported_env
+
 # Numbers
 for char in join(0:9)
     symbol_to_canonical[char] = TeXExpr(:digit, char)
