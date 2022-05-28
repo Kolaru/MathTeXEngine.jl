@@ -26,7 +26,16 @@ function tex_layout(expr, state)
     try
         if head in [:char, :delimiter, :digit, :punctuation, :symbol]
             char = args[1]
-            return TeXChar(char, state, head)
+            texchar = TeXChar(char, state, head)
+
+            if char == '°'
+                return Group(
+                    [texchar],
+                    [Point2f(-0.2, 0)],
+                    [1]
+                )
+            end
+            return texchar
         elseif head == :combining_accent
             accent, core = tex_layout.(args, state)
 
