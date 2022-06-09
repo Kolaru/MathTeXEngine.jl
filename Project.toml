@@ -15,7 +15,7 @@ RelocatableFolders = "05181044-ff0b-4ac5-8273-598c1e38db00"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-AbstractTrees = "0.3"
+AbstractTrees = "0.3, 0.4"
 Automa = "0.8"
 DataStructures = "0.18"
 FreeTypeAbstraction = "0.9"
