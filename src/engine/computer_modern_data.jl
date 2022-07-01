@@ -67,7 +67,6 @@ _latex_to_computer_modern = Dict(
     raw"\zeta"                     => ("cmmi10", 0xb3),
 
        "\\"                        => ("cmsy10", 0x6e),
-    raw"/"                         => ("cmsy10", 0x36),
 
     raw"!"                         => ("cmr10", 0x21),
     raw"%"                         => ("cmr10", 0x25),
