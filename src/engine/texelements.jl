@@ -121,14 +121,15 @@ proper positioning of math symbols.
 
 Fields
 ======
-    - char::Char The code point of the glyph representing the char.
+    - glyph_id::Culong The ID of the glyph representing the char in
+        the associated font.
     - font::FTFont The font that should be used to display this character.
     - slanted::Bool Whether this char is considered italic.
     - represented_char::Char The char represented by this char.
-        Different from char for non-unicode fonts.
+        Different from char for in some cases.
 """
 struct TeXChar <: TeXElement
-    char::Char
+    glyph_id::Culong
     font::FTFont
     slanted::Bool
     represented_char::Char
@@ -143,9 +144,11 @@ function TeXChar(char, state::LayoutState, char_type)
         return TeXChar(id, font, false, char)
     end
 
+    font = get_font(state, char_type)
+
     return TeXChar(
-        char,
-        get_font(state, char_type),
+        glyph_index(font, char),
+        font,
         is_slanted(state.font_family, char_type),
         char)
 end
@@ -154,10 +157,11 @@ TeXChar(char::Char, font::FTFont) =
     TeXChar(char, font, false, char)
 
 for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
-    @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
+    @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.glyph_id))
 end
 
-hadvance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
+glyph_index(char::TeXChar) = char.glyph_id
+hadvance(char::TeXChar) = hadvance(get_extent(char.font, char.glyph_id))
 xheight(char::TeXChar) = xheight(char.font)
 
 function ascender(char::TeXChar)
@@ -196,7 +200,7 @@ function FreeTypeAbstraction.height_insensitive_boundingbox(char::TeXChar, font)
 end
 
 Base.show(io::IO, tc::TeXChar) =
-    print(io, "TeXChar '$(tc.represented_char)' [U+$(uppercase(string(codepoint(tc.char), base=16, pad=4))) in $(tc.font.family_name) - $(tc.font.style_name)]")
+    print(io, "TeXChar '$(tc.represented_char)' [0x$(string(tc.glyph_id, base=16, pad=4)) in $(tc.font.family_name) - $(tc.font.style_name)]")
 
 
 """

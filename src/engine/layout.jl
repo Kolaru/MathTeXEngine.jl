@@ -129,19 +129,14 @@ function tex_layout(expr, state)
             return horizontal_layout(elements)
         elseif head == :integral
             pad = 0.1
-            sub, super = tex_layout.(args[2:3], state)
+            int, sub, super = tex_layout.(args, state)
 
-            # Always use ComputerModern fallback for the integral sign
-            # as the Unicode LaTeX approach requires to use glyph variant
-            # which is unlikely to be supported by backends
-            intfont = load_font(joinpath("ComputerModern", "cmex10.ttf"))
-            int = TeXChar(Char(0x5a), intfont)
             h = inkheight(int)
 
             return Group(
                 [int, sub, super],
                 Point2f[
-                    (0, y_for_centered(font_family, int)),
+                    (0, 0),
                     (
                         0.15 - inkwidth(sub)*shrink/2,
                         -h/2 + xheight(font_family)/2 - topinkbound(sub)*shrink - pad
