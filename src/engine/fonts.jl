@@ -94,7 +94,7 @@ const default_font_families = Dict(
         _default_font_mapping,
         _default_font_modifiers,
         _symbol_to_new_computer_modern,
-        15,
+        13,
         0.0375),
     "ComputerModern" => FontFamily(
         _computer_modern_fonts,
@@ -141,18 +141,9 @@ The thickness of the underline for the given font set.
 thickness(font_family::FontFamily) = font_family.thickness
 
 """
-    xheight(font::FTFont)
-
-The height of the letter x in the given font, i.e. the height of the letters
-without neither ascender nor descender.
-"""
-xheight(font::FTFont) = inkheight(TeXChar('x', font))
-
-
-"""
     xheight(font::FontFamily)
 
 The height of the letter x in the given font family, i.e. the height of the letters
 without neither ascender nor descender.
 """
-xheight(font_family) = xheight(get_font(font_family, :regular))
+xheight(font_family) = inkheight(TeXChar('x', LayoutState(font_family), :text))

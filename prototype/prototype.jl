@@ -17,7 +17,8 @@ draw_texelement!(args... ; size=64) = nothing
 function draw_texelement!(ax, texchar::TeXChar, position, scale ; size=64)
     x = position[1] * size
     y = position[2] * size
-    text!(ax, string(texchar.char), font=texchar.font,
+    # TODO This doesn't make sense anymore
+    text!(ax, string(Char(texchar.represented_char)), font=texchar.font,
         position=Point2f(x, y),
         textsize=size*scale,
         space=:data,
@@ -151,7 +152,12 @@ begin  # Quick test
     ax = Axis(fig[2, 1])
     hidedecorations!(ax)
     ax.aspect = DataAspect()
-    tex = L"3\degree \partial \sum \lim_{L →\infty} \gamma A^\sqrt{A + j + 2 + 3 + 2 + L} z^2 = \sum_{k = 1}^N \vec{v}_{(a + \bar{a})_k} + \sqrt{j} x! \quad \mathrm{when} \quad \sqrt{\frac{\Omega-2}{4+a+x}} < \int_{0}^{2π} |\sin(\mu x)| dx"
+    tex = L"\nabla 3\degree \partial L^3 \sum \lim_{L →\infty}
+            \varphi \phi \varpi \pi \varepsilon \epsilon
+            ℝ^\sqrt{A + j + 2 + 3} z^2 = \sum_{k = 1}^N
+            \vec{v}_{(a' + \bar{a})_k} + \sqrt{T} x! \quad \mathrm{when} \quad
+            \left[ \sqrt{\frac{\Omega-2}{a \langle c^\dagger \rangle b}} \right]^3_3 
+            < \int_{0}^{2π} |\sin(\mu x)| dx"
 
     makie_tex!(ax, tex, debug=true, size=64)
     fig[3, 1] = Label(fig, tex, tellwidth=false, tellheight=false, textsize=40)
