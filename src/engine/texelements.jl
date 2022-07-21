@@ -176,13 +176,13 @@ hadvance(char::TeXChar) = hadvance(get_extent(char.font, char.glyph_id))
 xheight(char::TeXChar) = xheight(char.font_family)
 
 function ascender(char::TeXChar)
-    regular_font = get_font(char.font_family, :regular)
-    return max(ascender(regular_font), topinkbound(char))
+    math_font = get_font(char.font_family, :math)
+    return max(ascender(math_font), topinkbound(char))
 end
 
 function descender(char::TeXChar)
-    regular_font = get_font(char.font_family, :regular)
-    return min(descender(regular_font), bottominkbound(char))
+    math_font = get_font(char.font_family, :regular)
+    return min(descender(math_font), bottominkbound(char))
 end
 
 function FreeTypeAbstraction.height_insensitive_boundingbox(char::TeXChar, font)
