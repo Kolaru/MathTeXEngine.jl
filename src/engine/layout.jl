@@ -56,7 +56,7 @@ function tex_layout(expr, state)
                 [core, sub, super],
                 Point2f[
                     (0, 0),
-                    (rightinkwidht(core) + 0.1, -0.2),
+                    (rightinkbound(core) + 0.1, -0.2),
                     (rightinkbound(core) + 0.1, 0.9 * xheight(core))],
                 [1, shrink, shrink]
             )
