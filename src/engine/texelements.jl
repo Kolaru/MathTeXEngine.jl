@@ -121,71 +121,68 @@ proper positioning of math symbols.
 
 Fields
 ======
-    - char::Char The code point of the glyph representing the char.
+    - glyph_id::Culong The ID of the glyph representing the char in
+        the associated font.
     - font::FTFont The font that should be used to display this character.
+    - font_family::FontFamily The font family of the character.
     - slanted::Bool Whether this char is considered italic.
     - represented_char::Char The char represented by this char.
-        Different from char for non-unicode fonts.
+        Different from char for in some cases.
 """
 struct TeXChar <: TeXElement
-    char::Char
+    glyph_id::Culong
     font::FTFont
+    font_family::FontFamily
     slanted::Bool
     represented_char::Char
 end
 
-function TeXChar(char, state::LayoutState, char_type)
+function TeXChar(char::Char, state::LayoutState, char_type)
     font_family = state.font_family
 
     if haskey(font_family.special_chars, char)
         fontpath, id = font_family.special_chars[char]
         font = load_font(fontpath)
-        return TeXChar(id, font, false, char)
+        return TeXChar(id, font, font_family, false, char)
     end
 
+    font = get_font(state, char_type)
+
     return TeXChar(
-        char,
-        get_font(state, char_type),
+        glyph_index(font, char),
+        font,
+        font_family,
         is_slanted(state.font_family, char_type),
         char)
 end
 
-TeXChar(char::Char, font::FTFont) =
-    TeXChar(char, font, false, char)
-
-for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
-    @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.char))
+function TeXChar(name::AbstractString, state::LayoutState, char_type ; represented='?')
+    font_family = state.font_family
+    font = get_font(state, char_type)
+    return TeXChar(
+        glyph_index(font, name),
+        font,
+        font_family,
+        is_slanted(state.font_family, char_type),
+        represented)
 end
 
-hadvance(char::TeXChar) = hadvance(get_extent(char.font, char.char))
-xheight(char::TeXChar) = xheight(char.font)
+for inkfunc in (:leftinkbound, :rightinkbound, :bottominkbound, :topinkbound)
+    @eval $inkfunc(char::TeXChar) = $inkfunc(get_extent(char.font, char.glyph_id))
+end
+
+glyph_index(char::TeXChar) = char.glyph_id
+hadvance(char::TeXChar) = hadvance(get_extent(char.font, char.glyph_id))
+xheight(char::TeXChar) = xheight(char.font_family)
 
 function ascender(char::TeXChar)
-    # Special cases for symbol fonts
-    if char.font.family_name == "cmsy10"
-        regular_font = load_font(_default_fonts[:regular])
-        return max(topinkbound(char), ascender(regular_font))
-    end
-
-    if char.font.family_name == "cmex10"
-        return topinkbound(char)
-    end
-
-    return ascender(char.font)
+    math_font = get_font(char.font_family, :math)
+    return max(ascender(math_font), topinkbound(char))
 end
 
 function descender(char::TeXChar)
-    # Special cases for symbol fonts
-    if char.font.family_name == "cmsy10"
-        regular_font = load_font(_default_fonts[:regular])
-        return min(bottominkbound(char), descender(regular_font))
-    end
-
-    if char.font.family_name == "cmex10"
-        return bottominkbound(char)
-    end
-
-    return descender(char.font)
+    math_font = get_font(char.font_family, :regular)
+    return min(descender(math_font), bottominkbound(char))
 end
 
 function FreeTypeAbstraction.height_insensitive_boundingbox(char::TeXChar, font)
@@ -196,7 +193,7 @@ function FreeTypeAbstraction.height_insensitive_boundingbox(char::TeXChar, font)
 end
 
 Base.show(io::IO, tc::TeXChar) =
-    print(io, "TeXChar '$(tc.represented_char)' [U+$(uppercase(string(codepoint(tc.char), base=16, pad=4))) in $(tc.font.family_name) - $(tc.font.style_name)]")
+    print(io, "TeXChar '$(tc.represented_char)' [index $(tc.glyph_id) in $(tc.font.family_name) - $(tc.font.style_name)]")
 
 
 """

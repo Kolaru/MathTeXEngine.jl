@@ -8,7 +8,7 @@ import MathTeXEngine: TeXParseError
 
 import MathTeXEngine: tex_layout, generate_tex_elements
 import MathTeXEngine: Space, TeXElement
-import MathTeXEngine: _default_fonts, FontFamily, load_font
+import MathTeXEngine: _new_computer_modern_fonts, FontFamily, load_font
 import MathTeXEngine: inkheight, inkwidth
 
 include("parser.jl")

@@ -14,7 +14,8 @@ using REPL.REPLCompletions: latex_symbols
 using RelocatableFolders
 
 import FreeTypeAbstraction:
-    ascender, boundingbox, descender, get_extent, hadvance, inkheight, inkwidth,
+    ascender, boundingbox, descender, get_extent, glyph_index,
+    hadvance, inkheight, inkwidth,
     height_insensitive_boundingbox, leftinkbound, rightinkbound,
     topinkbound, bottominkbound
 
@@ -23,6 +24,7 @@ const re = Automa.RegExp
 export TeXExpr, texparse
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
 export get_font, get_fontpath
+export glyph_index
 
 # Reexport from LaTeXStrings
 export @L_str
@@ -33,6 +35,7 @@ include("parser/commands_registration.jl")
 include("parser/parser.jl")
 
 include("engine/computer_modern_data.jl")
+include("engine/new_computer_modern_data.jl")
 include("engine/fonts.jl")
 include("engine/layout_context.jl")
 include("engine/texelements.jl")

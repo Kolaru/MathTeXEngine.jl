@@ -27,14 +27,6 @@ function tex_layout(expr, state)
         if head in [:char, :delimiter, :digit, :punctuation, :symbol]
             char = args[1]
             texchar = TeXChar(char, state, head)
-
-            if char == '°'
-                return Group(
-                    [texchar],
-                    [Point2f(-0.2, 0)],
-                    [1]
-                )
-            end
             return texchar
         elseif head == :combining_accent
             accent, core = tex_layout.(args, state)
@@ -52,21 +44,20 @@ function tex_layout(expr, state)
                 [core, accent],
                 Point2f[
                     (0, 0),
-                    (x + hmid(core) - hmid(accent), y)
+                    (x + hmid(core) - hmid(accent), 0)
                 ],
                 [1, 1]
             )
         elseif head == :decorated
             core, sub, super = tex_layout.(args, state)
-            
-            core_width = hadvance(core)
 
+            # Should be a bit smarter for slanted font
             return Group(
                 [core, sub, super],
                 Point2f[
                     (0, 0),
-                    (core_width, -0.2),
-                    (core_width, 0.8 * xheight(core))],
+                    (rightinkbound(core) + 0.1, -0.2),
+                    (rightinkbound(core) + 0.1, 0.9 * xheight(core))],
                 [1, shrink, shrink]
             )
         elseif head == :delimited
@@ -129,26 +120,19 @@ function tex_layout(expr, state)
             return horizontal_layout(elements)
         elseif head == :integral
             pad = 0.1
-            sub, super = tex_layout.(args[2:3], state)
-
-            # Always use ComputerModern fallback for the integral sign
-            # as the Unicode LaTeX approach requires to use glyph variant
-            # which is unlikely to be supported by backends
-            intfont = load_font(joinpath("ComputerModern", "cmex10.ttf"))
-            int = TeXChar(Char(0x5a), intfont)
-            h = inkheight(int)
+            int, sub, super = tex_layout.(args, state)
 
             return Group(
                 [int, sub, super],
                 Point2f[
-                    (0, y_for_centered(font_family, int)),
+                    (0, 0),
                     (
                         0.15 - inkwidth(sub)*shrink/2,
-                        -h/2 + xheight(font_family)/2 - topinkbound(sub)*shrink - pad
+                        bottominkbound(int) - topinkbound(sub)*shrink - pad
                     ),
                     (
                         0.85 - inkwidth(super)*shrink/2,
-                        h/2 + xheight(font_family)/2 + pad
+                        topinkbound(int) + pad
                     )
                 ],
                 [1, shrink, shrink]
@@ -160,27 +144,24 @@ function tex_layout(expr, state)
             return horizontal_layout([Space(0.2), sym, Space(0.2)])
         elseif head == :sqrt
             content = tex_layout(args[1], state)
-            sqrt = TeXChar('√', state, :symbol)
-
-            relpad = 0.15
-
             h = inkheight(content)
-            ypad = relpad * h
-            h += 2ypad
+            sqrt = nothing
 
-            if h > inkheight(sqrt)
-                sqrt = TeXChar('⎷', state, :symbol)
-                h = inkheight(sqrt)
-                y0 = (topinkbound(sqrt) - bottominkbound(sqrt))/2 + xheight(font_family)/2
-            else
-                y0 = bottominkbound(content) - bottominkbound(sqrt) - 0.1
+            for name in ["radical.v1", "radical.v2", "radical.v3", "radical.v4"]
+                sqrt = TeXChar(name, state, :symbol ; represented = '√')
+                if inkheight(sqrt) >= 1.05h
+                    pad = (inkheight(sqrt) - 1.05h) / 2
+                    break
+                end
             end
 
-            lw = thickness(font_family)
+            h = inkheight(sqrt)
 
+            lw = thickness(font_family)
+            y0 = bottominkbound(content) - bottominkbound(sqrt) - pad
             y = y0 + topinkbound(sqrt) - lw
 
-            hline = HLine(inkwidth(content) + 0.1, lw)
+            hline = HLine(inkwidth(content) + pad, lw)
 
             return Group(
                 [sqrt, hline, content, Space(1.2)],
@@ -204,14 +185,7 @@ function tex_layout(expr, state)
 
             # The leftmost element must have x = 0
             x0 = -min(0, dxsub, dxsuper)
-
-            # Special case to deal with sum symbols and the like that do not
-            # have their baseline properly set in the font
-            if core isa TeXChar
-                y0 = y_for_centered(font_family, core)
-            else
-                y0 = 0.0
-            end
+            y0 = 0.0
 
             return Group(
                 [core, sub, super],

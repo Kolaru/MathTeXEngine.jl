@@ -228,9 +228,9 @@ _latex_to_computer_modern = Dict(
 )
 
 
-_symbol_to_computer_modern = Dict{Char, Tuple{String, Char}}()
+_symbol_to_computer_modern = Dict{Char, Tuple{String, Int}}()
 
-for (symbol, (fontname, id)) in _latex_to_computer_modern
+for (symbol, (fontname, glyph_id)) in _latex_to_computer_modern
     if haskey(latex_symbols, symbol)
         symbol = latex_symbols[symbol][1]
     else
@@ -238,5 +238,5 @@ for (symbol, (fontname, id)) in _latex_to_computer_modern
     end
     
     fontpath = joinpath("ComputerModern", "$fontname.ttf")
-    _symbol_to_computer_modern[symbol] = (fontpath, Char(id))
+    _symbol_to_computer_modern[symbol] = (fontpath, glyph_id)
 end

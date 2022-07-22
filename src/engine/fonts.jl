@@ -25,7 +25,15 @@ end
 # Loading the font directly here lead to FreeTypeAbstraction to fail with error
 # code 35, because handles to fonts are C pointer that cannot be fully
 # serialized at compile time
-const _default_fonts = Dict(
+const _new_computer_modern_fonts = Dict(
+    :regular => joinpath("NewComputerModern", "NewCMMath-Regular.otf"),
+    :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
+    :bold => joinpath("NewComputerModern", "NewCM10-Bold.otf"),
+    :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
+    :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
+)
+
+const _computer_modern_fonts = Dict(
     :regular => joinpath("ComputerModern", "cmr10.ttf"),
     :italic => joinpath("ComputerModern", "cmmi10.ttf"),
     :bold => joinpath("ComputerModern", "cmb10.ttf"),
@@ -69,19 +77,33 @@ struct FontFamily
     fonts::Dict{Symbol, String}
     font_mapping::Dict{Symbol, Symbol}
     font_modifiers::Dict{Symbol, Dict{Symbol, Symbol}}
-    special_chars::Dict{Char, Tuple{String, Char}}
+    special_chars::Dict{Char, Tuple{String, Int}}
     slant_angle::Float64
     thickness::Float64
 end
 
-FontFamily(fonts) = FontFamily(
-    fonts,
-    _default_font_mapping,
-    _default_font_modifiers,
-    _symbol_to_computer_modern,
-    15,
-    0.0375)
-FontFamily() = FontFamily(_default_fonts)
+FontFamily() = FontFamily("NewComputerModern")
+FontFamily(fontname) = default_font_families[fontname]
+
+# These two fonts internals are very different, despite their similar names
+# We only try to fully support NewComputerModern, the other is here as it may
+# sometime provide quickfix solution to bug
+const default_font_families = Dict(
+    "NewComputerModern" => FontFamily(
+        _new_computer_modern_fonts,
+        _default_font_mapping,
+        _default_font_modifiers,
+        _symbol_to_new_computer_modern,
+        13,
+        0.0375),
+    "ComputerModern" => FontFamily(
+        _computer_modern_fonts,
+        _default_font_mapping,
+        _default_font_modifiers,
+        _symbol_to_computer_modern,
+        15,
+        0.0375)
+)
 
 """
     get_font([font_family=FontFamily()], fontstyle)
@@ -119,18 +141,9 @@ The thickness of the underline for the given font set.
 thickness(font_family::FontFamily) = font_family.thickness
 
 """
-    xheight(font::FTFont)
-
-The height of the letter x in the given font, i.e. the height of the letters
-without neither ascender nor descender.
-"""
-xheight(font::FTFont) = inkheight(TeXChar('x', font))
-
-
-"""
     xheight(font::FontFamily)
 
 The height of the letter x in the given font family, i.e. the height of the letters
 without neither ascender nor descender.
 """
-xheight(font_family) = xheight(get_font(font_family, :regular))
+xheight(font_family) = inkheight(TeXChar('x', LayoutState(font_family), :text))
