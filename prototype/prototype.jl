@@ -154,7 +154,7 @@ begin  # Quick test
     ax.aspect = DataAspect()
     tex = L"\nabla 3\degree \partial L^3 \sum \lim_{L →\infty}
             \varphi \phi \varpi \pi \varepsilon \epsilon
-            ℝ^\sqrt{A + j + 2 + 3} z^2 = \sum_{k = 1}^N
+            ℝ^\sqrt{A + j + 2 + 3} |x^2|^3 = \sum_{k = 1}^N
             \vec{v}_{(a' + \bar{a})_k} + \sqrt{T} x! \quad \mathrm{when} \quad
             \left[ \sqrt{\frac{\Omega-2}{a \langle c^\dagger \rangle b}} \right]^3_3 
             < \int_{0}^{2π} |\sin(\mu x)| dx"

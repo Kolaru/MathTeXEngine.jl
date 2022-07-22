@@ -26,7 +26,7 @@ end
 # code 35, because handles to fonts are C pointer that cannot be fully
 # serialized at compile time
 const _new_computer_modern_fonts = Dict(
-    :regular => joinpath("NewComputerModern", "NewCM10-Regular.otf"),
+    :regular => joinpath("NewComputerModern", "NewCMMath-Regular.otf"),
     :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
     :bold => joinpath("NewComputerModern", "NewCM10-Bold.otf"),
     :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
