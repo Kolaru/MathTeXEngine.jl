@@ -132,10 +132,10 @@ for name in font_names
     command = "\\math$name"
     command_to_canonical[command] = TeXExpr(:argument_gatherer, [:font, 2, Symbol(name)])
     command = "\\text$name"
-    command_to_canonical[command] = TeXExpr(:argument_gatherer, [:font, 2, Symbol(name)])
+    command_to_canonical[command] = TeXExpr(:argument_gatherer, [:text, 2, Symbol(name)])
 end
 command = "\\text"
-command_to_canonical[command] = TeXExpr(:argument_gatherer, [:font, 2, :rm])
+command_to_canonical[command] = TeXExpr(:argument_gatherer, [:text, 2, :rm])
 
 ##
 ## Default behavior
