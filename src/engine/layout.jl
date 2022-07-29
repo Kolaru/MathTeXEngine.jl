@@ -83,7 +83,7 @@ function tex_layout(expr, state)
                 ],
                 scales
             )
-        elseif head == :font
+        elseif head == :font || head == :text
             modifier, content = args
             return tex_layout(content, add_font_modifier(state, modifier))
         elseif head == :frac

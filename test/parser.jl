@@ -48,6 +48,19 @@ end
 
     @testset "Fonts" begin
         test_parse(raw"\mathrm{u}", (:font, :rm, (:char, 'u')))
+        test_parse(raw"\text{u}", (:text, :rm, (:char, 'u')))
+        
+        test_parse(raw"\mathrm{u v}", (:text, :rm, 
+            (:group,
+                (:char, 'u'),
+                (:char, 'v')
+            )))
+        test_parse(raw"\text{u v}", (:text, :rm, 
+            (:group,
+                (:char, 'u'),
+                (:char, ' '),
+                (:char, 'v')
+            )))
     end
 
     @testset "Fraction" begin

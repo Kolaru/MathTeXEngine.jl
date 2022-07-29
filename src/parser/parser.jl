@@ -76,7 +76,7 @@ command_char.actions[:exit] = [:push_char, :end_token]
 
 # Characters
 space = re" "
-space.actions[:exit] = [:end_command_builder]
+space.actions[:exit] = [:end_command_builder, :push_space]
 special_char = lbrace | rbrace | bslash | super | sub | command_char | space
 other_char = re"." \ special_char
 other_char.actions[:exit] = [:end_command_builder, :push_char, :end_token]
@@ -174,6 +174,18 @@ function _push_char!(stack, p, data)
     end
 end
 
+function _push_space!(stack, p, data)
+    if current_head(stack) == :group
+        # Pop the head to peak at the parent
+        group = pop!(stack)
+        if current_head(stack) == :argument_gatherer && current(stack).args[1] == :text
+            push!(group.args, canonical_expr(' '))
+        end
+        # Put back the group to restore the stack
+        push!(stack, group)
+    end
+end
+
 function _end_token!(stack, p, data)
     if isvalid(data, p-1)
         end_token!(stack)
@@ -242,7 +254,7 @@ function _end_command_builder!(stack, p, data)
 end
 
 action_names = [
-    :begin_group, :end_group, :push_char, :end_token, :begin_sub, :begin_super,
+    :begin_group, :end_group, :push_char, :push_space, :end_token, :begin_sub, :begin_super,
     :setup_decorated, :begin_command_builder, :end_command_builder]
 
 actions = map(action_names) do action_name
