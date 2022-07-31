@@ -11,6 +11,7 @@ import MathTeXEngine: Space, TeXElement
 import MathTeXEngine: _new_computer_modern_fonts, FontFamily, load_font
 import MathTeXEngine: inkheight, inkwidth
 
+include("texexpr.jl")
 include("parser.jl")
 include("fonts.jl")
 include("layout.jl")
