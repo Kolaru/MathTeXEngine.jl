@@ -159,7 +159,7 @@ begin  # Quick test
             \left[ \sqrt{\frac{\Omega-2}{a \langle c^\dagger \rangle b}} \right]^3_3 
             < \int_{0}^{2π} |\sin(\mu x)| dx"
     
-    tex = L"\mathbb{R} \longrightarrow xyz \text{x y z} \mathrm{x y z}"
+    tex = L"\mathcal{A} \mathbb{R} \longrightarrow xyz \text{x y z} \mathrm{x y z}"
 
     makie_tex!(ax, tex, debug=true, size=64)
     fig[3, 1] = Label(fig, tex, tellwidth=false, tellheight=false, textsize=40)

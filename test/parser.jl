@@ -106,6 +106,7 @@ end
 
     @testset "LaTeXString input" begin
         @test texparse(raw"\gamma") == texparse(L"\gamma")
+        @test texparse(raw"ℝ") == texparse(raw"\mathbb{R}")
     end
 
     @testset "Overunder" begin

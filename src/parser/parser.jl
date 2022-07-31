@@ -155,6 +155,7 @@ function _end_group!(stack, p, data)
         head, required_n_args = command_builder.args[1:2]
         args = command_builder.args[3:end]
 
+        # Check if the argument gatherer got all the needed arguments
         if required_n_args == length(args)
             pop!(stack)
             command = TeXExpr(head, args)

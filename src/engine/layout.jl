@@ -24,7 +24,7 @@ function tex_layout(expr, state)
     shrink = 0.6
 
     try
-        if head in [:char, :delimiter, :digit, :punctuation, :symbol]
+        if isleaf(expr)
             char = args[1]
             texchar = TeXChar(char, state, head)
             return texchar
