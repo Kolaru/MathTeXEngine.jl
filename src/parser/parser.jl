@@ -133,9 +133,14 @@ end
 
 # Set all command as function to play more nicely with Revise.jl
 
-_begin_group!(stack, p, data) = push!(stack, TeXExpr(:group))
+function _begin_group!(stack, p, data)
+    current_head(stack) == :skip_char && return
+    push!(stack, TeXExpr(:group))
+end
 
 function _end_group!(stack, p, data)
+    current_head(stack) == :skip_char && return
+    
     current_head(stack) != :group && throw(
         TeXParseError("Unexpected '}' at position $(p-1)", stack, p, data))
     group = pop!(stack)
