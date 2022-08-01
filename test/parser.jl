@@ -40,6 +40,10 @@ end
             )
         )
 
+        test_parse(raw"\{", (:delimiter, '{'))
+        test_parse(raw"\}", (:delimiter, '}'))
+
+
         @test_throws TeXParseError texparse(raw"\left( x")
         @test_throws TeXParseError texparse(raw"x \right)")
 
