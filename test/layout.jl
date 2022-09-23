@@ -101,6 +101,9 @@ end
     tex = L"Momentum $p_x$ (a.u.)"
     generate_tex_elements(tex)
 
+    tex = L"Average $\overline{an}_i$"
+    @test length(generate_tex_elements(tex)) == 12
+
     elems = generate_tex_elements(L"Time $t_0$")
     @test length(elems) == 7
 end

@@ -172,7 +172,21 @@ function tex_layout(expr, state)
                     (rightinkbound(content), 0)
                 ]
             )
+        elseif head == :overline
+            content = tex_layout(args[1], state)
 
+            lw = thickness(font_family)
+            y =  topinkbound(content) - lw
+
+            hline = HLine(inkwidth(content), lw)
+
+            return Group(
+                [hline, content],
+                Point2f[
+                    (0, y + lw/2),
+                    (0, 0)
+                ]
+            )
         elseif head == :underover
             core, sub, super = tex_layout.(args, state)
 

@@ -62,6 +62,7 @@ end
 
 command_to_canonical[raw"\frac"] = TeXExpr(:argument_gatherer, [:frac, 2])
 command_to_canonical[raw"\sqrt"] = TeXExpr(:argument_gatherer, [:sqrt, 1])
+command_to_canonical[raw"\overline"] = TeXExpr(:argument_gatherer, [:overline, 1])
 command_to_canonical[raw"\{"] = TeXExpr(:delimiter, '{')
 command_to_canonical[raw"\}"] = TeXExpr(:delimiter, '}')
 

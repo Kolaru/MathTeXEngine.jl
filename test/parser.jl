@@ -144,6 +144,14 @@ end
         )
     end
 
+    @testset "Overline" begin
+        test_parse(raw"\overline{x}", (:overline, 'x'))
+        test_parse(
+            raw"\overline{abc}",
+            (:overline, (:group, 'a', 'b', 'c'))
+        )
+    end
+
     @testset "Space" begin
         test_parse(raw"\quad", (:space, 1))
         test_parse(raw"\qquad", (:space, 2))
