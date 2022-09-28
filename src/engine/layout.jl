@@ -137,6 +137,21 @@ function tex_layout(expr, state)
                 ],
                 [1, shrink, shrink]
             )
+        elseif head == :overline
+            content = tex_layout(args[1], state)
+
+            lw = thickness(font_family)
+            y =  topinkbound(content) - lw
+
+            hline = HLine(inkwidth(content) - 0.15, lw)
+
+            return Group(
+                [hline, content],
+                Point2f[
+                    (0.25, y + lw/2 + 0.2),
+                    (0, 0)
+                ]
+            )
         elseif head == :space
             return Space(args[1])
         elseif head == :spaced
@@ -170,21 +185,6 @@ function tex_layout(expr, state)
                     (rightinkbound(sqrt) - lw/2, y + lw/2),
                     (rightinkbound(sqrt), 0),
                     (rightinkbound(content), 0)
-                ]
-            )
-        elseif head == :overline
-            content = tex_layout(args[1], state)
-
-            lw = thickness(font_family)
-            y =  topinkbound(content) - lw
-
-            hline = HLine(inkwidth(content), lw)
-
-            return Group(
-                [hline, content],
-                Point2f[
-                    (0, y + lw/2),
-                    (0, 0)
                 ]
             )
         elseif head == :underover
