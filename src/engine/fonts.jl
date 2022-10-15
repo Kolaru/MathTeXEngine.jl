@@ -116,11 +116,25 @@ function get_font(font_family::FontFamily, fontstyle::Symbol)
 end
 get_font(fontstyle::Symbol) = get_font(FontFamily(), fontstyle)
 
-function texfont(symbol=:text)
+"""
+    texfont(font_desc=:text)
+
+Return the font used by MathTeXEngine.
+
+If a font descriptor is given (e.g. :italic) return the font used for that
+scenario.
+"""
+function texfont(font_desc=:text)
     family = FontFamily()
     
-    haskey(family.fonts, symbol) && return load_font(family.fonts[symbol])
-    haskey(family.font_mapping, symbol) && return load_font(family.fonts[family.font_mapping[symbol]])
+    haskey(family.fonts, font_desc) && return load_font(family.fonts[font_desc])
+    haskey(family.font_mapping, font_desc) && return load_font(family.fonts[family.font_mapping[font_desc]])
+
+    valids = vcat(collect(keys(family.fonts)), collect(keys(family.font_mapping)))
+    valids = join([":$sym" for sym in valids], ", ", " and ")
+    throw(ArgumentError(
+        "Invalid font descriptor $font_desc, valid possibilites are $valids"
+    ))
 end
 
 """
