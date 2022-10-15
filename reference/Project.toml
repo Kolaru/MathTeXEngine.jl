@@ -1,0 +1,7 @@
+[deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+Git = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+MathTeXEngine = "0a4f8689-d25c-4efe-a92b-7142dfc1aa53"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
