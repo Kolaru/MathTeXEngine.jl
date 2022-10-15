@@ -24,7 +24,7 @@ const re = Automa.RegExp
 
 export TeXExpr, texparse
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
-export get_font, get_fontpath
+export texfont
 export glyph_index
 
 # Reexport from LaTeXStrings

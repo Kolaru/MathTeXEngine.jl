@@ -116,6 +116,13 @@ function get_font(font_family::FontFamily, fontstyle::Symbol)
 end
 get_font(fontstyle::Symbol) = get_font(FontFamily(), fontstyle)
 
+function texfont(symbol=:text)
+    family = FontFamily()
+    
+    haskey(family.fonts, symbol) && return load_font(family.fonts[symbol])
+    haskey(family.font_mapping, symbol) && return load_font(family.fonts[family.font_mapping[symbol]])
+end
+
 """
     get_fontpath([font_family::FontFamily], fontstyle)
 
