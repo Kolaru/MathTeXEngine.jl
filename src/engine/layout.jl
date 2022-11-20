@@ -51,13 +51,12 @@ function tex_layout(expr, state)
         elseif head == :decorated
             core, sub, super = tex_layout.(args, state)
 
-            # Should be a bit smarter for slanted font
             return Group(
                 [core, sub, super],
                 Point2f[
                     (0, 0),
-                    (rightinkbound(core) + 0.1, -0.2),
-                    (rightinkbound(core) + 0.1, 0.9 * xheight(core))],
+                    (hadvance(core), -0.1),
+                    (max(hadvance(core), rightinkbound(core)), xheight(core))],
                 [1, shrink, shrink]
             )
         elseif head == :delimited

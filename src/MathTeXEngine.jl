@@ -18,7 +18,8 @@ import FreeTypeAbstraction:
     ascender, boundingbox, descender, get_extent, glyph_index,
     hadvance, inkheight, inkwidth,
     height_insensitive_boundingbox, leftinkbound, rightinkbound,
-    topinkbound, bottominkbound
+    topinkbound, bottominkbound,
+    is_slanted
 
 const re = Automa.RegExp
 

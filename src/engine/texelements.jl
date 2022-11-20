@@ -108,6 +108,17 @@ Return the total height of the element ink.
 inkheight(x::TeXElement) = topinkbound(x) - bottominkbound(x)
 
 """
+    is_slanted(x::TeXElement)
+
+Return whether the given element is slanted.
+"""
+is_slanted(x::TeXElement) = false
+
+slant_angle(x::TeXElement) = 0.0
+leftmost_glyph(x::TeXElement) = x
+rightmost_glyph(x::TeXElement) = x
+
+"""
     TeXChar(char, font)
 
 A MathTeX character with an associated font.
@@ -191,6 +202,9 @@ function FreeTypeAbstraction.height_insensitive_boundingbox(char::TeXChar, font)
         inkwidth(char), ascender(char) - descender(char)
     )
 end
+
+is_slanted(char::TeXChar) = char.slanted
+slant_angle(char::TeXChar) = slant_angle(char.font_family)
 
 Base.show(io::IO, tc::TeXChar) =
     print(io, "TeXChar '$(tc.represented_char)' [index $(tc.glyph_id) in $(tc.font.family_name) - $(tc.font.style_name)]")
@@ -318,3 +332,6 @@ function descender(g::Group)
 end
 
 xheight(g::Group) = maximum(xheight.(g.elements) .* g.scales)
+
+leftmost_glyph(g::Group) = leftmost_glyph(first(g.elements))
+rightmost_glyph(g::Group) = rightmost_glyph(last(glyph))
