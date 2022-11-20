@@ -56,7 +56,7 @@ function tex_layout(expr, state)
                 Point2f[
                     (0, 0),
                     (hadvance(core), -0.1),
-                    (max(hadvance(core), rightinkbound(core)), xheight(core))],
+                    (max(hadvance(core), rightinkbound(core)), xheight(font_family))],
                 [1, shrink, shrink]
             )
         elseif head == :delimited
