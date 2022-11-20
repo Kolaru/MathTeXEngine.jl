@@ -73,7 +73,7 @@ inputs["subsuper"] = [
     L"V^1_2",
     L"U_{ij}",
     L"W^{(i + j)}",
-    L"x_{y \rightarrow 0}",
+    L"x_L x_y x_{y \rightarrow 0}",
     L"N_\nu L_\nu A_\nu J_\nu",
     L"N^\nu L^\nu A^\nu J^\nu",
     L"^{87} Rb"
