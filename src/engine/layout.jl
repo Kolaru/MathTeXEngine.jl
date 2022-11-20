@@ -55,8 +55,16 @@ function tex_layout(expr, state)
                 [core, sub, super],
                 Point2f[
                     (0, 0),
-                    (hadvance(core), -0.1),
-                    (max(hadvance(core), rightinkbound(core)), xheight(font_family))],
+                    (
+                        # The logic is to have the ink of the subscript starts
+                        # where the ink of the unshrink glyph would
+                        hadvance(core) + (1 - shrink) * leftinkbound(sub),
+                        -0.1
+                    ),
+                    (
+                        max(hadvance(core), rightinkbound(core)),
+                        xheight(font_family)
+                    )],
                 [1, shrink, shrink]
             )
         elseif head == :delimited
