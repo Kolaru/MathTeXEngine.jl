@@ -14,6 +14,8 @@ const git = Git.git()
     is_clean = isempty(readchomp(`$git status -s`))
     current_branch = readchomp(`$git rev-parse --abbrev-ref HEAD`)
 
+    @info "Reference test started on branch $current_branch"
+
     if !is_clean
         @warn "Using dirty commit for comparison"
         current_id *= "-dirty"
@@ -22,7 +24,7 @@ const git = Git.git()
     rm("reference/$current_id", recursive = true, force = true)
     generate("reference/$current_id")
 
-    if master_id == current_id && current_branch == "master"
+    if current_branch == "master"
         @info "Reference test started on master branch, nothing to compare"
         return
     end
