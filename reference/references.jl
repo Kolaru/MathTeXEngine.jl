@@ -19,6 +19,12 @@ inputs["delimiters"] = [
     L"\left{1 + \left[2 + \left(3 + 4\right)\right]\right}"
 ]
 
+inputs["fonts"] = [
+    L"\mathrm{bonjour}",
+    L"\mathbb{R} \mathbb{Q} \mathbb{C}",
+    L"\mathcal{N} \mathcal{K}"
+]
+
 inputs["fractions"] = [
     L"\frac{a + b + c}{c + b + a}",
     L"\frac{a}{A + B + C}",
@@ -31,10 +37,11 @@ inputs["functions"] = [
     L"\inf_{x} \tan(x) \leq \sup_{x} \tan(x)" 
 ]
 
-inputs["symbols"] = [
-    L"\alpha \beta \gamma \delta \epsilon \omega \theta \phi \varphi \psi",
-    L"\Gamma \Delta \Omega \Theta \Phi \Psi",
-    L"\nabla \rightarrow \neq \leq \hbar"
+inputs["infix"] = [
+    L"T + V",
+    L"7 - 2",
+    L"v \cdot w",
+    L"E = m c^2"
 ]
 
 inputs["integrals"] = [
@@ -48,13 +55,6 @@ inputs["punctuation"] = [
     L"10,000"
 ]
 
-inputs["square_roots"] = [
-    L"\sqrt{2}",
-    L"\sqrt{\frac{1}{2}}",
-    L"\sqrt{b^2 - 4ac}",
-    L"\sqrt{1 + \frac{A + B}{J + U}}"
-]
-
 inputs["spaces"] = [
     L"a \! b",
     L"a \; b",
@@ -62,18 +62,27 @@ inputs["spaces"] = [
     L"a \qquad b"
 ]
 
-inputs["infix"] = [
-    L"T + V",
-    L"7 - 2",
-    L"v \cdot w",
-    L"E = m c^2"
+inputs["square_roots"] = [
+    L"\sqrt{2}",
+    L"\sqrt{\frac{1}{2}}",
+    L"\sqrt{b^2 - 4ac}",
+    L"\sqrt{1 + \frac{A + B}{J + U}}"
 ]
 
 inputs["subsuper"] = [
     L"V^1_2",
     L"U_{ij}",
     L"W^{(i + j)}",
-    L"x_{y \rightarrow 0}"
+    L"x_{y \rightarrow 0}",
+    L"N_\nu L_\nu A_\nu J_\nu",
+    L"^{87} Rb"
+]
+
+inputs["symbols"] = [
+    L"\alpha \beta \gamma \delta \epsilon \omega \theta \phi \varphi \psi",
+    L"\Gamma \Delta \Omega \Theta \Phi \Psi",
+    L"\nabla \rightarrow \neq \leq \hbar",
+    L"\text{phi} \rightarrow \phi \quad \text{varphi} \rightarrow \varphi"
 ]
 
 inputs["underover"] = [
@@ -81,12 +90,6 @@ inputs["underover"] = [
     L"\sum_{N = 1}^{M^2}",
     L"\prod_{n \neq m}",
     L"\prod_{N \neq M}"
-]
-
-inputs["fonts"] = [
-    L"\mathrm{bonjour}",
-    L"\mathbb{R} \mathbb{Q} \mathbb{C}",
-    L"\mathcal{N} \mathcal{K}"
 ]
 
 function generate(name)
