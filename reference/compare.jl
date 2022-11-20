@@ -11,11 +11,18 @@ const git = Git.git()
 @testset begin "Reference images"
     master_id = readchomp(`$git rev-parse --short master`)
     current_id = readchomp(`$git rev-parse --short HEAD`)
+    is_clean = isempty(readchomp(`$git status -s`))
+    current_branch = readchomp(`$git rev-parse --abbrev-ref HEAD`)
+
+    if !is_clean
+        @warn "Using dirty commit for comparison"
+        current_id *= "-dirty"
+    end
 
     rm("reference/$current_id", recursive = true, force = true)
     generate("reference/$current_id")
 
-    if master_id == current_id
+    if master_id == current_id && current_branch == "master"
         @info "Reference test started on master branch, nothing to compare"
         return
     end
@@ -26,7 +33,7 @@ const git = Git.git()
         return
     end
 
-    @info "Comparing reference on the master $master_id with current commit $current_id"
+    @info "Comparing reference on master $master_id with current commit $current_id on branch $current_branch"
 
     # Compare
     rm("reference/comparisons", recursive = true, force = true)
@@ -51,6 +58,4 @@ const git = Git.git()
         end
         @test img == refimg
     end
-
-    cd("..")
 end
