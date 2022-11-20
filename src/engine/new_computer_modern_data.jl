@@ -32,14 +32,10 @@ for (symbol,  glyph_id) in _latex_to_new_computer_modern
     _symbol_to_new_computer_modern[symbol] = (cmmath_fontpath, glyph_id)
 end
 
-# Standard hreek symbols : thin and italic
+# Standard lowercase greek symbols : thin and italic
 for i in 0:24
-    capital = 'Α' + i
     small = 'α' + i
 
-    if !haskey(_symbol_to_new_computer_modern, capital)
-        _symbol_to_new_computer_modern[capital] = (cmmath_fontpath, 3326 + i)
-    end
     if !haskey(_symbol_to_new_computer_modern, small)
         _symbol_to_new_computer_modern[small] = (cmmath_fontpath, 3352 + i)
     end
