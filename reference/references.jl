@@ -83,7 +83,8 @@ inputs["symbols"] = [
     L"\alpha \beta \gamma \delta \epsilon \omega \theta \phi \varphi \psi",
     L"\Gamma \Delta \Omega \Theta \Phi \Psi",
     L"\nabla \rightarrow \neq \leq \hbar",
-    L"\text{phi} \rightarrow \phi \quad \text{varphi} \rightarrow \varphi"
+    L"\text{phi} \rightarrow \phi \quad \text{varphi} \rightarrow \varphi",
+    L"\text{epsilon} \rightarrow \epsilon \quad \text{varepsilon} \rightarrow \varepsilon"
 ]
 
 inputs["underover"] = [
