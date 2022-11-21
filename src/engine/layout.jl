@@ -31,6 +31,8 @@ function tex_layout(expr, state)
         elseif head == :combining_accent
             accent, core = tex_layout.(args, state)
 
+            # Same space between the top of core and the accent than
+            # between the top of a 'x' and the accent
             y = topinkbound(core) - xheight(font_family)
 
             if core.slanted
@@ -44,7 +46,7 @@ function tex_layout(expr, state)
                 [core, accent],
                 Point2f[
                     (0, 0),
-                    (x + hmid(core) - hmid(accent), 0)
+                    (x + hmid(core) - hmid(accent), y)
                 ],
                 [1, 1]
             )
