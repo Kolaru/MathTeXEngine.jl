@@ -6,14 +6,14 @@ _latex_to_new_computer_modern = Dict(
     raw"\varepsilon" => 3378,
     raw"\vartheta" => 3379,
     raw"\varkappa" => 3380,
-    raw"\varphi" => 3381,
+    raw"\varphi" => 3373,
     raw"\varrho" => 3382,
     raw"\varpi" => 3383,
 
     raw"\epsilon" => 3356,
     raw"\theta" => 3359,
     raw"\kappa" => 3361,
-    raw"\phi" => 3373,
+    raw"\phi" => 3381,
     raw"\rho" => 3368,
     raw"\pi" => 3367
 )
