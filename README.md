@@ -113,6 +113,7 @@ The table below contains the list of all supported LaTeX construction and their 
 | Generic symbol | `ω` | `:symbol` | `unicode_char` |
 | Group | `{ }` | `:group` | `elements...` |
 | Integral | `\int_a^b` | `:integral` | `symbol, low_bound, high_bound` |
+| Math fonts | `\mathrm{}` | `:font` | `font_modifier, expr` |
 | Punctuation | `!` | `:punctuation` |
 | Simple delimiter | `(` | `:delimiter` |
 | Square root | `\sqrt{2}` | `:sqrt` | `content` |
@@ -120,12 +121,6 @@ The table below contains the list of all supported LaTeX construction and their 
 | Spaced symbol | `+` | `:spaced` | `symbol` |
 | Subscript and superscript | `x_0^2` | `:decorated` | `core, subscript, superscript` |
 | Symbol with script under and/or over it | `\sum_i^k` | `:underover` | `symbol, under, over` |
-
-## To be implemented
-
-| Description | LaTeX example | Head | Fields | Comment |
-|--|--|--|--|--|
-| Basic font | `\mathrm{d}` | `:font` | `fontstyle, content` |
 
 ## Parser examples
 
