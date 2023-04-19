@@ -1,6 +1,6 @@
 # MathTeXEngine
 
-This is a work in progress package aimed at providing a pure Julia engine for LaTeX math mode. It is composed of two main parts: a LaTeX parser and a LaTeX engine, both only for LaTeX math mode.
+This is a package aimed at providing a pure Julia engine for LaTeX math mode. It is composed of two main parts: a LaTeX parser and a LaTeX engine, both only for LaTeX math mode.
 
 # Main features
 
@@ -98,6 +98,8 @@ julia> generate_tex_elements(L"A_{B_{C_D}}")
 
 Parsing is done through the exported function `texparse` into nested `TeXExpr` objects forming a tree. The parser does not perform any operation to layout the elements, it only transforms them into a syntax tree.
 
+The readme file in the `src/parser` folder contains more details about the inner working of the parser.
+
 ## Supported constructions
 
 The table below contains the list of all supported LaTeX construction and their representation when parsed.
@@ -166,3 +168,7 @@ julia> expr.args[1].args
 
  nothing
 ```
+
+# Acknowledgement
+
+The font inspector site [FontDrop!](https://fontdrop.info) has been invaluable for this package.
