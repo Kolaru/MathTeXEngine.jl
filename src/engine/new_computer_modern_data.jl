@@ -40,3 +40,9 @@ for i in 0:24
         _symbol_to_new_computer_modern[small] = (cmmath_fontpath, 3352 + i)
     end
 end
+
+# Special case : get hbar from the italic font
+_symbol_to_new_computer_modern['ħ'] = (
+    joinpath("NewComputerModern", "NewCM10-Italic.otf"),
+    231
+)
