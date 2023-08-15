@@ -8,7 +8,6 @@ using FreeTypeAbstraction
 using LaTeXStrings
 using UnicodeFun
 
-using Automa.RegExp: @re_str
 using DataStructures: Stack
 using GeometryBasics: Point2f, Rect2f
 using REPL.REPLCompletions: latex_symbols
@@ -19,8 +18,6 @@ import FreeTypeAbstraction:
     hadvance, inkheight, inkwidth,
     height_insensitive_boundingbox, leftinkbound, rightinkbound,
     topinkbound, bottominkbound
-
-const re = Automa.RegExp
 
 export TeXExpr, texparse
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements

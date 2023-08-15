@@ -53,38 +53,31 @@ function show_debug_info(stack, position, data, action_name)
     show_state(stack, position, data)
 end
 
-# Super and subscript
-super = re"\^"
-super.actions[:exit] = [:end_command_builder, :setup_decorated, :begin_super]
+machine = let
+    # Super and subscript
+    super = onexit!(re"\^", [:end_command_builder, :setup_decorated, :begin_super]) 
+    sub = onexit!(re"_", [:end_command_builder, :setup_decorated, :begin_sub])
 
-sub = re"_"
-sub.actions[:exit] = [:end_command_builder, :setup_decorated, :begin_sub]
+    # Groups
+    lbrace = onexit!(re"{", [:end_command_builder, :begin_group])
+    rbrace = onexit!(re"}", [:end_command_builder, :end_group, :end_token])
 
-# Groups
-lbrace = re"{"
-lbrace.actions[:exit] = [:end_command_builder, :begin_group]
+    # Commands
+    bslash = onexit!(re"\\", [:end_command_builder, :begin_command_builder])
+    command_char = onexit!(re"[A-Za-z]", [:push_char, :end_token])
 
-rbrace = re"}"
-rbrace.actions[:exit] = [:end_command_builder, :end_group, :end_token]
+    # Characters
+    space = onexit!(re" ", [:end_command_builder, :push_space])
+    special_char = lbrace | rbrace | bslash | super | sub | command_char | space
+    other_char = onexit!(
+        re"." \ special_char,
+        [:end_command_builder, :push_char, :end_token]
+    )
 
-# Commands
-bslash = re"\\"
-bslash.actions[:exit] = [:end_command_builder, :begin_command_builder]
+    mathexpr = onexit!(Automa.rep(special_char | other_char), :end_command_builder)
 
-command_char = re"[A-Za-z]"
-command_char.actions[:exit] = [:push_char, :end_token]
-
-# Characters
-space = re" "
-space.actions[:exit] = [:end_command_builder, :push_space]
-special_char = lbrace | rbrace | bslash | super | sub | command_char | space
-other_char = re"." \ special_char
-other_char.actions[:exit] = [:end_command_builder, :push_char, :end_token]
-
-mathexpr = re.rep(special_char | other_char)
-mathexpr.actions[:exit] = [:end_command_builder]
-
-machine = Automa.compile(mathexpr)
+    Automa.compile(mathexpr)
+end
 
 current(stack) = first(stack)
 current_head(stack) = head(current(stack))
@@ -283,22 +276,19 @@ end
 
 actions = Dict(actions...)
 
-context = Automa.CodeGenContext()
 @eval function texparse(data ; showdebug=false)
     # Allows string to start with _ or ^
     if !isempty(data) && (data[1] == '_' || data[1] == '^')
         data = "{}" * data
     end
 
-    $(Automa.generate_init_code(context, machine))
-    p_end = p_eof = lastindex(data)
-
+    $(Automa.generate_init_code(machine))
     # Needed to avoid problem with multi bytes unicode chars
     stack = Stack{Any}()
     push!(stack, TeXExpr(:expr))
 
     try
-        $(Automa.generate_exec_code(context, machine, actions))
+        $(Automa.generate_exec_code(machine, actions))
     catch
         throw(TeXParseError("unexpected error while parsing", stack, p, data))
     end
@@ -310,7 +300,7 @@ context = Automa.CodeGenContext()
     if length(stack) > 1 
         err = TeXParseError(
             "end of string reached with unfinished $(current(stack).head)",
-            stack, p_eof, data)
+            stack, p, data)
         throw(err)
     end
 
