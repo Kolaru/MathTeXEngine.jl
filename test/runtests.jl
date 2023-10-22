@@ -1,4 +1,3 @@
-using LaTeXStrings
 using Test
 
 using MathTeXEngine

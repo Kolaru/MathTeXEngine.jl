@@ -289,8 +289,12 @@ actions = Dict(actions...)
 
     try
         $(Automa.generate_exec_code(machine, actions))
-    catch
-        throw(TeXParseError("unexpected error while parsing", stack, p, data))
+    catch e
+        if e isa TeXParseError
+            rethrow()
+        else
+            throw(TeXParseError("unexpected error while parsing", stack, p, data))
+        end
     end
 
     while current_head(stack) == :skip_char
