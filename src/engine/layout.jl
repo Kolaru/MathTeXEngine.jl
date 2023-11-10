@@ -219,6 +219,38 @@ function tex_layout(expr, state)
                 ],
                 [1, shrink, shrink]
             )
+        elseif head == :env && args[1] == "matrix"
+            entries    = permutedims(tex_layout.(args[2], state))
+            entry_wdts = inkwidth.(entries)
+            entry_hgts = inkheight.(entries)
+
+            wdts = vec(maximum(entry_wdts, dims=2))
+            hgts = vec(maximum(entry_hgts, dims=1))
+
+            hor_sep  = 2*xheight(font_family)
+            vert_sep = 0.5*xheight(font_family)
+
+            padded_wdts  = wdts .+ hor_sep
+            padded_hgts  = hgts .+ vert_sep
+
+            row_offsets = reverse(cumsum(reverse([padded_hgts..., 0])))
+            column_offsets = cumsum([0, padded_wdts...])
+
+            linear_entries = TeXElement[]
+            offsets = Point2f[]
+            for I in eachindex(IndexCartesian(), entries)
+                offset = (column_offsets[I[1]], row_offsets[I[2]])
+
+                push!(linear_entries, entries[I])
+                push!(offsets, offset)
+
+                # Uncomment to see vertical extent of each matrix entry
+                push!(linear_entries, HLine(inkwidth(entries[I]), thickness(font_family)))
+                push!(offsets, offset)
+                push!(linear_entries, HLine(inkwidth(entries[I]), thickness(font_family)))
+                push!(offsets, offset .+ (0, inkheight(entries[I])))
+            end
+            return Group(linear_entries, offsets)
         end
     catch
         # TODO Better error
