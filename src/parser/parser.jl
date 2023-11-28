@@ -16,7 +16,7 @@ function show_state(io::IO, stack, position, data)
     if position > lastindex(data)
         println(io, "after the end of the data")
         println(io, data)
-    else
+    elseif position > 0
         # Compute the index of the char from the byte index
         position_to_id = zeros(Int, lastindex(data))
         id = 0
@@ -135,7 +135,7 @@ function _end_group!(stack, p, data)
     current_head(stack) == :skip_char && return
     
     current_head(stack) != :group && throw(
-        TeXParseError("Unexpected '}' at position $(p-1)", stack, p, data))
+        TeXParseError("unexpected '}'", stack, p, data))
     group = pop!(stack)
 
     # Remplace empty groups by a zero-width space
@@ -146,9 +146,9 @@ function _end_group!(stack, p, data)
         group = first(group.args)
     end
 
-    if requirement(stack) == :argument
-        push_to_current!(stack, group)
+    push_to_current!(stack, group)
 
+    if requirement(stack) == :argument
         command_builder = current(stack)
         head, required_n_args = command_builder.args[1:2]
         args = command_builder.args[3:end]
@@ -156,19 +156,69 @@ function _end_group!(stack, p, data)
         # Check if the argument gatherer got all the needed arguments
         if required_n_args == length(args)
             pop!(stack)
-            command = TeXExpr(head, args)
-            push_to_current!(stack, command)
+            if head == :begin_env
+                # Transform the content of the argument back to a single string
+                env_name = String(Char.(first(args).args))
+                !is_supported(env_name) && throw(
+                    TeXParseError(
+                        "env '$env_name' is not supported",
+                        stack, p, data))
+                push!(stack, TeXExpr(:env, Any[env_name]))
+                push!(stack, TeXExpr(:env_row))
+                push!(stack, TeXExpr(:env_cell))
+            elseif head == :end_env
+                env_name = String(Char.(args[1].args))
+                current(stack).head != :env_cell && throw(
+                    TeXParseError(
+                        "unexpected end of environnement '$env_name'",
+                        stack, p, data))
+
+                cell = pop!(stack)
+                push_to_current!(stack, cell)
+                row = pop!(stack)
+                push_to_current!(stack, row)
+                open_env_name = current(stack).args[1]
+                env_name != open_env_name && throw(
+                    TeXParseError(
+                        "found an end for environnement '$env_name', but it is not matching the currently open env",
+                    stack, p, data))
+
+                # Make a matrix of the arguments
+                env_data = pop!(stack)
+                rows = env_data.args[2:end]
+                n_cols = maximum([length(row.args) for row in rows])
+                matrix = fill(TeXExpr(:space, 0), length(rows), n_cols)
+                for (i, row) in enumerate(rows)
+                    for (j, cell) in enumerate(row.args)
+                        # Remove the :env_cell wrapper
+                        if length(cell.args) == 1
+                            matrix[i, j] = first(cell.args)
+                        else
+                            matrix[i, j] = TeXExpr(:group, cell.args)
+                        end
+                    end
+                end
+
+                env = TeXExpr(:env, [env_name, matrix])
+                push_to_current!(stack, env)
+            else
+                command = TeXExpr(head, args)
+                push_to_current!(stack, command)
+            end
         end
-    else
-        push_to_current!(stack, group)
     end
 end
 
 function _push_char!(stack, p, data)
-    if current_head(stack) == :skip_char
-        pop!(stack)
-    elseif isvalid(data, p-1)
-        char = data[prevind(data, p)]
+    current_head(stack) == :skip_char && return pop!(stack)
+    !isvalid(data, p-1) && return
+
+    char = data[prevind(data, p)]
+
+    if current_head(stack) == :env_cell && char == '&'
+        push_to_current!(stack, pop!(stack))
+        push!(stack, TeXExpr(:env_cell))
+    else
         push_to_current!(stack, canonical_expr(char))
     end
 end
@@ -203,7 +253,10 @@ function _setup_decorated!(stack, p, data)
     end
 end
 
-_begin_command_builder!(stack, p, data) = push!(stack, TeXExpr(:command_builder))
+function _begin_command_builder!(stack, p, data)
+    current_head(stack) == :skip_char && return pop!(stack)
+    push!(stack, TeXExpr(:command_builder))
+end
 
 function _end_command_builder!(stack, p, data)
     if current_head(stack) == :command_builder
@@ -231,6 +284,16 @@ function _end_command_builder!(stack, p, data)
                 TeXParseError("unexpected '\\right' at position $(p-1)",
                 stack, p, data))
             push!(stack, TeXExpr(:right_delimiter))
+        elseif command_name == "\\"
+            current(stack).head != :env_cell && throw(
+                TeXParseError("'\\' for newline is only supported inside env",
+                stack, p, data))
+            current_cell = pop!(stack)
+            push_to_current!(stack, current_cell)
+            current_row = pop!(stack)
+            push_to_current!(stack, current_row)
+            push!(stack, TeXExpr(:env_row))
+            push!(stack, TeXExpr(:env_cell))
         elseif haskey(command_to_canonical, command)
             expr = command_to_canonical[command]
 
@@ -246,7 +309,7 @@ function _end_command_builder!(stack, p, data)
                 stack, p, data))
         end
 
-        if skip_char 
+        if skip_char
             push!(stack, TeXExpr(:skip_char))
         end
     end

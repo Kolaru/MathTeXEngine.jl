@@ -110,5 +110,12 @@ punctuation_symbols = split(raw", ; . !")
 delimiter_symbols = split(raw"| / ( ) [ ] < >")
 font_names = split(raw"rm cal it tt sf bf default bb frak scr regular")
 
+##
+## Env
+##
+
+supported_env = split("matrix pmatrix bmatrix")
+
+
 # TODO Add to the parser what come below, if needed
 wide_accent_commands = split(raw"\widehat \widetilde \widebar")
