@@ -89,7 +89,7 @@ function manual_texexpr(tuple::Tuple)
 end
 
 function manual_texexpr(str::LaTeXString)
-    expr = texparse(str[2:end])
+    expr = texparse(str[2:end-1])
     if length(expr.args) == 1
         return first(expr.args)
     else

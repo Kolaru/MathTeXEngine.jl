@@ -88,10 +88,10 @@ end
 end
 
 @testset "Generate elements" begin
-    elems = generate_tex_elements("a + b")
+    elems = generate_tex_elements(L"a + b")
     @test length(elems) == 3
 
-    elems = generate_tex_elements(raw"{{a + b} - {c * d}}")
+    elems = generate_tex_elements(L"{{a + b} - {c * d}}")
     @test length(elems) == 7
 
     # Check the following does not error

@@ -26,6 +26,9 @@ function tex_layout(expr, state)
     try
         if isleaf(expr)
             char = args[1]
+            if char == ' ' && state.tex_mode == :inline_math
+                return Space(0.0)
+            end
             texchar = TeXChar(char, state, head)
             return texchar
         elseif head == :combining_accent
@@ -92,7 +95,7 @@ function tex_layout(expr, state)
                 ],
                 scales
             )
-        elseif head == :font || head == :text
+        elseif head == :font
             modifier, content = args
             return tex_layout(content, add_font_modifier(state, modifier))
         elseif head == :frac
@@ -124,8 +127,12 @@ function tex_layout(expr, state)
             name = args[1]
             elements = TeXChar.(collect(name), state, Ref(:function))
             return horizontal_layout(elements)
-        elseif head == :group || head == :expr
-            elements = tex_layout.(args, state)
+        elseif head == :group || head == :expr || head == :inline_math
+            mode = head == :inline_math ? :inline_math : state.tex_mode
+            elements = tex_layout.(args, change_mode(state, mode))
+            if isempty(elements)
+                return Space(0.0)
+            end
             return horizontal_layout(elements)
         elseif head == :integral
             pad = 0.1
@@ -196,6 +203,11 @@ function tex_layout(expr, state)
                     (rightinkbound(content), 0)
                 ]
             )
+        elseif head == :text
+            modifier, content = args
+            new_state = add_font_modifier(state, modifier)
+            new_state = change_mode(new_state, :text)
+            return tex_layout(content, new_state)
         elseif head == :underover
             core, sub, super = tex_layout.(args, state)
 
@@ -290,6 +302,7 @@ function generate_tex_elements(str, font_family=FontFamily())
     return unravel(layout)
 end
 
+#=
 # Still hacky as hell
 function generate_tex_elements(str::LaTeXString, font_family=FontFamily())
     parts = String.(split(str, raw"$"))
@@ -302,3 +315,4 @@ function generate_tex_elements(str::LaTeXString, font_family=FontFamily())
 
     return unravel(horizontal_layout(groups))
 end
+=#

@@ -1,16 +1,22 @@
 struct LayoutState
     font_family::FontFamily
     font_modifiers::Vector{Symbol}
+    tex_mode::Symbol
 end
 
+LayoutState(font_family::FontFamily, modifiers::Vector) = LayoutState(font_family, modifiers, :text)
 LayoutState(font_family::FontFamily) = LayoutState(font_family, Symbol[])
 LayoutState() = LayoutState(FontFamily())
 
-Base.broadcastable(state::LayoutState) = [state]
+Base.broadcastable(state::LayoutState) = Ref(state)
+
+function change_mode(state::LayoutState, mode)
+    LayoutState(state.font_family, state.font_modifiers, mode)
+end
 
 function add_font_modifier(state::LayoutState, modifier)
-    modifiers = [state.font_modifiers..., modifier]
-    return LayoutState(state.font_family, modifiers)
+    modifiers = vcat(state.font_modifiers, modifier)
+    return LayoutState(state.font_family, modifiers, state.tex_mode)
 end
 
 function get_font(state::LayoutState, char_type)
