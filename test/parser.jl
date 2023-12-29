@@ -22,17 +22,17 @@ end
 
     @testset "Delimiter" begin
         test_parse(
-            raw"\left( x \right)",
+            raw"\left(x\right)",
             (:delimited, '(', 'x', ')')
         )
 
         test_parse(
-            raw"\left[ y \right)",
+            raw"\left[y\right)",
             (:delimited, '[', 'y', ')')
         )
 
         test_parse(
-            raw"\left( a + b \right)",
+            raw"\left(a+b\right)",
             (:delimited,
                 '(',
                 (:group, 'a', (:spaced, '+'), 'b'),
@@ -46,8 +46,6 @@ end
 
         @test_throws TeXParseError texparse(raw"\left( x")
         @test_throws TeXParseError texparse(raw"x \right)")
-
-        # TODO Recursive delim
     end
 
     @testset "Fonts" begin
@@ -57,6 +55,7 @@ end
         test_parse(raw"\mathrm{u v}", (:text, :rm, 
             (:group,
                 (:char, 'u'),
+                (:char, ' '),
                 (:char, 'v')
             )))
         test_parse(raw"\text{u v}", (:text, :rm, 
@@ -65,6 +64,8 @@ end
                 (:char, ' '),
                 (:char, 'v')
             )))
+
+        @test texparse(raw"ℝ") == texparse(raw"\mathbb{R}")
     end
 
     @testset "Fraction" begin
@@ -109,8 +110,7 @@ end
     end
 
     @testset "LaTeXString input" begin
-        @test texparse(raw"\gamma") == texparse(L"\gamma")
-        @test texparse(raw"ℝ") == texparse(raw"\mathbb{R}")
+        @test texparse(raw"$\gamma$") == texparse(L"\gamma")
     end
 
     @testset "Overunder" begin

@@ -20,7 +20,7 @@ Fields
 """
 struct TeXExpr
     head::Symbol
-    args::Vector
+    args::Vector{Any}
 
     function TeXExpr(head, args::Vector)
         # Convert math font like `\mathbb{R}` -- TeXExpr(:font, [:bb, 'R']) --
@@ -41,6 +41,10 @@ end
 TeXExpr(head) = TeXExpr(head, [])
 TeXExpr(head, args...) = TeXExpr(head, collect(args))
 TeXExpr(head, arg) = TeXExpr(head, [arg])
+
+Base.push!(texexpr::TeXExpr, arg) = push!(texexpr.args, arg)
+Base.pop!(texexpr::TeXExpr) = pop!(texexpr.args)
+Base.copy(texexpr::TeXExpr) = TeXExpr(texexpr.head, deepcopy(texexpr.args))
 
 function Base.Char(texexpr::TeXExpr)
     if texexpr.head in [:char, :symbol, :digit]
@@ -100,8 +104,6 @@ head(texexpr::TeXExpr) = texexpr.head
 head(::Char) = :char
 isleaf(texexpr::TeXExpr) = texexpr.head in (:char, :delimiter, :digit, :punctuation, :symbol)
 isleaf(::Nothing) = true
-
-Base.copy(texexpr::TeXExpr) = TeXExpr(texexpr.head, deepcopy(texexpr.args))
 
 function AbstractTrees.children(texexpr::TeXExpr)
     isleaf(texexpr) && return TeXExpr[]

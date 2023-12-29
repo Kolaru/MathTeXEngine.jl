@@ -19,7 +19,7 @@ import FreeTypeAbstraction:
     height_insensitive_boundingbox, leftinkbound, rightinkbound,
     topinkbound, bottominkbound
 
-export TeXExpr, texparse
+export TeXExpr, texparse, TeXParseError
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
 export texfont
 export glyph_index
@@ -27,6 +27,7 @@ export glyph_index
 # Reexport from LaTeXStrings
 export @L_str
 
+include("parser/tokenizer.jl")
 include("parser/texexpr.jl")
 include("parser/commands_data.jl")
 include("parser/commands_registration.jl")
