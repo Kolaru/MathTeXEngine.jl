@@ -1,5 +1,6 @@
 tex_tokens = [
     :char => re".",
+    :primes => re"'+",
     :caret => re"\^",
     :underscore => re"_",
     :rcurly => re"}",

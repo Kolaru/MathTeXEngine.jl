@@ -155,8 +155,8 @@ function texparse(tex ; root = TeXExpr(:expr), showdebug = false)
                 com_str = tex[pos:pos+len-1]
                 push!(stack, TeXExpr(:command, [com_str]))
                 conclude_command!!(stack)
-            elseif token == underscore || token == caret
-                dec = token == underscore ? :subscript : :superscript
+            elseif token == underscore || token == caret || token == primes
+                dec = (token == underscore) ? :subscript : :superscript
 
                 if isempty(first(stack).args)
                     core = TeXExpr(:space, 0.0)
@@ -173,7 +173,12 @@ function texparse(tex ; root = TeXExpr(:expr), showdebug = false)
                 end
 
                 push!(first(stack), core)
-                push!(stack, TeXExpr(dec))
+
+                if token == primes
+                    core.args[subsuperindex(dec)] = TeXExpr(:primes, len)
+                else
+                    push!(stack, TeXExpr(dec))
+                end
             elseif token == char
                 push!(stack, canonical_expr(tex[pos])) 
                 push_down!(stack)

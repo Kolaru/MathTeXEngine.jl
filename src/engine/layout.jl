@@ -56,6 +56,16 @@ function tex_layout(expr, state)
         elseif head == :decorated
             core, sub, super = tex_layout.(args, state)
 
+            if args[3].head == :primes
+                super_x = min(hadvance(core), rightinkbound(core)) - 0.1
+                super_y = 0.1
+                super_shrink = 1
+            else
+                super_x = max(hadvance(core), rightinkbound(core))
+                super_y = xheight(font_family)
+                super_shrink = shrink
+            end
+
             return Group(
                 [core, sub, super],
                 Point2f[
@@ -64,13 +74,10 @@ function tex_layout(expr, state)
                         # The logic is to have the ink of the subscript starts
                         # where the ink of the unshrink glyph would
                         hadvance(core) + (1 - shrink) * leftinkbound(sub),
-                        -0.1
+                        -0.2
                     ),
-                    (
-                        max(hadvance(core), rightinkbound(core)),
-                        xheight(font_family)
-                    )],
-                [1, shrink, shrink]
+                    ( super_x, super_y)],
+                [1, shrink, super_shrink]
             )
         elseif head == :delimited
             elements = tex_layout.(args, state)
@@ -168,6 +175,9 @@ function tex_layout(expr, state)
                     (0, 0)
                 ]
             )
+        elseif head == :primes
+            primes = [TeXExpr(:char, ''') for _ in 1:only(args)]
+            return horizontal_layout(tex_layout.(primes, state))
         elseif head == :space
             return Space(args[1])
         elseif head == :spaced
