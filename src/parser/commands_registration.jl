@@ -27,48 +27,81 @@ function Base.get(d::CanonicalDict, key, default)
     return default
 end
 
-
-# Each symbol or command has a unique canonical representation
+# Each symbol or com_str has a unique canonical representation
 const symbol_to_canonical = CanonicalDict{Char}()
-const command_to_canonical = CanonicalDict{String}()
 
 function canonical_expr(char::Char)
     haskey(symbol_to_canonical, char) && return symbol_to_canonical[char]
     return TeXExpr(:char, char)
 end
 
-canonical_expr(command::String) = get(command_to_canonical, command, nothing)
-
-# Symbols missing from the REPL completion data
-latex_symbols[raw"\neq"] = "≠"
-
-function get_symbol_char(command)
-    if !haskey(latex_symbols, command)
-        @warn "unknown command $command"
+function get_symbol_char(com_str)
+    if !haskey(latex_symbols, com_str)
+        @warn "unknown com_str $com_str"
         return '?'
     end
 
-    return first(latex_symbols[command])
+    return first(latex_symbols[com_str])
 end
+
+##
+## Commands
+##
+
+function command_expr(com_str, args)
+    template = copy(command_definitions[com_str][1])
+    return TeXExpr(template.head, vcat(template.args, args))
+end
+required_args(com_str) = command_definitions[com_str][2]
+
+const command_definitions = Dict(
+    raw"\frac" => (TeXExpr(:frac), 2),
+    raw"\sqrt" => (TeXExpr(:sqrt), 1),
+    raw"\overline" => (TeXExpr(:overline), 1),
+    raw"\{" => (TeXExpr(:delimiter, '{'), 0),
+    raw"\}" => (TeXExpr(:delimiter, '}'), 0),
+)
+
+for func in underover_functions
+    com_str = "\\" * func
+    template = TeXExpr(:underover, Any[TeXExpr(:function, func), nothing, nothing])
+    command_definitions[com_str] = (template, 0)
+end
+
+for func in generic_functions
+    com_str = "\\" * func
+    command_definitions[com_str] = (TeXExpr(:function, func), 0)
+end
+
+for (com_str, width) in space_commands
+    command_definitions[com_str] = (TeXExpr(:space, width), 0)
+end
+
+for com_str in combining_accents
+    combining_char = get_symbol_char(com_str)
+    template = TeXExpr(:combining_accent, TeXExpr(:symbol, combining_char))
+    command_definitions[com_str] = (template, 1)
+end
+
+for name in font_names
+    com_str = "\\math$name"
+    command_definitions[com_str] = (TeXExpr(:font, Symbol(name)), 1)
+    com_str = "\\text$name"
+    command_definitions[com_str] = (TeXExpr(:text, Symbol(name)), 1)
+end
+command_definitions["\\text"] = (TeXExpr(:text, :rm), 1)
+
+##
+## Symbols
+##
+
+# Symbols missing from the REPL completion data
+latex_symbols[raw"\neq"] = "≠"
 
 # Numbers
 for char in join(0:9)
     symbol_to_canonical[char] = TeXExpr(:digit, char)
 end
-
-##
-## Special commands
-##
-
-command_to_canonical[raw"\frac"] = TeXExpr(:argument_gatherer, [:frac, 2])
-command_to_canonical[raw"\sqrt"] = TeXExpr(:argument_gatherer, [:sqrt, 1])
-command_to_canonical[raw"\overline"] = TeXExpr(:argument_gatherer, [:overline, 1])
-command_to_canonical[raw"\{"] = TeXExpr(:delimiter, '{')
-command_to_canonical[raw"\}"] = TeXExpr(:delimiter, '}')
-
-##
-## Commands from the commands_data.jl file
-##
 
 for symbol in spaced_symbols
     symbol_expr = TeXExpr(:symbol, symbol)
@@ -76,49 +109,35 @@ for symbol in spaced_symbols
 end
 
 # Special case for hyphen that must be replaced by a minus sign
-# TODO Make sure it is not replaced outside of math mode
+# TODO Make sure it is not replaced outside of math mode and when starting a group
 symbol_to_canonical['-'] = TeXExpr(:spaced, TeXExpr(:symbol, '−'))
 
-for command in spaced_commands
-    symbol = get_symbol_char(command)
+for com_str in spaced_commands
+    symbol = get_symbol_char(com_str)
     symbol_expr = TeXExpr(:symbol, symbol)
-    symbol_to_canonical[symbol] = command_to_canonical[command] = TeXExpr(:spaced, symbol_expr)
+    template = TeXExpr(:spaced, symbol_expr)
+    symbol_to_canonical[symbol] = template
+    command_definitions[com_str] = (template, 0)
 end
 
-for command in underover_commands
-    symbol = get_symbol_char(command)
+for com_str in underover_commands
+    symbol = get_symbol_char(com_str)
     symbol_expr = TeXExpr(:symbol, symbol)
-    symbol_to_canonical[symbol] = command_to_canonical[command] = TeXExpr(:underover, Any[symbol_expr, nothing, nothing])
+    template = TeXExpr(:underover, Any[symbol_expr, nothing, nothing])
+    symbol_to_canonical[symbol] = template
+    command_definitions[com_str] = (template, 0)
 end
 
-for func in underover_functions
-    command = "\\" * func
-    command_to_canonical[command] = TeXExpr(:underover, Any[TeXExpr(:function, func), nothing, nothing])
-end
-
-for command in integral_commands
-    symbol = get_symbol_char(command)
+for com_str in integral_commands
+    symbol = get_symbol_char(com_str)
     symbol_expr = TeXExpr(:symbol, symbol)
-    symbol_to_canonical[symbol] = command_to_canonical[command] = TeXExpr(:integral, Any[symbol_expr, nothing, nothing])
-end
-
-for func in generic_functions
-    command = "\\" * func
-    command_to_canonical[command] = TeXExpr(:function, func)
-end
-
-for (command, width) in space_commands
-    command_to_canonical[command] = TeXExpr(:space, width)
+    template = TeXExpr(:integral, Any[symbol_expr, nothing, nothing])
+    symbol_to_canonical[symbol] = template
+    command_definitions[com_str] = (template, 0)
 end
 
 for (symbol, width) in space_symbols
     symbol_to_canonical[symbol] = TeXExpr(:space, width)
-end
-
-for command in combining_accents
-    combining_char = get_symbol_char(command)
-    symbol_expr = TeXExpr(:symbol, combining_char)
-    command_to_canonical[command] = TeXExpr(:argument_gatherer, [:combining_accent, 2, symbol_expr])
 end
 
 for symbol in punctuation_symbols
@@ -131,30 +150,21 @@ for symbol in delimiter_symbols
     symbol_to_canonical[symbol] = TeXExpr(:delimiter, symbol)
 end
 
-for name in font_names
-    command = "\\math$name"
-    command_to_canonical[command] = TeXExpr(:argument_gatherer, [:font, 2, Symbol(name)])
-    command = "\\text$name"
-    command_to_canonical[command] = TeXExpr(:argument_gatherer, [:text, 2, Symbol(name)])
-end
-command = "\\text"
-command_to_canonical[command] = TeXExpr(:argument_gatherer, [:text, 2, :rm])
-
 ##
 ## Default behavior
 ##
 # We put it at the end to avoid overwritting existing commands
 
-for (command, symbol) in latex_symbols
+for (com_str, symbol) in latex_symbols
     symbol = first(symbol)  # Convert String to Char
-    symbol_expr = TeXExpr(:symbol, [symbol])
+    symbol_expr = TeXExpr(:symbol, symbol)
     
     if !haskey(symbol_to_canonical, symbol)
         symbol_to_canonical[symbol] = symbol_expr
     end
 
     # Separate case for symbols that have multiple valid commands
-    if !haskey(command_to_canonical, command)
-        command_to_canonical[command] = symbol_expr
+    if !haskey(command_definitions, com_str)
+        command_definitions[com_str] = (symbol_expr, 0)
     end
 end

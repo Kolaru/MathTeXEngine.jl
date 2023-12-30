@@ -114,6 +114,7 @@ The table below contains the list of all supported LaTeX construction and their 
 | Function | `\sin` | `:function` | `name` |
 | Generic symbol | `ω` | `:symbol` | `unicode_char` |
 | Group | `{ }` | `:group` | `elements...` |
+| Inline math | `$ $` | `:inline_math` | `content` |
 | Integral | `\int_a^b` | `:integral` | `symbol, low_bound, high_bound` |
 | Math fonts | `\mathrm{}` | `:font` | `font_modifier, expr` |
 | Punctuation | `!` | `:punctuation` |
