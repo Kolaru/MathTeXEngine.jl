@@ -56,7 +56,7 @@ function tex_layout(expr, state)
         elseif head == :decorated
             core, sub, super = tex_layout.(args, state)
 
-            if args[3].head == :primes
+            if !isnothing(args[3]) && args[3].head == :primes
                 super_x = min(hadvance(core), rightinkbound(core)) - 0.1
                 super_y = 0.1
                 super_shrink = 1
