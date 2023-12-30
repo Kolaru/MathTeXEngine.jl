@@ -8,7 +8,7 @@ include("references.jl")
 
 const git = Git.git()
 
-@testset begin "Reference images"
+begin
     readchomp(`$git fetch`)
     master_id = readchomp(`$git rev-parse --short master`)
     current_id = readchomp(`$git rev-parse --short HEAD`)

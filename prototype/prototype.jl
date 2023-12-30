@@ -147,7 +147,7 @@ function makie_tex!(
 end
 
 begin  # Quick test
-    fig = Figure(resolution=(1800, 1000))
+    fig = Figure(size=(1800, 1000))
     fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
     ax = Axis(fig[2, 1])
     hidedecorations!(ax)

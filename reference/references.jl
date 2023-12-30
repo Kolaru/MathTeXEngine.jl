@@ -111,7 +111,7 @@ function generate(name)
 end
 
 function single_figure(exprs)
-    fig = Figure(resolution=(200, length(exprs)*60))
+    fig = Figure(size=(200, length(exprs)*60))
     failures = Dict()
     for (i, expr) in enumerate(exprs)
         try
