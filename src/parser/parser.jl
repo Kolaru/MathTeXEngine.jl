@@ -94,7 +94,7 @@ end
 function delimiter(com_str, str)
     str = str[length(com_str)+1:end]
     if length(str) == 1
-        return TeXExpr(:char, only(str))
+        return TeXExpr(:delimiter, only(str))
     else
         return only(texparse(str).args)
     end
@@ -145,7 +145,7 @@ function texparse(tex ; root = TeXExpr(:expr), showdebug = false)
                 left_delim, content... = delimited.args
                 right_delim = delimiter(raw"\right", tex[pos:pos+len-1])
                 if length(content) == 1
-                    content = TeXExpr(:char, only(content))
+                    content = only(content)
                 else
                     content = TeXExpr(:group, content)
                 end

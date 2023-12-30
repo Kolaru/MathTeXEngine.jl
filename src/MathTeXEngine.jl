@@ -19,7 +19,7 @@ import FreeTypeAbstraction:
     height_insensitive_boundingbox, leftinkbound, rightinkbound,
     topinkbound, bottominkbound
 
-export TeXExpr, texparse, TeXParseError
+export TeXExpr, texparse, TeXParseError, manual_texexpr
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
 export texfont
 export glyph_index

@@ -21,6 +21,12 @@ end
     end
 
     @testset "Delimiter" begin
+        expr = texparse(L"\left(\frac{x}{y}\right)")
+        delimited = expr.args[1].args[1]
+        @test delimited.args[1].head == :delimiter
+        @test delimited.args[2].head == :frac
+        @test delimited.args[3].head == :delimiter
+
         test_parse(
             raw"\left(x\right)",
             (:delimited, '(', 'x', ')')
@@ -42,7 +48,6 @@ end
 
         test_parse(raw"\{", (:delimiter, '{'))
         test_parse(raw"\}", (:delimiter, '}'))
-
 
         @test_throws TeXParseError texparse(raw"\left( x")
         @test_throws TeXParseError texparse(raw"x \right)")
