@@ -97,6 +97,7 @@ command_definitions["\\text"] = (TeXExpr(:text, :rm), 1)
 
 # Symbols missing from the REPL completion data
 latex_symbols[raw"\neq"] = "≠"
+latex_symbols[raw"\upepsilon"] = "ε"
 
 # Numbers
 for char in join(0:9)
@@ -158,7 +159,7 @@ end
 for (com_str, symbol) in latex_symbols
     symbol = first(symbol)  # Convert String to Char
     symbol_expr = TeXExpr(:symbol, symbol)
-    
+
     if !haskey(symbol_to_canonical, symbol)
         symbol_to_canonical[symbol] = symbol_expr
     end
