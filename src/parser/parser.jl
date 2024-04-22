@@ -111,12 +111,6 @@ arguments.
 Setting `showdebug` to `true` show a very verbose break down of the parsing.
 """
 function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
-    if tex[1] == '$' && tex[end] == '$' && !('$' in tex[2:end-1])
-        @info "Just one latex equation"
-        tex = tex[2:end-1]
-    end
-    @show tex
-
     stack = Stack{Any}()
     push!(stack, root)
     push!(stack, TeXExpr(:line))

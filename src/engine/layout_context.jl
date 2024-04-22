@@ -20,6 +20,10 @@ function add_font_modifier(state::LayoutState, modifier)
 end
 
 function get_font(state::LayoutState, char_type)
+    if state.tex_mode == :text
+        char_type = :text
+    end
+
     font_family = state.font_family
     font_id = font_family.font_mapping[char_type]
 

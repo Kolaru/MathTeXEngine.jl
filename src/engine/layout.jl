@@ -29,8 +29,7 @@ function tex_layout(expr, state)
             if char == ' ' && state.tex_mode == :inline_math
                 return Space(0.0)
             end
-            texchar = TeXChar(char, state, head)
-            return texchar
+            return TeXChar(char, state, head)
         elseif head == :combining_accent
             accent, core = tex_layout.(args, state)
 
@@ -134,8 +133,8 @@ function tex_layout(expr, state)
             name = args[1]
             elements = TeXChar.(collect(name), state, Ref(:function))
             return horizontal_layout(elements)
-        elseif head == :group || head == :expr || head == :inline_math
-            mode = head == :inline_math ? :inline_math : state.tex_mode
+        elseif head in (:group, :inline_math, :line)
+            mode = (head == :inline_math) ? :inline_math : state.tex_mode
             elements = tex_layout.(args, change_mode(state, mode))
             if isempty(elements)
                 return Space(0.0)
@@ -160,6 +159,8 @@ function tex_layout(expr, state)
                 ],
                 [1, shrink, shrink]
             )
+        elseif head == :lines
+            length(args) == 1 && return tex_layout(only(args), state)
         elseif head == :overline
             content = tex_layout(args[1], state)
 
@@ -248,7 +249,7 @@ function tex_layout(expr, state)
         @error "Error while layouting expr"
     end
 
-    @error "Unsupported head $(head) in expr:\n$expr"
+    throw(ArgumentError("Unsupported head :$(head) in TeXExpr\n$expr"))
 end
 
 tex_layout(::Nothing, state) = Space(0)
@@ -311,18 +312,3 @@ function generate_tex_elements(str, font_family=FontFamily())
     layout = tex_layout(expr, font_family)
     return unravel(layout)
 end
-
-#=
-# Still hacky as hell
-function generate_tex_elements(str::LaTeXString, font_family=FontFamily())
-    parts = String.(split(str, raw"$"))
-    groups = Vector{TeXElement}(undef, length(parts))
-    texts = parts[1:2:end]
-    maths = parts[2:2:end]
-
-    groups[1:2:end] = layout_text.(texts, Ref(font_family))
-    groups[2:2:end] = tex_layout.(texparse.(maths), Ref(font_family))
-
-    return unravel(horizontal_layout(groups))
-end
-=#
