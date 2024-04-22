@@ -161,6 +161,15 @@ function tex_layout(expr, state)
             )
         elseif head == :lines
             length(args) == 1 && return tex_layout(only(args), state)
+            lineheight = 1.3
+            lines = tex_layout.(args, state)
+            points = map(enumerate(lines)) do (k, line)
+                x = -inkwidth(line) / 2
+                y = (1 - k)*lineheight
+                return Point2f(x, y)
+            end
+
+            return Group(lines, points)
         elseif head == :overline
             content = tex_layout(args[1], state)
 
