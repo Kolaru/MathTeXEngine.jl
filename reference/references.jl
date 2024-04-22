@@ -49,6 +49,10 @@ inputs["integrals"] = [
     L"\int \int \int"
 ]
 
+input["linebreaks"] = [
+    L"we clearly see $x = 22$\\and $y > x^2$"
+]
+
 inputs["punctuation"] = [
     L"x!",
     L"23.17",

@@ -203,5 +203,11 @@ function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
     if length(stack) > 1
         throw(TeXParseError("unexpected end of input", stack, length(tex), tex))
     end
-    return only(stack)
+
+    lines = only(stack)
+    if length(lines.args) == 1
+        return only(lines.args)
+    else
+        return lines
+    end
 end
