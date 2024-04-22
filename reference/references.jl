@@ -49,6 +49,10 @@ inputs["integrals"] = [
     L"\int \int \int"
 ]
 
+input["linebreaks"] = [
+    L"we clearly see $x = 22$\\and $y > x^2$"
+]
+
 inputs["punctuation"] = [
     L"x!",
     L"23.17",
@@ -115,7 +119,7 @@ function single_figure(exprs)
     failures = Dict()
     for (i, expr) in enumerate(exprs)
         try
-            fig[i, 1] = Label(fig, expr)
+            Label(fig[i, 1], expr)
         catch e
             failures[expr] = e
         end 

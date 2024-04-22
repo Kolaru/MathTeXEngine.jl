@@ -110,9 +110,10 @@ arguments.
 
 Setting `showdebug` to `true` show a very verbose break down of the parsing.
 """
-function texparse(tex ; root = TeXExpr(:expr), showdebug = false)
+function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
     stack = Stack{Any}()
     push!(stack, root)
+    push!(stack, TeXExpr(:line))
 
     for (pos, len, token) in tokenize(TeXToken, tex)
         if showdebug
@@ -128,6 +129,13 @@ function texparse(tex ; root = TeXExpr(:expr), showdebug = false)
                 else
                     push!(stack, TeXExpr(:inline_math))
                 end
+            elseif token == newline
+                if length(stack) > 2                
+                    throw(TeXParseError("unexpected new line", stack, length(tex), tex))
+                end
+
+                push_down!(stack)
+                push!(stack, TeXExpr(:line))
             elseif token == lcurly
                 push!(stack, TeXExpr(:group))
             elseif token == rcurly
@@ -188,8 +196,18 @@ function texparse(tex ; root = TeXExpr(:expr), showdebug = false)
         end
     end
 
+    if head(first(stack)) == :line
+        push_down!(stack)
+    end
+
     if length(stack) > 1
         throw(TeXParseError("unexpected end of input", stack, length(tex), tex))
     end
-    return only(stack)
+
+    lines = only(stack)
+    if length(lines.args) == 1
+        return only(lines.args)
+    else
+        return lines
+    end
 end

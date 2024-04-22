@@ -8,6 +8,7 @@ tex_tokens = [
     :command => re"\\[a-zA-Z]+" | re"\\.",
     :right => re"\\right.",
     :left => re"\\left.",
+    :newline => (re"\\" * re"\\") | re"\\n",
     :dollar => re"$"
 ]
 

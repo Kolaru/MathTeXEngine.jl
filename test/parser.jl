@@ -1,5 +1,5 @@
 function test_parse(input, args... ; broken=false)
-    arg = (:expr, args...)
+    arg = (:line, args...)
     if broken
         @test_broken texparse(input) == manual_texexpr(arg)
     else
@@ -112,6 +112,12 @@ end
             raw"\int_a^b",
             (:integral, (:symbol, '∫'), 'a', 'b')
         )
+    end
+
+    @testset "Linebreak" begin
+        expr = texparse(L"$A$\\$B$\\$C$")
+        @test expr.head == :lines
+        @test length(expr.args) == 3
     end
 
     @testset "LaTeXString input" begin
