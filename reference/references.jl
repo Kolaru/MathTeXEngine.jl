@@ -115,7 +115,7 @@ function single_figure(exprs)
     failures = Dict()
     for (i, expr) in enumerate(exprs)
         try
-            fig[i, 1] = Label(fig, expr)
+            Label(fig[i, 1], expr)
         catch e
             failures[expr] = e
         end 
