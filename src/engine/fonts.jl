@@ -25,21 +25,7 @@ end
 # Loading the font directly here lead to FreeTypeAbstraction to fail with error
 # code 35, because handles to fonts are C pointer that cannot be fully
 # serialized at compile time
-const _new_computer_modern_fonts = Dict(
-    :regular => joinpath("NewComputerModern", "NewCMMath-Regular.otf"),
-    :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
-    :bold => joinpath("NewComputerModern", "NewCM10-Bold.otf"),
-    :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
-    :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
-)
 
-const _computer_modern_fonts = Dict(
-    :regular => joinpath("ComputerModern", "cmr10.ttf"),
-    :italic => joinpath("ComputerModern", "cmmi10.ttf"),
-    :bold => joinpath("ComputerModern", "cmb10.ttf"),
-    :bolditalic => joinpath("ComputerModern", "cmmib10.ttf"),
-    :math => joinpath("ComputerModern", "cmmi10.ttf")
-)
 
 const _default_font_mapping = Dict(
     :text => :regular,
@@ -58,20 +44,27 @@ const _default_font_modifiers = Dict(
 )
 
 """
-    FontFamily([fonts, font_mapping, font_modifiers, slant_angle])
+    FontFamily(fonts ; font_mapping, font_modifiers, special_chars, slant_angle, thickness)
 
 A set of font for LaTeX rendering.
 
-# Fields
+# Required fields
+  - `fonts` A with the path to 5 fonts (:regular, :italic, :bold, :bolditalic,
+    and :math). The same font can be used for multiple entries, and unrelated
+    fonts can be mixed.
+
+# Optional fields
   - `font_mapping` a dict mapping the different character types (`:digit`,
     `:function`, `:punctuation`, `:symbol`, `:variable`) to a font identifier.
     Default to `MathTeXEngine._default_font_mapping`
-  - `fonts` a dict mapping font identifier to a font path. Default to
-    `MathTeXEngine._default_fonts` which represents the NewComputerModern font.
   - `font_modifiers` a dict of dict, one entry per font command supported in the
     font set. Each entry is a dict that maps a font identifier to another.
     Default to `MathTeXEngine._default_font_modifiers`.
-  - `slant_angle` the angle by which the italic fonts are slanted, in degree
+  - `specail_chars` mapping for special characters that should not be
+    represented by their default unicode glyph
+    (for example necessary to access the big integral glyph).
+  - `slant_angle` the angle by which the italic fonts are slanted, in degree.
+  - `thickness` the thickness of the lines associated to the font.
 """
 struct FontFamily
     fonts::Dict{Symbol, String}
@@ -82,28 +75,63 @@ struct FontFamily
     thickness::Float64
 end
 
+function FontFamily(fonts::Dict ;
+        font_mapping = _default_font_mapping,
+        font_modifiers = _default_font_modifiers,
+        special_chars = Dict{Char, Tuple{String, Int}}(),
+        slant_angle = 13,
+        thickness = 0.0375)
+    
+    return FontFamily(
+        fonts,
+        font_mapping,
+        font_modifiers,
+        special_chars,
+        slant_angle,
+        thickness
+    )
+end
+
+"""
+    FontFamily(name::String = "NewComputerModern")
+
+One of the default set of font for LaTeX rendering.
+
+Currently available are
+- NewComputerModern
+- TeXGyreHeros
+
+These names can also be used in a LaTeXString directly,
+with the command `\\fontfamily`,
+e.g. L"\\fontfamily{TeXGyreHeros}x^2_3".
+"""
 FontFamily() = FontFamily("NewComputerModern")
-FontFamily(fontname) = default_font_families[fontname]
+FontFamily(fontname::AbstractString) = default_font_families[fontname]
 
 # These two fonts internals are very different, despite their similar names
 # We only try to fully support NewComputerModern, the other is here as it may
 # sometime provide quickfix solution to bug
 const default_font_families = Dict(
     "NewComputerModern" => FontFamily(
-        _new_computer_modern_fonts,
-        _default_font_mapping,
-        _default_font_modifiers,
-        _symbol_to_new_computer_modern,
-        13,
-        0.0375),
-    "ComputerModern" => FontFamily(
-        _computer_modern_fonts,
-        _default_font_mapping,
-        _default_font_modifiers,
-        _symbol_to_computer_modern,
-        15,
-        0.0375)
+        Dict(
+            :regular => joinpath("NewComputerModern", "NewCMMath-Regular.otf"),
+            :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
+            :bold => joinpath("NewComputerModern", "NewCM10-Bold.otf"),
+            :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
+            :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
+        ),
+        special_chars =_symbol_to_new_computer_modern),
+    "TeXGyreHeros" => FontFamily(
+        Dict(
+            :regular => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Regular.otf"),
+            :italic => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Italic.otf"),
+            :bold => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Bold.otf"),
+            :bolditalic => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-BoldItalic.otf"),
+            :math => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Regular.otf")
+        )
+    )
 )
+
 
 """
     get_font([font_family=FontFamily()], fontstyle)
