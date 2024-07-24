@@ -200,6 +200,7 @@ function tex_layout(expr, state)
 
             for name in ["radical.v1", "radical.v2", "radical.v3", "radical.v4"]
                 sqrt = TeXChar(name, state, :symbol ; represented = '√')
+                pad = inkheight(sqrt)
                 if inkheight(sqrt) >= 1.05h
                     pad = (inkheight(sqrt) - 1.05h) / 2
                     break

@@ -20,7 +20,7 @@ function draw_texelement!(ax, texchar::TeXChar, position, scale ; size=64)
     # TODO This doesn't make sense anymore
     text!(ax, string(Char(texchar.represented_char)), font=texchar.font,
         position=Point2f(x, y),
-        textsize=size*scale,
+        fontsize=size*scale,
         space=:data,
         markerspace=:data,
         align=(:left, :baseline),
@@ -134,11 +134,12 @@ end
 
 function makie_tex!(
         ax, latex::LaTeXString ;
-        debug=false,
-        size=64,
-        position=[0, 0])
+        debug = false,
+        size = 64,
+        position = [0, 0],
+        fontfamily = FontFamily())
 
-    for (elem, pos, scale) in generate_tex_elements(latex)
+    for (elem, pos, scale) in generate_tex_elements(latex, fontfamily)
         draw_texelement!(ax, elem, pos .+ position, scale ; size=size)
         if debug
             draw_texelement_helpers!(ax, elem, pos .+ position, scale ; size=size)
@@ -148,20 +149,21 @@ end
 
 begin  # Quick test
     fig = Figure(size=(1800, 1000))
-    fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, textsize=64)
+    fig[1, 1] = Label(fig, "LaTeX in Makie.jl", tellwidth=false, fontsize=64)
     ax = Axis(fig[2, 1])
     hidedecorations!(ax)
     ax.aspect = DataAspect()
     tex = L"\nabla 3\degree \partial L^3 \sum \lim_{L →\infty}
-            \varphi \phi \varpi \pi \varepsilon \epsilon
+            \frac{\varphi \phi \varpi}{\pi \varepsilon \epsilon}
             ℝ^\sqrt{A + j + 2 + 3} |x^2|^3 = \sum_{k = 1}^N
             \vec{v}_{(a' + \bar{a})_k} + \sqrt{T} x! \quad \mathrm{when} \quad
             \left[ \sqrt{\frac{\Omega-2}{a \langle c^\dagger \rangle b}} \right]^3_3 
             < \int_{0}^{2π} |\sin(\mu x)| dx"
     
-    tex = L"\mathcal{A} \mathbb{R} \longrightarrow xyz \text{x y z} \mathrm{x y z}"
+    # tex = L"\mathcal{A} \mathbb{R} \longrightarrow xyz \text{x y z} \mathrm{x y z}"
+    # tex = L"$p_z$ ($10^5$ a. u.)"
 
-    makie_tex!(ax, tex, debug=true, size=64)
-    fig[3, 1] = Label(fig, tex, tellwidth=false, tellheight=false, textsize=40)
+    makie_tex!(ax, tex, size=64, fontfamily = FontFamily("TeXGyreHeros"))
+    fig[3, 1] = Label(fig, tex, tellwidth=false, tellheight=false, fontsize=40)
     fig
 end

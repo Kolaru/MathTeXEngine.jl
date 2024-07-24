@@ -41,6 +41,14 @@ const _computer_modern_fonts = Dict(
     :math => joinpath("ComputerModern", "cmmi10.ttf")
 )
 
+const _texgyre_heros_fonts = Dict(
+    :regular => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Regular.otf"),
+    :italic => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Italic.otf"),
+    :bold => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Bold.otf"),
+    :bolditalic => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-BoldItalic.otf"),
+    :math => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Regular.otf")
+)
+
 const _default_font_mapping = Dict(
     :text => :regular,
     :delimiter => :regular,
@@ -102,7 +110,14 @@ const default_font_families = Dict(
         _default_font_modifiers,
         _symbol_to_computer_modern,
         15,
-        0.0375)
+        0.0375),
+    "TeXGyreHeros" => FontFamily(
+        _texgyre_heros_fonts,
+        _default_font_mapping,
+        _default_font_modifiers,
+        _symbol_to_new_computer_modern,
+        13,
+        0.0375),
 )
 
 """
