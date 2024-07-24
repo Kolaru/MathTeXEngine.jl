@@ -323,8 +323,7 @@ function generate_tex_elements(str, font_family=FontFamily())
     expr = texparse(str)
 
     for node in PreOrderDFS(expr)
-        isnothing(node) && break
-        if node.head == :fontfamily
+        if node isa TeXExpr && node.head == :fontfamily
             # Reconstruct the argument as a single string
             name = join([texchar.args[1] for texchar in node.args[1].args])
             font_family = FontFamily(name)
