@@ -44,20 +44,27 @@ const _default_font_modifiers = Dict(
 )
 
 """
-    FontFamily([fonts, font_mapping, font_modifiers, slant_angle])
+    FontFamily(fonts ; font_mapping, font_modifiers, special_chars, slant_angle, thickness)
 
 A set of font for LaTeX rendering.
 
-# Fields
+# Required fields
+  - `fonts` A with the path to 5 fonts (:regular, :italic, :bold, :bolditalic,
+    and :math). The same font can be used for multiple entries, and unrelated
+    fonts can be mixed.
+
+# Optional fields
   - `font_mapping` a dict mapping the different character types (`:digit`,
     `:function`, `:punctuation`, `:symbol`, `:variable`) to a font identifier.
     Default to `MathTeXEngine._default_font_mapping`
-  - `fonts` a dict mapping font identifier to a font path. Default to
-    `MathTeXEngine._default_fonts` which represents the NewComputerModern font.
   - `font_modifiers` a dict of dict, one entry per font command supported in the
     font set. Each entry is a dict that maps a font identifier to another.
     Default to `MathTeXEngine._default_font_modifiers`.
-  - `slant_angle` the angle by which the italic fonts are slanted, in degree
+  - `specail_chars` mapping for special characters that should not be
+    represented by their default unicode glyph
+    (for example necessary to access the big integral glyph).
+  - `slant_angle` the angle by which the italic fonts are slanted, in degree.
+  - `thickness` the thickness of the lines associated to the font.
 """
 struct FontFamily
     fonts::Dict{Symbol, String}
@@ -85,6 +92,19 @@ function FontFamily(fonts::Dict ;
     )
 end
 
+"""
+    FontFamily(name::String = "NewComputerModern")
+
+One of the default set of font for LaTeX rendering.
+
+Currently available are
+- NewComputerModern
+- TeXGyreHeros
+
+These names can also be used in a LaTeXString directly,
+with the command `\\fontfamily`,
+e.g. L"\\fontfamily{TeXGyreHeros}x^2_3".
+"""
 FontFamily() = FontFamily("NewComputerModern")
 FontFamily(fontname::AbstractString) = default_font_families[fontname]
 
