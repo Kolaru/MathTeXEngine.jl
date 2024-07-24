@@ -25,29 +25,7 @@ end
 # Loading the font directly here lead to FreeTypeAbstraction to fail with error
 # code 35, because handles to fonts are C pointer that cannot be fully
 # serialized at compile time
-const _new_computer_modern_fonts = Dict(
-    :regular => joinpath("NewComputerModern", "NewCMMath-Regular.otf"),
-    :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
-    :bold => joinpath("NewComputerModern", "NewCM10-Bold.otf"),
-    :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
-    :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
-)
 
-const _computer_modern_fonts = Dict(
-    :regular => joinpath("ComputerModern", "cmr10.ttf"),
-    :italic => joinpath("ComputerModern", "cmmi10.ttf"),
-    :bold => joinpath("ComputerModern", "cmb10.ttf"),
-    :bolditalic => joinpath("ComputerModern", "cmmib10.ttf"),
-    :math => joinpath("ComputerModern", "cmmi10.ttf")
-)
-
-const _texgyre_heros_fonts = Dict(
-    :regular => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Regular.otf"),
-    :italic => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Italic.otf"),
-    :bold => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Bold.otf"),
-    :bolditalic => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-BoldItalic.otf"),
-    :math => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Regular.otf")
-)
 
 const _default_font_mapping = Dict(
     :text => :regular,
@@ -90,35 +68,50 @@ struct FontFamily
     thickness::Float64
 end
 
+function FontFamily(fonts::Dict ;
+        font_mapping = _default_font_mapping,
+        font_modifiers = _default_font_modifiers,
+        special_chars = Dict{Char, Tuple{String, Int}}(),
+        slant_angle = 13,
+        thickness = 0.0375)
+    
+    return FontFamily(
+        fonts,
+        font_mapping,
+        font_modifiers,
+        special_chars,
+        slant_angle,
+        thickness
+    )
+end
+
 FontFamily() = FontFamily("NewComputerModern")
-FontFamily(fontname) = default_font_families[fontname]
+FontFamily(fontname::AbstractString) = default_font_families[fontname]
 
 # These two fonts internals are very different, despite their similar names
 # We only try to fully support NewComputerModern, the other is here as it may
 # sometime provide quickfix solution to bug
 const default_font_families = Dict(
     "NewComputerModern" => FontFamily(
-        _new_computer_modern_fonts,
-        _default_font_mapping,
-        _default_font_modifiers,
-        _symbol_to_new_computer_modern,
-        13,
-        0.0375),
-    "ComputerModern" => FontFamily(
-        _computer_modern_fonts,
-        _default_font_mapping,
-        _default_font_modifiers,
-        _symbol_to_computer_modern,
-        15,
-        0.0375),
+        Dict(
+            :regular => joinpath("NewComputerModern", "NewCMMath-Regular.otf"),
+            :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
+            :bold => joinpath("NewComputerModern", "NewCM10-Bold.otf"),
+            :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
+            :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
+        ),
+        special_chars =_symbol_to_new_computer_modern),
     "TeXGyreHeros" => FontFamily(
-        _texgyre_heros_fonts,
-        _default_font_mapping,
-        _default_font_modifiers,
-        _symbol_to_new_computer_modern,
-        13,
-        0.0375),
+        Dict(
+            :regular => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Regular.otf"),
+            :italic => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Italic.otf"),
+            :bold => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Bold.otf"),
+            :bolditalic => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-BoldItalic.otf"),
+            :math => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Regular.otf")
+        )
+    )
 )
+
 
 """
     get_font([font_family=FontFamily()], fontstyle)
