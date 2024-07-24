@@ -60,6 +60,7 @@ const command_definitions = Dict(
     raw"\overline" => (TeXExpr(:overline), 1),
     raw"\{" => (TeXExpr(:delimiter, '{'), 0),
     raw"\}" => (TeXExpr(:delimiter, '}'), 0),
+    raw"\fontfamily" => (TeXExpr(:fontfamily), 1)
 )
 
 for func in underover_functions

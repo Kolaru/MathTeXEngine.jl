@@ -104,6 +104,8 @@ function tex_layout(expr, state)
         elseif head == :font
             modifier, content = args
             return tex_layout(content, add_font_modifier(state, modifier))
+        elseif head == :fontfamily
+            return Space(0)
         elseif head == :frac
             numerator = tex_layout(args[1], state)
             denominator = tex_layout(args[2], state)
@@ -319,6 +321,16 @@ The elments are of one of the following types
 """
 function generate_tex_elements(str, font_family=FontFamily())
     expr = texparse(str)
+
+    for node in PreOrderDFS(expr)
+        isnothing(node) && break
+        if node.head == :fontfamily
+            # Reconstruct the argument as a single string
+            name = join([texchar.args[1] for texchar in node.args[1].args])
+            font_family = FontFamily(name)
+            break
+        end
+    end
     layout = tex_layout(expr, font_family)
     return unravel(layout)
 end
