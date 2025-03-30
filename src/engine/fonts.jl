@@ -136,7 +136,7 @@ const default_font_families = Dict(
             :italic => joinpath("TeXGyrePagella", "texgyrepagella-italic.otf"),
             :bold => joinpath("TeXGyrePagella", "texgyrepagella-bold.otf"),
             :bolditalic => joinpath("TeXGyrePagella", "texgyrepagella-bolditalic.otf"),
-            :math => joinpath("TeXGyrePagella", "texgyrepagella-regular.otf"),
+            :math => joinpath("TeXGyrePagella", "texgyrepagella-math.otf"),
         )
     )
 )
