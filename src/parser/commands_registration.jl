@@ -110,10 +110,6 @@ for symbol in spaced_symbols
     symbol_to_canonical[symbol] = TeXExpr(:spaced, symbol_expr)
 end
 
-# Special case for hyphen that must be replaced by a minus sign
-# TODO Make sure it is not replaced outside of math mode and when starting a group
-symbol_to_canonical['-'] = TeXExpr(:spaced, TeXExpr(:symbol, '−'))
-
 for com_str in spaced_commands
     symbol = get_symbol_char(com_str)
     symbol_expr = TeXExpr(:symbol, symbol)

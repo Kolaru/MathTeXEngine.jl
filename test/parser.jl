@@ -56,14 +56,14 @@ end
     @testset "Fonts" begin
         test_parse(raw"\mathrm{u}", (:font, :rm, (:char, 'u')))
         test_parse(raw"\text{u}", (:text, :rm, (:char, 'u')))
-        
-        test_parse(raw"\mathrm{u v}", (:text, :rm, 
+
+        test_parse(raw"\mathrm{u v}", (:text, :rm,
             (:group,
                 (:char, 'u'),
                 (:char, ' '),
                 (:char, 'v')
             )))
-        test_parse(raw"\text{u v}", (:text, :rm, 
+        test_parse(raw"\text{u v}", (:text, :rm,
             (:group,
                 (:char, 'u'),
                 (:char, ' '),
@@ -177,6 +177,14 @@ end
         )
         # Hyphen must be replaced by a minus sign
         test_parse(raw"-", (:spaced, (:symbol, '−')))
+
+        test_parse(raw"a-b $c-d$",
+                   (:char, 'a'), (:char, '-'), (:char, 'b'),
+                   (:char, ' '),
+                   (:inline_math,
+                    (:char, 'c'),
+                    (:spaced, (:symbol, '−')),
+                    (:char, 'd')))
     end
 
     @testset "Subscript and superscript" begin

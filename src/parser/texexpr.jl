@@ -125,7 +125,7 @@ end
 function Base.:(==)(tex1::TeXExpr, tex2::TeXExpr)
     childs1 = children(tex1)
     childs2 = children(tex2)
-    
+
     length(childs1) != length(childs2) && return false
 
     return all(childs1 .== childs2)
@@ -141,7 +141,7 @@ function leafmap(f, texexpr::TeXExpr)
     isleaf(texexpr) && return f(texexpr)
 
     args = map(texexpr.args) do arg
-        isnothing(arg) && return nothing
+        arg isa TeXExpr || return arg
         return leafmap(f, arg)
     end
 
