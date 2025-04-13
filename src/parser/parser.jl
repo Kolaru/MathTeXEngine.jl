@@ -62,16 +62,16 @@ function push_down!(stack)
 
     if head(first(stack)) in [:subscript, :superscript]
         decoration = pop!(stack)
-        decorated = pop!(first(stack)) 
+        decorated = pop!(first(stack))
         decorated.args[subsuperindex(head(decoration))] = first(decoration.args)
         push!(first(stack).args, decorated)
-    end 
+    end
 
     conclude_command!!(stack)
 end
 
 function conclude_command!!(stack)
-    com = first(stack) 
+    com = first(stack)
     head(com) != :command && return false
     nargs = length(com.args) - 1
 
@@ -111,7 +111,10 @@ arguments.
 Setting `showdebug` to `true` show a very verbose break down of the parsing.
 """
 function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
+    contains_math = occursin(raw"$", tex)
+
     stack = Stack{Any}()
+    inside_math = false
     push!(stack, root)
     push!(stack, TeXExpr(:line))
 
@@ -125,12 +128,14 @@ function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
         try
             if token == dollar
                 if head(first(stack)) == :inline_math
+                    inside_math = false
                     push_down!(stack)
                 else
+                    inside_math = true
                     push!(stack, TeXExpr(:inline_math))
                 end
             elseif token == newline
-                if length(stack) > 2                
+                if length(stack) > 2
                     throw(TeXParseError("unexpected new line", stack, length(tex), tex))
                 end
 
@@ -188,7 +193,20 @@ function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
                     push!(stack, TeXExpr(dec))
                 end
             elseif token == char
-                push!(stack, canonical_expr(tex[pos])) 
+                c = tex[pos]
+
+                # hyphen replaced by minus sign if expression does not contain
+                # inline math at all, or the hyphen is inside inline math
+                if c == '-'
+                    if !contains_math || inside_math
+                        expr = TeXExpr(:spaced, TeXExpr(:symbol, '−'))
+                    else
+                        expr = TeXExpr(:char, '-')
+                    end
+                else
+                    expr = canonical_expr(c)
+                end
+                push!(stack, expr)
                 push_down!(stack)
             end
         catch err
