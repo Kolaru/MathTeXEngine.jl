@@ -1,6 +1,6 @@
 @testset "TeXExpr" begin
     @testset "leafmap" begin
-        ab = texparse(raw"a + b_a")
+        ab = texparse(raw"a + b_a" ; showdebug = true)
         xx = texparse(raw"x + b_x")
 
         @test xx == MathTeXEngine.leafmap(ab) do leaf
