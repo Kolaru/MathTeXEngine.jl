@@ -34,6 +34,13 @@ function show_state(io::IO, stack, position, tex)
     println(io, "Stack")
     show_stack(io, stack)
     println(io)
+
+    println(io, "TeX expression tokenized as")
+    println(io, "index : token_type [length]")
+    for (i, len, token) in tokenize(TeXToken, tex)
+        println(io, "$i : $token [$len]")
+    end
+    println(io)
 end
 
 show_state(stack, position, tex) = show_state(stdout, stack, position, tex)
