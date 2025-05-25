@@ -1,0 +1,175 @@
+\NeedsTeXFormat{LaTeX2e}[2022/06/01]
+\def\fileversion{0.40}
+\def\filedate{2025-03-27}
+\ProvidesPackage{luciole-math}[\filedate\space\fileversion]
+
+% Ensure luatex or xetex engine
+\RequirePackage{iftex}[2019/10/24]
+\RequireTUTeX
+\RequirePackage{unicode-math}
+
+\newopentypefeature{Style}{leqslant}{+ss04}
+\newopentypefeature{Style}{smaller}{+ss05}
+\newopentypefeature{Style}{subsetneq}{+ss06}
+\newopentypefeature{Style}{parallelslant}{+ss07}
+
+\newtoks\LuciMtoks
+\newtoks\LuciScale
+\newcommand*{\Lucistore@KV@Option}[2]{%
+  \LuciMtoks=\expandafter{\the\LuciMtoks #1={#2},}
+  \def\Luci@opt{#1}%
+  \def\Luci@scale{Scale}%
+  \ifx\Luci@opt\Luci@scale
+    \LuciScale=\expandafter{Scale={#2}}%
+  \fi
+}
+
+% Package options:
+\DeclareKeys
+  {
+   Numbers.code          = \Lucistore@KV@Option{Numbers}{#1}          ,
+   math-style.code       = \Lucistore@KV@Option{math-style}{#1}       ,
+   bold-style.code       = \Lucistore@KV@Option{bold-style}{#1}       ,
+   nabla.code            = \Lucistore@KV@Option{nabla}{#1}            ,
+   partial.code          = \Lucistore@KV@Option{partial}{#1}          ,
+   CharacterVariant.code = \Lucistore@KV@Option{CharacterVariant}{#1} ,
+   StylisticSet.code     = \Lucistore@KV@Option{StylisticSet}{#1}     ,
+   Style.code            = \Lucistore@KV@Option{Style}{#1}            ,
+   Scale.code            = \Lucistore@KV@Option{Scale}{#1}
+  }
+%
+\ProcessKeyOptions
+%
+% Text fonts: *not* loaded by luciole-math.sty
+%
+% Math fonts: Luciole-Math.otf, Luciole-Math-Bold.otf.
+% Following Joseph Wright in https://tex.stackexchange.com/questions/451
+\Lucistore@KV@Option{BoldFont}{Luciole-Math-Bold.otf}
+\begingroup
+  \edef\temp{%
+    \endgroup
+    \noexpand\setmathfont{Luciole-Math.otf}%
+    [\unexpanded\expandafter{\the\LuciMtoks}]%
+  }
+  \temp
+% For Maths operators (use Luciole text fonts).
+\begingroup
+  \edef\temp{%
+    \endgroup
+      \noexpand\setmathfontface\noexpand\mathrm{Luciole-Regular.ttf}%
+        [\unexpanded\expandafter{\the\LuciScale}]%
+      \noexpand\setmathfontface\noexpand\mathit{Luciole-Regular-Italic.ttf}%
+        [\unexpanded\expandafter{\the\LuciScale}]%
+      \noexpand\setmathfontface\noexpand\mathbf{Luciole-Bold.ttf}%
+        [\unexpanded\expandafter{\the\LuciScale}]%
+      \noexpand\setmathfontface\noexpand\mathsf{Luciole-Regular.ttf}%
+        [\unexpanded\expandafter{\the\LuciScale}]%
+  }
+  \temp
+%
+\AtBeginDocument{%
+  % Luciole-Math specific
+  % \Umathchardef\<cmd> = <math type> <family> <slot>
+  % <math type> : \mathord=0 \mathrel=3 ; <family>=0
+  \Umathchardef\mbfimath =            0 0 "E041 \relax
+  \Umathchardef\mbfjmath =            0 0 "E042 \relax
+  \Umathchardef\mbfdotlessi =         0 0 "E043 \relax
+  \Umathchardef\mbfdotlessj =         0 0 "E044 \relax
+  \Umathchardef\mithbar =             0 0 "E048 \relax
+  \Umathchardef\mbfvarzero =          0 0 "E04D \relax
+  \Umathchardef\mupvarzero =          0 0 "E04E \relax
+  \Umathchardef\varemptyset =         0 0 "E04F \relax
+  \Umathchardef\lesseqslantgtr =      3 0 "E060 \relax
+  \Umathchardef\gtreqslantless =      3 0 "E061 \relax
+  \Umathchardef\lesseqqslantgtr =     3 0 "E062 \relax
+  \Umathchardef\gtreqqslantless =     3 0 "E063 \relax
+  \Umathchardef\nleqqslant =          3 0 "E066 \relax
+  \Umathchardef\ngeqqslant =          3 0 "E067 \relax
+  \Umathchardef\parallelslant  =      3 0 "E080 \relax
+  \Umathchardef\nparallelslant =      3 0 "E081 \relax
+  \Umathchardef\shortparallelslant =  3 0 "E082 \relax
+  \Umathchardef\nshortparallelslant = 3 0 "E083 \relax
+  \Umathchardef\mapstochar =          3 0 "E08D \relax
+  \Umathchardef\lhook =               3 0 "E08E \relax
+  \Umathchardef\rhook =               3 0 "E08F \relax
+ % \widearc and\overrightarc
+  \newcommand*{\widearc}{\Umathaccent 0 0 "23DC }%
+  \newcommand*{\overrightarc}{\Umathaccent 0 0 "20D5 }%
+  % amssymb
+  \@ifpackageloaded{amssymb}%
+    {\PackageWarning{luciole}{%
+       Luciole-Math provides all AMS symbols.\MessageBreak
+       Loading amssymb.sty is not advisable.\MessageBreak
+       Reported}%
+    }%
+    {% AMS Symbols not referenced in unicode-math-table.tex
+     % \Umathchardef\<cmd> = <math type> <family> <slot>
+     % <math type> : \mathord=0 \mathrel=3 ; <family>=0
+     \Umathchardef\circledR =       0 0 "24C7 \relax
+     \Umathchardef\circledS =       0 0 "24C8 \relax
+     \Umathchardef\diagup =         0 0 "27CB \relax
+     \Umathchardef\diagdown =       0 0 "27CD \relax
+     \Umathchardef\lvertneqq =      3 0 "E068 \relax
+     \Umathchardef\gvertneqq =      3 0 "E069 \relax
+     \Umathchardef\varsubsetneq =   3 0 "E06C \relax
+     \Umathchardef\varsupsetneq =   3 0 "E06D \relax
+     \Umathchardef\varsubsetneqq =  3 0 "E06E \relax
+     \Umathchardef\varsupsetneqq =  3 0 "E06F \relax
+     \Umathchardef\shortmid =       3 0 "E070 \relax
+     \Umathchardef\shortparallel =  3 0 "E071 \relax
+     \Umathchardef\nshortmid =      3 0 "E072 \relax
+     \Umathchardef\nshortparallel = 3 0 "E073 \relax
+     \Umathchardef\nleqslant =      3 0 "E076 \relax
+     \Umathchardef\ngeqslant =      3 0 "E077 \relax
+     \Umathchardef\nleqq =          3 0 "E078 \relax
+     \Umathchardef\ngeqq =          3 0 "E079 \relax
+     \Umathchardef\npreceq =        3 0 "E07C \relax
+     \Umathchardef\nsucceq =        3 0 "E07D \relax
+     \Umathchardef\nsubseteqq =     3 0 "E07E \relax
+     \Umathchardef\nsupseteqq =     3 0 "E07F \relax
+     \let\centerdot\cdotp
+     \let\restriction\upharpoonright
+     \let\doteqdot\Doteq
+     \let\doublecup\Cup
+     \let\doublecap\Cap
+     \let\llless\lll
+     \let\gggtr\ggg
+     \let\circlearrowleft\acwopencirclearrow
+     \let\circlearrowright\cwopencirclearrow
+     \let\lozenge\mdlgwhtlozenge
+     \let\blacklozenge\mdlgblklozenge
+     \let\square\mdlgwhtsquare
+     \let\blacksquare\mdlgblksquare
+     \let\dashleftarrow\leftdasharrow
+     \let\dashrightarrow\rightdasharrow
+     \let\ntriangleleft\nvartriangleleft
+     \let\ntriangleright\nvartriangleright
+     \let\varpropto\propto
+     \let\thicksim\sim
+     \let\thickapprox\approx
+     \let\smallsmile\smile
+     \let\smallfrown\frown
+    }%
+  % latexsym
+  \@ifpackageloaded{latexsym}%
+    {\PackageWarning{luciole}{%
+       Luciole-Math provides all LaTeX symbols.\MessageBreak
+       Loading latexsym.sty is not advisable.\MessageBreak
+       Reported}%
+    }%
+    {\let\lhd\vartriangleleft
+     \let\rhd\vartriangleright
+     \let\unlhd\trianglelefteq
+     \let\unrhd\trianglerighteq
+     \let\leadsto\rightcurvedarrow
+     \let\Box\lgwhtsquare
+     \let\Diamond\mdlgwhtdiamond
+    }%
+  % mathtools \xLeftarrow, etc.
+  \@ifpackageloaded{amsmath}%
+    {\Umathchardef\std@equal = 3 0 "E4F2 \relax
+     \Umathchardef\std@minus = 3 0 "E4F0 \relax
+    }{}%
+}
+
+\endinput
