@@ -84,7 +84,7 @@ struct FontFamily
     thickness::Float64
 end
 
-function FontFamily(fonts::Union{Dict, Tuple{Pair}} ;
+function FontFamily(fonts::Union{Dict, NTuple{<:Any, Pair}} ;
         font_mapping = _default_font_mapping,
         font_modifiers = _default_font_modifiers,
         special_chars = Dict{Char, Tuple{String, Int}}(),
