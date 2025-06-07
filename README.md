@@ -8,6 +8,63 @@ This is a package aimed at providing a pure Julia engine for LaTeX math mode. It
 - Equivalence between traditional LaTeX commands and their unicode input equivalent.
 - Pure julia.
 
+# Fonts
+
+The characters in a math expression come from a variety of fonts depending on their role (most notably italic for variable, regular for functions, math for the symbols).
+A set of such font forms a `FontFamily`, and several are predefined here (NewComputerModer, TeXGyreHeros, TeXGyrePagella, and LucioleMath)
+and can be access by `FontFamily(name)`.
+
+A font family is defined by a dictionary of the paths of the font files:
+```julia
+julia> FontFamily("NewComputerModern")
+FontFamily with 13.0° slant angle and 0.0375 line thickness
+  bold        =>  NewComputerModern\NewCM10-Bold.otf
+  bolditalic  =>  NewComputerModern\NewCM10-BoldItalic.otf
+  italic      =>  NewComputerModern\NewCM10-Italic.otf
+  math        =>  NewComputerModern\NewCMMath-Regular.otf
+  regular     =>  NewComputerModern\NewCMMath-Regular.otf
+```
+
+Currently, there are two ways to get the font information to Makie.
+
+First, change the global default font family using `set_texfont_family!`,
+which take either a font family as an argument or a list of (`Symbol`, path to the font file) pairs.
+```julia
+# Change to a different font familiy entirely
+julia> set_texfont_family!(FontFamily("LucioleMath"))
+FontFamily with 13.0° slant angle and 0.0375 line thickness
+  bold        =>  Luciole-Math\Luciole-Bold.ttf
+  bolditalic  =>  Luciole-Math\Luciole-Bold-Italic.ttf
+  italic      =>  Luciole-Math\Luciole-Regular-Italic.ttf
+  math        =>  Luciole-Math\Luciole-Math.otf
+  regular     =>  Luciole-Math\Luciole-Regular.ttf
+
+# Change just the regular and bold fonts, keep the default for the rest
+julia> set_texfont_family!(
+   regular = raw"C:\Users\Kolaru\.julia\dev\MathTeXEngine\experimental\utopia\Utopia-Regular.ttf",
+   bold = raw"C:\Users\Kolaru\.julia\dev\MathTeXEngine\experimental\utopia\Utopia-Bold.ttf")
+FontFamily with 13.0° slant angle and 0.0375 line thickness
+  bold        =>  C:\Users\Kolaru\.julia\dev\MathTeXEngine\experimental\utopia\Utopia-Bold.ttf
+  bolditalic  =>  NewComputerModern\NewCM10-BoldItalic.otf
+  italic      =>  NewComputerModern\NewCM10-Italic.otf
+  math        =>  NewComputerModern\NewCMMath-Regular.otf
+  regular     =>  C:\Users\Kolaru\.julia\dev\MathTeXEngine\experimental\utopia\Utopia-Regular.ttf
+
+# Switch back to the default
+julia> set_texfont_family!()
+FontFamily with 13.0° slant angle and 0.0375 line thickness
+  bold        =>  NewComputerModern\NewCM10-Bold.otf
+  bolditalic  =>  NewComputerModern\NewCM10-BoldItalic.otf
+  italic      =>  NewComputerModern\NewCM10-Italic.otf
+  math        =>  NewComputerModern\NewCMMath-Regular.otf
+  regular     =>  NewComputerModern\NewCMMath-Regular.otf
+```
+
+Alternatively, the special command `\fontfamily{FontName}` can be used in the LaTeX string itself
+to choose the font, for example `L"\fontfamily{TeXGyreHeros}x^2 + y^2 = 1"`.
+The font name must be in the global dictionary `MathTeXEngin.default_font_families`.
+If needed, it can be extended at runtime.
+
 # Engine
 
 The main use of the package is through `generate_tex_elements` taking a LaTeX string as input and return a list of tuples `(TeXElement, position, scale)` where `TeXElement` is one of the following:
