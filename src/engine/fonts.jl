@@ -43,6 +43,14 @@ const _default_font_modifiers = Dict(
     :bf => Dict(:italic => :bolditalic, :regular => :bold)
 )
 
+const _default_fonts = Dict(
+    :regular => joinpath("NewComputerModern", "NewCMMath-Regular.otf"),
+    :italic => joinpath("NewComputerModern", "NewCM10-Italic.otf"),
+    :bold => joinpath("NewComputerModern", "NewCM10-Bold.otf"),
+    :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
+    :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
+)
+
 """
     FontFamily(fonts ; font_mapping, font_modifiers, special_chars, slant_angle, thickness)
 
@@ -52,6 +60,7 @@ A set of font for LaTeX rendering.
   - `fonts` A with the path to 5 fonts (:regular, :italic, :bold, :bolditalic,
     and :math). The same font can be used for multiple entries, and unrelated
     fonts can be mixed.
+    Missing fields are completed with the default fonts from NewComputerModern.
 
 # Optional fields
   - `font_mapping` a dict mapping the different character types (`:digit`,
@@ -75,12 +84,14 @@ struct FontFamily
     thickness::Float64
 end
 
-function FontFamily(fonts::Dict ;
+function FontFamily(fonts::Union{Dict, Tuple{Pair}} ;
         font_mapping = _default_font_mapping,
         font_modifiers = _default_font_modifiers,
         special_chars = Dict{Char, Tuple{String, Int}}(),
         slant_angle = 13,
         thickness = 0.0375)
+
+    fonts = merge(_default_fonts, Dict(fonts))
     
     return FontFamily(
         fonts,
@@ -100,12 +111,15 @@ One of the default set of font for LaTeX rendering.
 Currently available are
 - NewComputerModern
 - TeXGyreHeros
+- TeXGyrePagella
+- LucioleMath
 
 These names can also be used in a LaTeXString directly,
+to set the font of a single string,
 with the command `\\fontfamily`,
 e.g. L"\\fontfamily{TeXGyreHeros}x^2_3".
 """
-FontFamily() = FontFamily("NewComputerModern")
+FontFamily() = get_texfont_family()
 FontFamily(fontname::AbstractString) = default_font_families[fontname]
 
 function Base.show(io::IO, family::FontFamily)
@@ -115,6 +129,7 @@ function Base.show(io::IO, family::FontFamily)
         println(io, "  $key$spaces=>  $font")
     end
 end
+
 
 # These two fonts internals are very different, despite their similar names
 # We only try to fully support NewComputerModern, the other is here as it may
@@ -158,6 +173,42 @@ const default_font_families = Dict(
     )
 )
 
+const current_texfont_family = Ref(default_font_families["NewComputerModern"])
+
+"""
+    get_texfont_family()
+
+Get the current default font family for the styling of LaTeXString.
+"""
+get_texfont_family() = current_texfont_family[]
+
+"""
+    set_texfont_family!([font_family::FontFamily])
+
+Set a font family for the styling of LaTeXString.
+
+See the documentaiton of `FontFamily` for more information.
+"""
+set_texfont_family!() = (current_texfont_family[] = default_font_families["NewComputerModern"])
+set_texfont_family!(font_family::FontFamily) = (current_texfont_family[] = font_family)
+
+"""
+    set_texfont_family!(pairs)
+
+Set a font family for the styling of LaTeXString,
+using key-value pairs to specify individual fonts.
+
+For example, the following set the regular font
+(used for text and function names) to Utopia
+(assuming that the Utopia font can be found at the given path).
+
+```julia
+set_texfont_family!(:regular => "Utopia-Regular.ttf")
+```
+
+See the documentaiton of `FontFamily` for more information.
+"""
+set_texfont_family!(pairs...) = set_texfont_family!(FontFamily(pairs))
 
 """
     get_font([font_family=FontFamily()], fontstyle)

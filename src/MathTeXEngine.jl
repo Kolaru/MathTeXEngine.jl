@@ -22,7 +22,7 @@ import FreeTypeAbstraction:
 export TeXToken, tokenize
 export TeXExpr, texparse, TeXParseError, manual_texexpr
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
-export texfont, FontFamily
+export texfont, FontFamily, set_texfont_family!, get_texfont_family
 export glyph_index
 
 # Reexport from LaTeXStrings
