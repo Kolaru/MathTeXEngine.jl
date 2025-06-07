@@ -108,6 +108,14 @@ e.g. L"\\fontfamily{TeXGyreHeros}x^2_3".
 FontFamily() = FontFamily("NewComputerModern")
 FontFamily(fontname::AbstractString) = default_font_families[fontname]
 
+function Base.show(io::IO, family::FontFamily)
+    println(io, "FontFamily with $(family.slant_angle)° slant angle and $(family.thickness) line thickness")
+    for (key, font) in family.fonts
+        spaces = " "^(12 - length(string(key)))
+        println(io, "  $key$spaces=>  $font")
+    end
+end
+
 # These two fonts internals are very different, despite their similar names
 # We only try to fully support NewComputerModern, the other is here as it may
 # sometime provide quickfix solution to bug
