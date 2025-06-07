@@ -8,7 +8,19 @@ end
 function Base.showerror(io::IO, e::TeXParseError)
     println(io, "TeXParseError: ",  e.msg)
     show_state(io, e.stack, e.position, e.tex)
+    show_tokenization(io, tex)
 end
+
+function show_tokenization(io, tex)
+    println(io, "TeX expression tokenized as")
+    println(io, "index : token_type [length]")
+    for (i, len, token) in tokenize(TeXToken, tex)
+        println(io, "$i : $token [$len]")
+    end
+    println(io)
+end
+
+show_tokenization(tex) = show_tokenization(stdout, tex)
 
 function show_state(io::IO, stack, position, tex)
     # Everything is shifted by one
@@ -33,13 +45,6 @@ function show_state(io::IO, stack, position, tex)
 
     println(io, "Stack")
     show_stack(io, stack)
-    println(io)
-
-    println(io, "TeX expression tokenized as")
-    println(io, "index : token_type [length]")
-    for (i, len, token) in tokenize(TeXToken, tex)
-        println(io, "$i : $token [$len]")
-    end
     println(io)
 end
 
@@ -118,6 +123,10 @@ arguments.
 Setting `showdebug` to `true` show a very verbose break down of the parsing.
 """
 function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
+    if showdebug
+        show_tokenization(tex)
+    end
+
     contains_math = occursin(raw"$", tex)
 
     stack = Stack{Any}()
