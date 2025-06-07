@@ -84,7 +84,7 @@ struct FontFamily
     thickness::Float64
 end
 
-function FontFamily(fonts::Union{Dict, NTuple{<:Any, Pair}} ;
+function FontFamily(fonts ;
         font_mapping = _default_font_mapping,
         font_modifiers = _default_font_modifiers,
         special_chars = Dict{Char, Tuple{String, Int}}(),
@@ -189,26 +189,30 @@ Set a font family for the styling of LaTeXString.
 
 See the documentaiton of `FontFamily` for more information.
 """
-set_texfont_family!() = (current_texfont_family[] = default_font_families["NewComputerModern"])
 set_texfont_family!(font_family::FontFamily) = (current_texfont_family[] = font_family)
 
 """
-    set_texfont_family!(pairs)
+    set_texfont_family!(; kwargs...)
 
 Set a font family for the styling of LaTeXString,
-using key-value pairs to specify individual fonts.
+using key-value to specify individual fonts.
 
-For example, the following set the regular font
+For example, the following sets the regular font
 (used for text and function names) to Utopia
 (assuming that the Utopia font can be found at the given path).
 
 ```julia
-set_texfont_family!(:regular => "Utopia-Regular.ttf")
+set_texfont_family!(regular = "Utopia-Regular.ttf")
 ```
 
-See the documentaiton of `FontFamily` for more information.
+See the documentation of `FontFamily` for more information.
 """
-set_texfont_family!(pairs...) = set_texfont_family!(FontFamily(pairs))
+function set_texfont_family!(; kwargs...)
+    if length(kwargs) == 0
+        return current_texfont_family[] = default_font_families["NewComputerModern"]
+    end
+    return set_texfont_family!(FontFamily(kwargs))
+end
 
 """
     get_font([font_family=FontFamily()], fontstyle)
