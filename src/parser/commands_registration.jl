@@ -37,7 +37,7 @@ end
 
 function get_symbol_char(com_str)
     if !haskey(latex_symbols, com_str)
-        @warn "unknown com_str $com_str"
+        @warn "unknown command string $com_str"
         return '?'
     end
 
@@ -60,7 +60,9 @@ const command_definitions = Dict(
     raw"\overline" => (TeXExpr(:overline), 1),
     raw"\{" => (TeXExpr(:delimiter, '{'), 0),
     raw"\}" => (TeXExpr(:delimiter, '}'), 0),
-    raw"\fontfamily" => (TeXExpr(:fontfamily), 1)
+    raw"\fontfamily" => (TeXExpr(:fontfamily), 1),
+    raw"\glyph" => (TeXExpr(:glyph), 2),
+    raw"\unicode" => (TeXExpr(:unicode), 2),
 )
 
 for func in underover_functions

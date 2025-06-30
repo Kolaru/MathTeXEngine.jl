@@ -7,6 +7,10 @@ function y_for_centered(font_family, elem)
     return h/2 + xheight(font_family)/2
 end
 
+function argument_as_string(arg)
+    return String(Char.(arg.args))
+end
+
 """
     tex_layout(mathexpr::TeXExpr, font_family)
 
@@ -135,6 +139,12 @@ function tex_layout(expr, state)
             name = args[1]
             elements = TeXChar.(collect(name), state, Ref(:function))
             return horizontal_layout(elements)
+        elseif head == :glyph
+            font_id, glyph_id = argument_as_string.(args)
+            font_id = Symbol(font_id)
+            glyph_id = parse(Culong, glyph_id)
+            font = get_font(state.font_family, font_id)
+            return TeXChar(glyph_id, font, state.font_family, false, '?')
         elseif head in (:group, :inline_math, :line)
             mode = (head == :inline_math) ? :inline_math : state.tex_mode
             elements = tex_layout.(args, change_mode(state, mode))
@@ -254,6 +264,12 @@ function tex_layout(expr, state)
                 ],
                 [1, shrink, shrink]
             )
+        elseif head == :unicode
+            font_id, glyph_id = argument_as_string.(args)
+            font_id = Symbol(font_id)
+            font = get_font(state.font_family, font_id)
+            glyph_id = glyph_index(font, Char(parse(Culong, glyph_id)))
+            return TeXChar(glyph_id, font, state.font_family, false, '?')
         end
     catch
         # TODO Better error
