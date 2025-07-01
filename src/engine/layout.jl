@@ -28,7 +28,7 @@ function tex_layout(expr, state)
     shrink = 0.6
 
     try
-        if isleaf(expr)
+        if isleaf(expr)  # :char, :delimiter, :digit, :punctuation, :symbol
             char = args[1]
             if char == ' ' && state.tex_mode == :inline_math
                 return Space(0.0)

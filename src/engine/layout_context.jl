@@ -8,6 +8,10 @@ LayoutState(font_family::FontFamily, modifiers::Vector) = LayoutState(font_famil
 LayoutState(font_family::FontFamily) = LayoutState(font_family, Symbol[])
 LayoutState() = LayoutState(FontFamily())
 
+function Base.show(io::IO, state::LayoutState)
+    print(io, "LayoutState($(state.font_modifiers), $(state.tex_mode))")
+end
+
 Base.broadcastable(state::LayoutState) = Ref(state)
 
 function change_mode(state::LayoutState, mode)
