@@ -17,7 +17,7 @@ UnicodeFun = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 [compat]
 AbstractTrees = "0.3, 0.4"
 Automa = "1"
-DataStructures = "0.18"
+DataStructures = "0.18, 0.19"
 FreeTypeAbstraction = "0.10"
 GeometryBasics = "0.4.1, 0.5"
 LaTeXStrings = "1.2"
