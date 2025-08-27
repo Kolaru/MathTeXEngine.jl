@@ -157,6 +157,14 @@ function TeXChar(char::Char, state::LayoutState, char_type)
         return TeXChar(id, font, font_family, false, char)
     end
 
+    if state.tex_mode == :inline_math && char_type != :ucm_symbol
+        char = _ucm_stylize(char_type, char, font_family)
+    end
+
+    if char_type == :ucm_symbol
+        char_type = :symbol
+    end
+
     font = get_font(state, char_type)
 
     return TeXChar(

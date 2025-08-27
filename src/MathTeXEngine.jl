@@ -61,17 +61,19 @@ const _ucm_font_mapping = Dict(
 )
 
 """
-    unicode_math_fonts!()
+    unicode_math_fonts!(font_family)
 
 Convenience function to configure math font to be used for anything but text and functions."""
-function unicode_math_fonts!()
+function unicode_math_fonts!(ffm=nothing;)
     global _ucm_font_mapping
-    ffm = get_texfont_family()
+    _ffm = isnothing(ffm) ? get_texfont_family() : ffm
     for (k, v) in pairs(_ucm_font_mapping)
-        ffm.font_mapping[k] = v
+        _ffm.font_mapping[k] = v
     end
-    set_texfont_family!(ffm)
-    return ffm
+    if !isnothing(ffm)
+        set_texfont_family!(_ffm)
+    end    
+    return _ffm
 end
 
 """
@@ -93,6 +95,7 @@ keyword argument."""
 function unicode_math_config!(;
     enable_sym_commands=true,
     enable_substitutions=true,
+    math_style=:tex,
     normal_style=nothing,
     bold_style=nothing,
     sans_style=nothing,
@@ -108,6 +111,9 @@ end
 
 # ### Command Registration
 # #### Style Commands
+
+# command_definitions["\\_"] = (TeXExpr(:punctuation, '_'), 0)
+
 for style_symb in UCM.all_styles
     com_str = "\\sym$(style_symb)"
     command_definitions[com_str] = (TeXExpr(:sym, style_symb), 1)
@@ -141,10 +147,11 @@ function TeXExpr(head::Symbol, args::Vector)
         style_symb, content = args
         return leafmap(content) do leaf
             sym = only(leaf.args)
-            return TeXExpr(:symbol, UCM.sym_style(sym, style_symb))
+            return TeXExpr(:ucm_symbol, UCM.sym_style(sym, style_symb))
         end
     end
     
+    #=
     ## we can also stylize other characters at parse-time;
     ## feels a bit hacky as `_ucm_stylize` takes into account the font-family to determine
     ## which symbols to investigate;
@@ -159,23 +166,33 @@ function TeXExpr(head::Symbol, args::Vector)
         end
     end
 
+    Disabled because we want to distinguish normal characters (not wrapped by `\symXXX`)
+    depending on state, and only stylize with `:inline_math`.
+    To not change symbols already stylized, we use `:ucm_symbol` above.
+    This is a new (internal) leaf type that is respected in `TeXChar`.
+    =#
+
     ## redirect to original method:
     return Base.invoke(TeXExpr, Tuple{Any, Vector}, head, args)
 end
 
+#=
 function TeXExpr(head::Symbol, arg::Char)
+    #=
     ## stylize unicode characters at parse-time:
     arg = _ucm_stylize(head, arg)
+    =#
     return Base.invoke(TeXExpr, Tuple{Any, Any}, head, arg)
 end
+=#
 
-function _ucm_stylize(head, char)
+function _ucm_stylize(head, char, _ffm = nothing)
     global _unicode_math_substitutions_ref
     
     !(_unicode_math_substitutions_ref[]) && return char
 
     if head in (:char, :delimiter, :digit, :punctuation, :symbol)
-        ffm = get_texfont_family()
+        ffm = isnothing(_ffm) ? get_texfont_family() : _ffm
         if get(ffm.font_mapping, head, :notmath) == :math
             char = UCM.sym_style(char)
         end

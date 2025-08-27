@@ -102,7 +102,7 @@ manual_texexpr(any) = any
 
 head(texexpr::TeXExpr) = texexpr.head
 head(::Char) = :char
-isleaf(texexpr::TeXExpr) = texexpr.head in (:char, :delimiter, :digit, :punctuation, :symbol)
+isleaf(texexpr::TeXExpr) = texexpr.head in (:char, :delimiter, :digit, :punctuation, :symbol, :ucm_symbol)
 isleaf(::Nothing) = true
 
 function AbstractTrees.children(texexpr::TeXExpr)
