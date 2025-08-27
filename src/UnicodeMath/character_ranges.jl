@@ -81,7 +81,7 @@ function collect_chars(
     char_range=:UnknownRange,
     fixes=Dict{Char,Char}()
 )
-    chars_dict = SpecialDict{Symbol, SpecialDict}()
+    chars_dict = SpecialDict{Symbol, SpecialDict{String, UCMChar}}()
 
     for (sn, cp) in pairs(usv_dict)
         dict_sn = SpecialDict(
@@ -91,11 +91,16 @@ function collect_chars(
             end for (i, n) = enumerate(char_names) 
         )
         chars_dict[sn] = dict_sn
-        !haskey(extras_dict, sn) && continue
-    
-        extras = extras_dict[sn]
+    end
 
-        for (n, cp) in extras
+    for (sn, extras) in pairs(extras_dict)
+        if !haskey(chars_dict, sn)
+            dict_sn = SpecialDict{String, UCMChar}()
+            chars_dict[sn] = dict_sn
+        else
+            dict_sn = chars_dict[sn]
+        end
+        for (n, cp) in pairs(extras)
             if haskey(dict_sn, n)
                 dict_sn[n].char = Char(cp)
             else
@@ -103,8 +108,6 @@ function collect_chars(
                     name=n, char=Char(cp), style=sn, char_range)
             end
         end
-
-
     end
     return chars_dict
 end
