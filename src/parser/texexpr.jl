@@ -22,25 +22,30 @@ struct TeXExpr
     head::Symbol
     args::Vector{Any}
 
-    function TeXExpr(head, args::Vector)
-        # Convert math font like `\mathbb{R}` -- TeXExpr(:font, [:bb, 'R']) --
-        # to unicode symbols -- e.g. TeXExpr(:symbol, 'ℝ')
-        if length(args) == 2 && head == :font && haskey(_math_font_mappings, args[1])
-            font, content = args
-            to_font = _math_font_mappings[font]
-            return leafmap(content) do leaf
-                sym = only(leaf.args)
-                return TeXExpr(:symbol, to_font(sym))
-            end
-        end
-
-        return new(head, args)
-    end
+    TeXExpr(head, args::Vector)=_TeXExpr(Val(head), args)
+    TeXExpr(::Val{head}, args::Vector) where {head} = new(head, args)
 end
 
 TeXExpr(head) = TeXExpr(head, [])
 TeXExpr(head, args...) = TeXExpr(head, collect(args))
 TeXExpr(head, arg) = TeXExpr(head, [arg])
+
+_TeXExpr(val_head::Val, args::Vector) = TeXExpr(val_head, args)
+
+function _TeXExpr(::Val{:font}, args::Vector)
+    # Convert math font like `\mathbb{R}` -- TeXExpr(:font, [:bb, 'R']) --
+    # to unicode symbols -- e.g. TeXExpr(:symbol, 'ℝ')
+    if length(args) == 2 && haskey(_math_font_mappings, args[1])
+        font, content = args
+        to_font = _math_font_mappings[font]
+        return leafmap(content) do leaf
+            sym = only(leaf.args)
+            return TeXExpr(:symbol, to_font(sym))
+        end
+    end
+
+    return TeXExpr(Val(:font), args)
+end
 
 Base.push!(texexpr::TeXExpr, arg) = push!(texexpr.args, arg)
 Base.pop!(texexpr::TeXExpr) = pop!(texexpr.args)
@@ -102,8 +107,16 @@ manual_texexpr(any) = any
 
 head(texexpr::TeXExpr) = texexpr.head
 head(::Char) = :char
-isleaf(texexpr::TeXExpr) = texexpr.head in (:char, :delimiter, :digit, :punctuation, :symbol)
 isleaf(::Nothing) = true
+isleaf(texexpr::TeXExpr) = _isleaf(Val(texexpr.head))
+_isleaf(::Val{head}) where head = false
+_isleaf(::Union{
+    Val{:char}, 
+    Val{:delimiter}, 
+    Val{:digit}, 
+    Val{:punctuation}, 
+    Val{:symbol}
+}) = true
 
 function AbstractTrees.children(texexpr::TeXExpr)
     isleaf(texexpr) && return TeXExpr[]
