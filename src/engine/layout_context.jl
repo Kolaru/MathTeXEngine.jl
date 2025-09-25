@@ -32,9 +32,8 @@ function get_font(state::LayoutState, char_type)
     font_id = font_family.font_mapping[char_type]
 
     for modifier in state.font_modifiers
-        @show modifier
         if haskey(font_family.font_modifiers, modifier)
-            @show mapping = font_family.font_modifiers[modifier]
+            mapping = font_family.font_modifiers[modifier]
             font_id = get(mapping, font_id, font_id)
         else
             throw(ArgumentError("font modifier $modifier not supported for the current font family."))
