@@ -22,30 +22,37 @@ struct TeXExpr
     head::Symbol
     args::Vector{Any}
 
-    TeXExpr(head, args::Vector)=_TeXExpr(Val(head), args)
-    TeXExpr(::Val{head}, args::Vector) where {head} = new(head, args)
+    function TeXExpr(head, args::Vector)
+        if head == :font
+            # Convert math font like `\mathbb{R}` -- TeXExpr(:font, [:bb, 'R']) --
+            # to unicode symbols -- e.g. TeXExpr(:symbol, 'ℝ')
+            if length(args) == 2 && haskey(_math_font_mappings, args[1])
+                font, content = args
+                to_font = _math_font_mappings[font]
+                return leafmap(content) do leaf
+                    sym = only(leaf.args)
+                    return TeXExpr(:symbol, to_font(sym))
+                end
+            end
+        end
+        if head == :sym
+            # Convert math font like `\symbb{R}` -- TeXExpr(:sym, [:bb, 'R']) --
+            # to unicode symbols -- e.g. TeXExpr(:ucm_glyph, 'ℝ')
+            if length(args) == 2 && args[1] in UCM.all_styles
+                style_symb, content = args
+                return leafmap(content) do leaf
+                    glyph = only(leaf.args)
+                    return TeXExpr(:ucm_glyph, UCM._sym(glyph, style_symb))
+                end
+            end
+        end
+        return new(head, args)
+    end
 end
 
 TeXExpr(head) = TeXExpr(head, [])
 TeXExpr(head, args...) = TeXExpr(head, collect(args))
 TeXExpr(head, arg) = TeXExpr(head, [arg])
-
-_TeXExpr(val_head::Val, args::Vector) = TeXExpr(val_head, args)
-
-function _TeXExpr(::Val{:font}, args::Vector)
-    # Convert math font like `\mathbb{R}` -- TeXExpr(:font, [:bb, 'R']) --
-    # to unicode symbols -- e.g. TeXExpr(:symbol, 'ℝ')
-    if length(args) == 2 && haskey(_math_font_mappings, args[1])
-        font, content = args
-        to_font = _math_font_mappings[font]
-        return leafmap(content) do leaf
-            sym = only(leaf.args)
-            return TeXExpr(:symbol, to_font(sym))
-        end
-    end
-
-    return TeXExpr(Val(:font), args)
-end
 
 Base.push!(texexpr::TeXExpr, arg) = push!(texexpr.args, arg)
 Base.pop!(texexpr::TeXExpr) = pop!(texexpr.args)
@@ -107,16 +114,11 @@ manual_texexpr(any) = any
 
 head(texexpr::TeXExpr) = texexpr.head
 head(::Char) = :char
+function isleaf(texexpr::TeXExpr)
+    return texexpr.head in (
+        :char, :delimiter, :digit, :punctuation, :symbol, :ucm_glyph)
+end
 isleaf(::Nothing) = true
-isleaf(texexpr::TeXExpr) = _isleaf(Val(texexpr.head))
-_isleaf(::Val{head}) where head = false
-_isleaf(::Union{
-    Val{:char}, 
-    Val{:delimiter}, 
-    Val{:digit}, 
-    Val{:punctuation}, 
-    Val{:symbol}
-}) = true
 
 function AbstractTrees.children(texexpr::TeXExpr)
     isleaf(texexpr) && return TeXExpr[]

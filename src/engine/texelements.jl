@@ -157,6 +157,19 @@ function TeXChar(char::Char, state::LayoutState, char_type)
         return TeXChar(id, font, font_family, false, char)
     end
 
+    if state.tex_mode == :inline_math && char_type != :ucm_glyph
+        ## check if `char` is meant to be typeset using `:math` font
+        if get(state.font_family.font_mapping, char_type, :notmath) == :math
+            ## if `:math` font is used, apply UnicodeMath styling standard
+            char = UCM._sym(char)
+        end
+    end
+
+    ## now treat any :ucm_glyph same as a :symbol
+    if char_type == :ucm_glyph
+        char_type = :symbol
+    end
+
     font = get_font(state, char_type)
 
     return TeXChar(
@@ -165,6 +178,20 @@ function TeXChar(char::Char, state::LayoutState, char_type)
         font_family,
         is_slanted(state.font_family, char_type),
         char)
+end
+
+function _ucm_stylize(head, char, _ffm = nothing)
+    global _unicode_math_substitutions_ref
+
+    !(_unicode_math_substitutions_ref[]) && return char
+
+    if head in (:char, :delimiter, :digit, :punctuation, :symbol)
+        ffm = isnothing(_ffm) ? get_texfont_family() : _ffm
+        if get(ffm.font_mapping, head, :notmath) == :math
+            char = UCM.sym_style(char)
+        end
+    end
+    return char
 end
 
 function TeXChar(name::AbstractString, state::LayoutState, char_type ; represented='?')

@@ -94,6 +94,11 @@ for name in font_names
 end
 command_definitions["\\text"] = (TeXExpr(:text, :rm), 1)
 
+for style_symb in UCM.all_styles
+    com_str = "\\sym$(style_symb)"
+    command_definitions[com_str] = (TeXExpr(:sym, style_symb), 1)
+end
+
 ##
 ## Symbols
 ##
