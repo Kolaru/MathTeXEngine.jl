@@ -180,20 +180,6 @@ function TeXChar(char::Char, state::LayoutState, char_type)
         char)
 end
 
-function _ucm_stylize(head, char, _ffm = nothing)
-    global _unicode_math_substitutions_ref
-
-    !(_unicode_math_substitutions_ref[]) && return char
-
-    if head in (:char, :delimiter, :digit, :punctuation, :symbol)
-        ffm = isnothing(_ffm) ? get_texfont_family() : _ffm
-        if get(ffm.font_mapping, head, :notmath) == :math
-            char = UCM.sym_style(char)
-        end
-    end
-    return char
-end
-
 function TeXChar(name::AbstractString, state::LayoutState, char_type ; represented='?')
     font_family = state.font_family
     font = get_font(state, char_type)
