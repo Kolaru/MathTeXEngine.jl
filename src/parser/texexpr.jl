@@ -23,17 +23,29 @@ struct TeXExpr
     args::Vector{Any}
 
     function TeXExpr(head, args::Vector)
-        # Convert math font like `\mathbb{R}` -- TeXExpr(:font, [:bb, 'R']) --
-        # to unicode symbols -- e.g. TeXExpr(:symbol, 'ℝ')
-        if length(args) == 2 && head == :font && haskey(_math_font_mappings, args[1])
-            font, content = args
-            to_font = _math_font_mappings[font]
-            return leafmap(content) do leaf
-                sym = only(leaf.args)
-                return TeXExpr(:symbol, to_font(sym))
+        if head == :font
+            # Convert math font like `\mathbb{R}` -- TeXExpr(:font, [:bb, 'R']) --
+            # to unicode symbols -- e.g. TeXExpr(:symbol, 'ℝ')
+            if length(args) == 2 && haskey(_math_font_mappings, args[1])
+                font, content = args
+                to_font = _math_font_mappings[font]
+                return leafmap(content) do leaf
+                    sym = only(leaf.args)
+                    return TeXExpr(:symbol, to_font(sym))
+                end
             end
         end
-
+        if head == :sym
+            # Convert math font like `\symbb{R}` -- TeXExpr(:sym, [:bb, 'R']) --
+            # to unicode symbols -- e.g. TeXExpr(:ucm_glyph, 'ℝ')
+            if length(args) == 2 && args[1] in UCM.all_styles
+                style_symb, content = args
+                return leafmap(content) do leaf
+                    glyph = only(leaf.args)
+                    return TeXExpr(:ucm_glyph, UCM._sym(glyph, style_symb))
+                end
+            end
+        end
         return new(head, args)
     end
 end
@@ -102,7 +114,10 @@ manual_texexpr(any) = any
 
 head(texexpr::TeXExpr) = texexpr.head
 head(::Char) = :char
-isleaf(texexpr::TeXExpr) = texexpr.head in (:char, :delimiter, :digit, :punctuation, :symbol)
+function isleaf(texexpr::TeXExpr)
+    return texexpr.head in (
+        :char, :delimiter, :digit, :punctuation, :symbol, :ucm_glyph)
+end
 isleaf(::Nothing) = true
 
 function AbstractTrees.children(texexpr::TeXExpr)

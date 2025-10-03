@@ -7,6 +7,7 @@ using Automa
 using FreeTypeAbstraction
 using LaTeXStrings
 using UnicodeFun
+import UnicodeMath as UCM
 
 using DataStructures: Stack
 using GeometryBasics: Point2f, Rect2f
