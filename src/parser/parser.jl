@@ -222,6 +222,12 @@ function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
                 else
                     expr = canonical_expr(c)
                 end
+                if head(expr) == :spaced && inside_math && !isempty(stack)
+                    top = first(stack)
+                    if _is_ordinary(top)
+                        expr = only(expr.args)
+                    end                    
+                end
                 push!(stack, expr)
                 push_down!(stack)
             end
@@ -244,4 +250,25 @@ function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
     else
         return lines
     end
+end
+
+function _is_ordinary(top)
+    if head(top) in (:punctuation, :space)
+        return true
+    elseif head(top) in (:function, :integral, :underover) 
+        return true
+    elseif head(top) in (:superscript, :subscript)
+        return true
+    elseif head(top) == :delimiter
+        if length(top.args)==1 && top.args[1] in ('(', '[', '<')
+            return true
+        end
+    elseif head(top) in (:inline_math, :group, :delimited)
+        if isempty(top.args)
+            return true
+        else
+            return _is_ordinary(last(top.args))
+        end
+    end
+    return false
 end
