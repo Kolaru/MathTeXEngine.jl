@@ -1,5 +1,9 @@
+module MathTeXEngineReferenceTests
+
 using CairoMakie
 using MathTeXEngine
+
+export inputs, generate
 
 inputs = Dict()
 
@@ -126,3 +130,5 @@ function single_figure(exprs)
     end
     return fig, failures
 end
+
+end # module

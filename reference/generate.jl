@@ -1,6 +1,5 @@
 using Tar
-
-include("references.jl")
+using MathTeXEngineReferenceTests
 
 begin
     @info "Generating reference images"

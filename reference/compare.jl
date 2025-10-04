@@ -5,7 +5,7 @@ using Tar
 using Test
 using TOML
 
-include("references.jl")
+using MathTeXEngineReferenceTests
 
 function last_major_version()
     path = joinpath(@__DIR__, "..", "Project.toml")
@@ -30,12 +30,14 @@ function download_refimages(tag = last_major_version())
     return images
 end
 
-begin
+@testset "Reference images" begin
     @info "Reference test started"
 
+    @info "Downloading reference images"
     reference_images = download_refimages()
-    comparison_images = joinpath(@__DIR__, "comparison_images")
     
+    @info "Generating comparison images"
+    comparison_images = joinpath(@__DIR__, "comparison_images")
     rm(comparison_images, recursive = true, force = true)
     generate(comparison_images)
     
@@ -44,6 +46,7 @@ begin
     rm(reference_comparison_images, recursive = true, force = true)
     path = mkpath(reference_comparison_images)
 
+    @info "Comparing images"
     for group in keys(inputs)
         refimg = load(joinpath(reference_images, "$group.png"))
         img = load(joinpath(comparison_images, "$group.png"))
@@ -61,6 +64,6 @@ begin
 
             save(joinpath(path, "$group.png"), fig)
         end
-        @show @test img == refimg
+        @test img == refimg
     end
 end
