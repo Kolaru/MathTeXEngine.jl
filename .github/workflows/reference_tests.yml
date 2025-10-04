@@ -26,11 +26,11 @@ jobs:
       - uses: julia-actions/cache@v2
       - name: Install Julia dependencies
         run: >
-          julia --project=reference -e 'using Pkg; Pkg.update(); Pkg.resolve(); Pkg.instantiate()'
+          julia --project=reference -e 'using Pkg; Pkg.Registry.update(); Pkg.develop(path="."); Pkg.resolve(); Pkg.instantiate();'
       - name: Run the reference tests
         continue-on-error: true
         run: >
-          julia --project=reference -e 'using Pkg; Pkg.test(coverage=true)'
+          julia --project=reference reference/compare.jl
           && echo "TESTS_SUCCESSFUL=true" >> $GITHUB_ENV
       - name: Upload test Artifacts
         uses: actions/upload-artifact@v4
@@ -45,4 +45,5 @@ jobs:
           directories: reference/src
       - uses: codecov/codecov-action@v5
         with:
-          file: lcov.info
+          files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}

@@ -5,7 +5,7 @@ using Tar
 using Test
 using TOML
 
-using MathTeXEngineReferenceTests
+include("references.jl")
 
 function last_major_version()
     path = joinpath(@__DIR__, "..", "Project.toml")
