@@ -4,7 +4,7 @@ middle of the xheight.
 """
 function y_for_centered(font_family, elem)
     h = inkheight(elem)
-    return h/2 + xheight(font_family)/2
+    return h + xheight(font_family)/2
 end
 
 function argument_as_string(arg)
