@@ -26,7 +26,7 @@ jobs:
       - uses: julia-actions/cache@v2
       - name: Install Julia dependencies
         run: >
-          julia --project=reference -e 'using Pkg; Pkg.resolve(); Pkg.instantiate()'
+          julia --project=reference -e 'using Pkg; Pkg.update(); Pkg.resolve(); Pkg.instantiate()'
       - name: Run the reference tests
         continue-on-error: true
         run: >
