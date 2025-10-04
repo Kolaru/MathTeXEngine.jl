@@ -1,6 +1,7 @@
 name: ReferenceTests
 on:
   push:
+    branches: [master]
   pull_request:
 jobs:
   reftest:
@@ -30,7 +31,7 @@ jobs:
       - name: Run the reference tests
         continue-on-error: true
         run: >
-          julia --project=reference reference/compare.jl
+          julia --project=reference --code-coverage reference/compare.jl
           && echo "TESTS_SUCCESSFUL=true" >> $GITHUB_ENV
       - name: Upload test Artifacts
         uses: actions/upload-artifact@v4

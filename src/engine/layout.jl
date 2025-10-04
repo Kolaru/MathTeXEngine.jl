@@ -25,7 +25,7 @@ function tex_layout(expr, state)
     font_family = state.font_family
     head = expr.head
     args = [expr.args...]
-    shrink = 0.1
+    shrink = 0.6
 
     try
         if isleaf(expr)  # :char, :delimiter, :digit, :punctuation, :symbol
