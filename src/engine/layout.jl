@@ -295,10 +295,16 @@ function horizontal_layout(elements)
         for (i, elem) in enumerate(elements)
             i == 1 && continue
             prev = elements[i-1]
-            if elem isa TeXChar && prev isa TeXChar 
+            #=
+            # TODO enable? this makes `\mathrm{gg}t` print nice, but could break other stuff
+            # if preceding element is a group, inspect last element
+            if prev isa Group && !isempty(prev.elements)
+                prev = last(prev.elements)
+            end
+            =#
+            !isa(prev, TeXChar) && continue
+            if elem isa TeXChar
                 if prev.slanted != elem.slanted
-                    height_prev = hbearing_ori_to_top(prev)
-                    depth_prev = inkheight(prev) - hbearing_ori_to_top(prev)
                     offset = 0
                     #=
                     glyph metrics defined in `sile/justenough/justenoughharfbuzz.c`;
@@ -308,21 +314,34 @@ function horizontal_layout(elements)
                     `x_bearing`                 ⇔ `hbearing_ori_to_left`
                     `glyphWidth` (== `width`)   ⇔ `inkwidth`
                     =#
+                    height_prev = hbearing_ori_to_top(prev)
+                    bearing_x_prev = hbearing_ori_to_left(prev)
+                    glyph_width_prev = inkwidth(prev)
                     if prev.slanted && !elem.slanted && height_prev > 0
                         # `fromItalicCorrection` in `sile/typesetters/base.lua`
-                        glyph_width_prev = inkwidth(prev)
-                        bearing_x_prev = hbearing_ori_to_left(prev)
                         width_prev = hadvance(prev)
                         d = glyph_width_prev + bearing_x_prev
                         delta = d > width_prev ? d - width_prev : 0
                         height_elem = hbearing_ori_to_top(elem)
                         offset = height_prev <= height_elem ? delta : delta * height_elem / height_prev
-                    elseif !prev.slanted && elem.slanted && depth_prev > 0
-                        # `toItalicCorrection` in `sile/typesetters/base.lua`
+                    elseif !prev.slanted && elem.slanted 
+                        # inspired by `toItalicCorrection` in `sile/typesetters/base.lua`
                         d = hbearing_ori_to_left(elem)
+                        depth_prev = inkheight(prev) - hbearing_ori_to_top(prev)
                         depth_elem = inkheight(elem) - hbearing_ori_to_top(elem)
-                        delta = d < 0 ? -d : 0
-                        offset = depth_prev >= depth_elem ? delta : delta * depth_prev / depth_elem
+                        delta = -d
+                        if d < 0 && depth_prev > 0
+                            # `sile` formula
+                            offset = depth_prev >= depth_elem ? delta : delta * depth_prev / depth_elem
+                        else
+                            # but also remove bearing in other cases
+                            # simple: offset = delta
+                            # but we try to detect "padded" glyphs (e.g., parenthesis in many fonts)
+                            # and then, assuming that for other upright glyphs the bearing is somewhat regular,
+                            # use that as a target for the slanted glyph
+                            b = (bearing_x_prev / glyph_width_prev) > 0.25 ? 0 : bearing_x_prev
+                            offset = b + delta
+                        end
                     end
                     if offset != 0
                         insert!(elems, i+j, Space(offset))
