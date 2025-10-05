@@ -24,6 +24,11 @@ function add_font_modifier(state::LayoutState, modifier)
 end
 
 function get_font(state::LayoutState, char_type)
+    font_id = get_font_identifier(state, char_type)
+    return get_font(font_family, font_id)
+end
+
+function get_font_identifier(state::LayoutState, char_type)
     if state.tex_mode == :text
         char_type = :text
     end
@@ -40,5 +45,5 @@ function get_font(state::LayoutState, char_type)
         end
     end
 
-    return get_font(font_family, font_id)
+    return font_id
 end

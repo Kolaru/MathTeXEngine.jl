@@ -157,24 +157,27 @@ function TeXChar(char::Char, state::LayoutState, char_type)
         return TeXChar(id, font, font_family, false, char)
     end
 
-    font = get_font(state, char_type)
+    font_id = get_font_identifier(state, char_type)
+    font = get_font(font_family, font_id)
 
     return TeXChar(
         glyph_index(font, char),
         font,
         font_family,
-        is_slanted(state.font_family, char_type),
+        font_id == :italic || font_id == :bolditalic, # previously: `is_slanted(state.font_family, char_type)`
         char)
 end
 
 function TeXChar(name::AbstractString, state::LayoutState, char_type ; represented='?')
     font_family = state.font_family
-    font = get_font(state, char_type)
+    font_id = get_font_identifier(state, char_type)
+    font = get_font(font_family, font_id)
+
     return TeXChar(
         glyph_index(font, name),
         font,
         font_family,
-        is_slanted(state.font_family, char_type),
+        font_id == :italic || font_id == :bolditalic, # previously: `is_slanted(state.font_family, char_type)`
         represented)
 end
 
@@ -185,6 +188,9 @@ end
 glyph_index(char::TeXChar) = char.glyph_id
 hadvance(char::TeXChar) = hadvance(get_extent(char.font, char.glyph_id))
 xheight(char::TeXChar) = xheight(char.font_family)
+
+hbearing_ori_to_left(char::TeXChar) = hbearing_ori_to_left(get_extent(char.font, char.glyph_id))
+hbearing_ori_to_top(char::TeXChar) = hbearing_ori_to_top(get_extent(char.font, char.glyph_id))
 
 function ascender(char::TeXChar)
     math_font = get_font(char.font_family, :math)

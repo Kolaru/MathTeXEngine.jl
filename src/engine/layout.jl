@@ -288,6 +288,53 @@ tex_layout(::Nothing, state) = Space(0)
 Layout the elements horizontally, like normal text.
 """
 function horizontal_layout(elements)
+    global ITALIC_CORRECTION
+    if ITALIC_CORRECTION[]
+        elems = vcat(Space(0), elements)
+        j = 1
+        for (i, elem) in enumerate(elements)
+            i == 1 && continue
+            prev = elements[i-1]
+            if elem isa TeXChar && prev isa TeXChar 
+                if prev.slanted != elem.slanted
+                    height_prev = hbearing_ori_to_top(prev)
+                    depth_prev = inkheight(prev) - hbearing_ori_to_top(prev)
+                    offset = 0
+                    #=
+                    glyph metrics defined in `sile/justenough/justenoughharfbuzz.c`;
+                    `height` (== `y_bearing`)   ⇔ `hbearing_ori_to_top`
+                    `tHeight`                   ⇔ `- inkheight`
+                    `width` (== `x_advance`)    ⇔ `hadvance`
+                    `x_bearing`                 ⇔ `hbearing_ori_to_left`
+                    `glyphWidth` (== `width`)   ⇔ `inkwidth`
+                    =#
+                    if prev.slanted && !elem.slanted && height_prev > 0
+                        # `fromItalicCorrection` in `sile/typesetters/base.lua`
+                        glyph_width_prev = inkwidth(prev)
+                        bearing_x_prev = hbearing_ori_to_left(prev)
+                        width_prev = hadvance(prev)
+                        d = glyph_width_prev + bearing_x_prev
+                        delta = d > width_prev ? d - width_prev : 0
+                        height_elem = hbearing_ori_to_top(elem)
+                        offset = height_prev <= height_elem ? delta : delta * height_elem / height_prev
+                    elseif !prev.slanted && elem.slanted && depth_prev > 0
+                        # `toItalicCorrection` in `sile/typesetters/base.lua`
+                        d = hbearing_ori_to_left(elem)
+                        depth_elem = inkheight(elem) - hbearing_ori_to_top(elem)
+                        delta = d < 0 ? -d : 0
+                        offset = depth_prev >= depth_elem ? delta : delta * depth_prev / depth_elem
+                    end
+                    if offset != 0
+                        @show offset
+                        insert!(elems, i+j, Space(offset))
+                        j+=1
+                    end
+                end
+            end
+        end
+        popfirst!(elems)
+        elements = elems
+    end
     dxs = hadvance.(elements)
     xs = [0, cumsum(dxs[1:end-1])...]
 

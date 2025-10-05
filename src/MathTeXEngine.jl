@@ -17,13 +17,16 @@ import FreeTypeAbstraction:
     ascender, boundingbox, descender, get_extent, glyph_index,
     hadvance, inkheight, inkwidth,
     height_insensitive_boundingbox, leftinkbound, rightinkbound,
-    topinkbound, bottominkbound
+    topinkbound, bottominkbound,
+    hbearing_ori_to_left, hbearing_ori_to_top
 
 export TeXToken, tokenize
 export TeXExpr, texparse, TeXParseError, manual_texexpr
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
 export texfont, FontFamily, set_texfont_family!, get_texfont_family
 export glyph_index
+
+const ITALIC_CORRECTION = Ref(true)
 
 # Reexport from LaTeXStrings
 export @L_str
