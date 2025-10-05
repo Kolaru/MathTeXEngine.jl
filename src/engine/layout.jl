@@ -333,8 +333,8 @@ function horizontal_layout(elements)
                         if d < 0 && depth_prev > 0
                             # `sile` formula
                             offset = depth_prev >= depth_elem ? delta : delta * depth_prev / depth_elem
-                        else
-                            # but also remove bearing in other cases
+                        elseif d >= 0
+                            # but also remove/reduce positive bearing
                             # simple: offset = delta
                             # but we try to detect "padded" glyphs (e.g., parenthesis in many fonts)
                             # and then, assuming that for other upright glyphs the bearing is somewhat regular,
