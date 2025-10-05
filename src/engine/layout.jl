@@ -325,7 +325,6 @@ function horizontal_layout(elements)
                         offset = depth_prev >= depth_elem ? delta : delta * depth_prev / depth_elem
                     end
                     if offset != 0
-                        @show offset
                         insert!(elems, i+j, Space(offset))
                         j+=1
                     end
