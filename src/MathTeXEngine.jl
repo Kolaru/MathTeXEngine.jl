@@ -28,8 +28,6 @@ export glyph_index
 # Reexport from LaTeXStrings
 export @L_str
 
-const UNSPACE_BINARY_OPERATORS_HEURISTIC = Ref(true)
-
 include("parser/tokenizer.jl")
 include("parser/texexpr.jl")
 include("parser/commands_data.jl")

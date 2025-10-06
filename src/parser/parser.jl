@@ -1,3 +1,7 @@
+## flag to indicate whether or not to (try to) remove space for 
+## binary operator symbols if they are used as unary prefixes
+const UNSPACE_BINARY_OPERATORS_HEURISTIC = Ref(true)
+
 struct TeXParseError <: Exception
     msg::String
     stack::Stack
