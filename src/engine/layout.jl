@@ -1,3 +1,9 @@
+## flag to enable italic correction heuristic
+const ITALIC_CORRECTION = Ref(true)
+## percentage of x-pixelsize of font (like LetterSpacing in fontspec)
+## for bearing before slanted glyph when switching from upright to slanted letters
+const ITALIC_CORRECTION_LETTER_SPACING_UP_TO_IT = Ref(0.75f0) 
+
 """
 Return the y value needed for the element to be vertically centered in the
 middle of the xheight.
@@ -26,7 +32,7 @@ function tex_layout(expr, state)
     head = expr.head
     args = [expr.args...]
     shrink = 0.6
-
+    inside_math = state.tex_mode == :inline_math
     try
         if isleaf(expr)  # :char, :delimiter, :digit, :punctuation, :symbol
             char = args[1]
@@ -138,7 +144,7 @@ function tex_layout(expr, state)
         elseif head == :function
             name = args[1]
             elements = TeXChar.(collect(name), state, Ref(:function))
-            return horizontal_layout(elements)
+            return horizontal_layout(elements, inside_math)
         elseif head == :glyph
             font_id, glyph_id = argument_as_string.(args)
             font_id = Symbol(font_id)
@@ -151,7 +157,7 @@ function tex_layout(expr, state)
             if isempty(elements)
                 return Space(0.0)
             end
-            return horizontal_layout(elements)
+            return horizontal_layout(elements, mode == :inline_math)
         elseif head == :integral
             pad = 0.1
             int, sub, super = tex_layout.(args, state)
@@ -199,12 +205,12 @@ function tex_layout(expr, state)
             )
         elseif head == :primes
             primes = [TeXExpr(:char, ''') for _ in 1:only(args)]
-            return horizontal_layout(tex_layout.(primes, state))
+            return horizontal_layout(tex_layout.(primes, state), inside_math)
         elseif head == :space
             return Space(args[1])
         elseif head == :spaced
             sym = tex_layout(args[1], state)
-            return horizontal_layout([Space(0.2), sym, Space(0.2)])
+            return horizontal_layout([Space(0.2), sym, Space(0.2)], inside_math)
         elseif head == :sqrt
             content = tex_layout(args[1], state)
             h = inkheight(content)
@@ -287,7 +293,25 @@ tex_layout(::Nothing, state) = Space(0)
 
 Layout the elements horizontally, like normal text.
 """
-function horizontal_layout(elements)
+function horizontal_layout(elements, inside_math=false)
+    elements = _italic_correction(Val(inside_math), elements)
+    dxs = hadvance.(elements)
+    xs = [0, cumsum(dxs[1:end-1])...]
+
+    return Group(elements, Point2f.(xs, 0))
+end
+
+function layout_text(string, font_family)
+    isempty(string) && return Space(0)
+
+    elements = TeXChar.(collect(string), LayoutState(font_family), Ref(:text))
+    return horizontal_layout(elements, false)
+end
+
+function _italic_correction(inside_math::Val{false}, elements)
+    return elements
+end
+function _italic_correction(inside_math::Val{true}, elements)
     global ITALIC_CORRECTION, ITALIC_CORRECTION_LETTER_SPACING_UP_TO_IT
     if ITALIC_CORRECTION[]
         elems = vcat(Space(0), elements)
@@ -317,6 +341,8 @@ function horizontal_layout(elements)
                     height_prev = hbearing_ori_to_top(prev)
                     if prev.slanted && !elem.slanted && height_prev > 0
                         # `fromItalicCorrection` in `sile/typesetters/base.lua`
+                        ## if previous glyph was slanted and printed width `d` is greater
+                        ## than hadvance, then add difference to bearing of upright glyph
                         width_prev = hadvance(prev)
                         glyph_width_prev = inkwidth(prev)
                         bearing_x_prev = hbearing_ori_to_left(prev)
@@ -332,11 +358,15 @@ function horizontal_layout(elements)
                         delta = -d
                         if d < 0 && depth_prev > 0
                             # `sile` formula
+                            ## if previous glyph was upright and goes beyond baseline, 
+                            ## if and current glyph has a negative bearing,
+                            ## then increase bearing by flipping sign of bearing distance
                             offset = depth_prev >= depth_elem ? delta : delta * depth_prev / depth_elem
                         elseif d >= 0
-                            # but also remove/reduce positive bearing
-                            perc = ITALIC_CORRECTION_LETTER_SPACING_UP_TO_IT[] / 100
-                            b = perc == 0 ? 0 : perc * _pixelsize(prev)
+                            ## but also remove/reduce positive bearing or reduce it to some
+                            ## minimum spacing value
+                            fac = ITALIC_CORRECTION_LETTER_SPACING_UP_TO_IT[] / 100
+                            b = fac == 0 ? 0 : fac * _font_pixelsize(prev)
                             offset = b + delta
                         end
                     end
@@ -350,27 +380,13 @@ function horizontal_layout(elements)
         popfirst!(elems)
         elements = elems
     end
-    dxs = hadvance.(elements)
-    xs = [0, cumsum(dxs[1:end-1])...]
-
-    return Group(elements, Point2f.(xs, 0))
-end
-
-function layout_text(string, font_family)
-    isempty(string) && return Space(0)
-
-    elements = TeXChar.(collect(string), LayoutState(font_family), Ref(:text))
-    return horizontal_layout(elements)
+    return elements
 end
 
 # obtain horizontal size of EM-box of font of `tchar` in pixels
-function _pixelsize(tchar::TeXChar)
+function _font_pixelsize(tchar::TeXChar)
     font = tchar.font
     pxsize = @lock font.lock begin
-        #=
-        sz = unsafe_load(font.size)
-        sz.metrics.x_scale // (0x10000 * 64)    # this only works if a pixel size has been set
-        =#
         font.max_advance_width / font.units_per_EM
     end
     return pxsize
