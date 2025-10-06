@@ -187,6 +187,91 @@ end
                     (:char, 'd')))
     end
 
+    @testset "Unspaced symbol" begin
+        MathTeXEngine.UNSPACE_BINARY_OPERATORS_HEURISTIC[] = true
+        ## keep space in binary operations
+        test_parse(raw"$2-1$", (
+            :inline_math, 
+            (:digit, '2'), 
+            (:spaced, (:symbol, '−')),
+            (:digit, '1')
+        ))
+        ## but remove if used as unary symbol
+        test_parse(raw"$-1$", (
+            :inline_math, 
+            (:symbol, '−'),
+            (:digit, '1')
+        ))
+        ## same for spaced commands
+        test_parse(raw"$2\pm1$", (
+            :inline_math, 
+            (:digit, '2'), 
+            (:spaced, (:symbol, '±')),
+            (:digit, '1')
+        ))
+        test_parse(raw"$\pm1$", (
+            :inline_math, 
+            (:symbol, '±'),
+            (:digit, '1')
+        ))
+
+        ## within parentheses:
+        test_parse(raw"$(2-1)$", (
+            :inline_math, 
+            (:delimiter, "("),
+            (:digit, '2'), 
+            (:spaced, (:symbol, '−')),
+            (:digit, '1'),
+            (:delimiter, ")"),
+        ))
+        test_parse(raw"$(-1)$", (
+            :inline_math, 
+            (:delimiter, "("),
+            (:symbol, '−'),
+            (:digit, '1'),
+            (:delimiter, ")"),
+        ))
+        ## zero space/empty group removes binary spacing
+        test_parse(raw"$(2{}-1)$", (
+            :inline_math, 
+            (:delimiter, "("),
+            (:digit, '2'), 
+            (:space, 0.0),
+            (:symbol, '−'),
+            (:digit, '1'),
+            (:delimiter, ")"),
+        ))
+        ## exponents
+        test_parse(raw"$a^+$", (
+            :inline_math,
+            (:decorated,
+                (:char, 'a'),
+                nothing,
+                (:symbol, '+')
+            )
+        ))
+        test_parse(raw"$a^{+}$", (
+            :inline_math,
+            (:decorated,
+                (:char, 'a'),
+                nothing,
+                (:symbol, '+')
+            )
+        ))
+        test_parse(raw"$a^{1+2}$", (
+            :inline_math,
+            (:decorated,
+                (:char, 'a'),
+                nothing,
+                (:group, 
+                    (:digit, '1'),
+                    (:spaced, (:symbol, '+')),
+                    (:digit, '2'),
+                )
+            )
+        ))
+    end
+
     @testset "Subscript and superscript" begin
         @test texparse(raw"a^2_3") == texparse(raw"a_3^2")
         @test texparse(raw"^7_b") == texparse(raw"{}^7_b")
