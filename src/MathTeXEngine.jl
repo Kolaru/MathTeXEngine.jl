@@ -18,7 +18,7 @@ import FreeTypeAbstraction:
     hadvance, inkheight, inkwidth,
     height_insensitive_boundingbox, leftinkbound, rightinkbound,
     topinkbound, bottominkbound,
-    hbearing_ori_to_left, hbearing_ori_to_top
+    hbearing_ori_to_left
 
 export TeXToken, tokenize
 export TeXExpr, texparse, TeXParseError, manual_texexpr

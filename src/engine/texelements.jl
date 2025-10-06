@@ -190,7 +190,6 @@ hadvance(char::TeXChar) = hadvance(get_extent(char.font, char.glyph_id))
 xheight(char::TeXChar) = xheight(char.font_family)
 
 hbearing_ori_to_left(char::TeXChar) = hbearing_ori_to_left(get_extent(char.font, char.glyph_id))
-hbearing_ori_to_top(char::TeXChar) = hbearing_ori_to_top(get_extent(char.font, char.glyph_id))
 
 function ascender(char::TeXChar)
     math_font = get_font(char.font_family, :math)
