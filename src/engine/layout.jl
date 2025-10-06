@@ -288,7 +288,7 @@ tex_layout(::Nothing, state) = Space(0)
 Layout the elements horizontally, like normal text.
 """
 function horizontal_layout(elements)
-    global ITALIC_CORRECTION
+    global ITALIC_CORRECTION, ITALIC_CORRECTION_LETTER_SPACING_UP_TO_IT
     if ITALIC_CORRECTION[]
         elems = vcat(Space(0), elements)
         j = 1
@@ -315,11 +315,11 @@ function horizontal_layout(elements)
                     `glyphWidth` (== `width`)   ⇔ `inkwidth`
                     =#
                     height_prev = hbearing_ori_to_top(prev)
-                    bearing_x_prev = hbearing_ori_to_left(prev)
-                    glyph_width_prev = inkwidth(prev)
                     if prev.slanted && !elem.slanted && height_prev > 0
                         # `fromItalicCorrection` in `sile/typesetters/base.lua`
                         width_prev = hadvance(prev)
+                        glyph_width_prev = inkwidth(prev)
+                        bearing_x_prev = hbearing_ori_to_left(prev)
                         d = glyph_width_prev + bearing_x_prev
                         delta = d > width_prev ? d - width_prev : 0
                         height_elem = hbearing_ori_to_top(elem)
@@ -335,11 +335,8 @@ function horizontal_layout(elements)
                             offset = depth_prev >= depth_elem ? delta : delta * depth_prev / depth_elem
                         elseif d >= 0
                             # but also remove/reduce positive bearing
-                            # simple: offset = delta
-                            # but we try to detect "padded" glyphs (e.g., parenthesis in many fonts)
-                            # and then, assuming that for other upright glyphs the bearing is somewhat regular,
-                            # use that as a target for the slanted glyph
-                            b = (bearing_x_prev / glyph_width_prev) > 0.25 ? 0 : bearing_x_prev
+                            perc = ITALIC_CORRECTION_LETTER_SPACING_UP_TO_IT[] / 100
+                            b = perc == 0 ? 0 : perc * _pixelsize(prev)
                             offset = b + delta
                         end
                     end
@@ -364,6 +361,19 @@ function layout_text(string, font_family)
 
     elements = TeXChar.(collect(string), LayoutState(font_family), Ref(:text))
     return horizontal_layout(elements)
+end
+
+# obtain horizontal size of EM-box of font of `tchar` in pixels
+function _pixelsize(tchar::TeXChar)
+    font = tchar.font
+    pxsize = @lock font.lock begin
+        #=
+        sz = unsafe_load(font.size)
+        sz.metrics.x_scale // (0x10000 * 64)    # this only works if a pixel size has been set
+        =#
+        font.max_advance_width / font.units_per_EM
+    end
+    return pxsize
 end
 
 """

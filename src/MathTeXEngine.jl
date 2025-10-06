@@ -27,6 +27,7 @@ export texfont, FontFamily, set_texfont_family!, get_texfont_family
 export glyph_index
 
 const ITALIC_CORRECTION = Ref(true)
+const ITALIC_CORRECTION_LETTER_SPACING_UP_TO_IT = Ref(0.75f0) # percentage of x-pixelsize of font (like LetterSpacing in fontspec)
 
 # Reexport from LaTeXStrings
 export @L_str
