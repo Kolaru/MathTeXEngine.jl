@@ -87,10 +87,10 @@ end
     end
 
     @testset "Italic Correction" begin
-        MTE.ITALIC_CORRECTION[] = false
+        MathTeXEngine.ITALIC_CORRECTION[] = false
         els1 = generate_tex_elements(L"(f)x")
 
-        MTE.ITALIC_CORRECTION[] = true
+        MathTeXEngine.ITALIC_CORRECTION[] = true
         els2 = generate_tex_elements(L"(f)x")
 
         xpos = ((elem, pos),) -> pos[1]

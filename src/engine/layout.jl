@@ -355,7 +355,9 @@ function _italic_correction(
     
     for (i, elem) in enumerate(elements)
         i == 1 && continue
+        elem isa Space && continue
         prev = elements[i-1]
+        prev isa Space && continue
         
         scale_elem = _get_scale(scales, i)
         scale_prev = _get_scale(scales, i-1)
