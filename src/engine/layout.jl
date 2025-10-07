@@ -316,7 +316,7 @@ function horizontal_layout(elements; kwargs...)
     dxs = hadvance.(elements)
     xs = [0, cumsum(dxs[1:end-1])...]
 
-    return Group(elements, Point2f.(xs, 0))
+    return Group(elements, Point2f.(xs, 0); slanted = any(is_slanted, elements))
 end
 
 function layout_text(string, font_family)
@@ -360,7 +360,7 @@ function _italic_correction(
         scale_elem = _get_scale(scales, i)
         scale_prev = _get_scale(scales, i-1)
 
-        if prev.slanted != elem.slanted
+        if is_slanted(prev) != is_slanted(elem)
             offset = 0
             #=
             glyph metrics defined in `sile/justenough/justenoughharfbuzz.c`;
