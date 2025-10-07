@@ -17,9 +17,8 @@ import FreeTypeAbstraction:
     ascender, boundingbox, descender, get_extent, glyph_index,
     hadvance, inkheight, inkwidth,
     height_insensitive_boundingbox, leftinkbound, rightinkbound,
-    topinkbound, bottominkbound,
-    hbearing_ori_to_left
-
+    topinkbound, bottominkbound
+    
 export TeXToken, tokenize
 export TeXExpr, texparse, TeXParseError, manual_texexpr
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements

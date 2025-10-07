@@ -189,8 +189,6 @@ glyph_index(char::TeXChar) = char.glyph_id
 hadvance(char::TeXChar) = hadvance(get_extent(char.font, char.glyph_id))
 xheight(char::TeXChar) = xheight(char.font_family)
 
-hbearing_ori_to_left(char::TeXChar) = hbearing_ori_to_left(get_extent(char.font, char.glyph_id))
-
 function ascender(char::TeXChar)
     math_font = get_font(char.font_family, :math)
     return max(ascender(math_font), topinkbound(char))
@@ -294,9 +292,13 @@ struct Group{T} <: TeXElement
     elements::Vector{<:TeXElement}
     positions::Vector{Point2f}
     scales::Vector{T}
+    slanted::Bool
 end
 
-Group(elements, positions) = Group(elements, positions, ones(length(elements)))
+Group(elements, positions, scales; slanted=false) = Group(elements, positions, scales, slanted)
+Group(elements, positions; slanted=false) = Group(elements, positions, ones(length(elements)); slanted)
+
+is_slanted(g::Group) = g.slanted
 
 xpositions(g::Group) = [p[1] for p in g.positions]
 ypositions(g::Group) = [p[2] for p in g.positions]
@@ -339,4 +341,4 @@ end
 xheight(g::Group) = maximum(xheight.(g.elements) .* g.scales)
 
 leftmost_glyph(g::Group) = leftmost_glyph(first(g.elements))
-rightmost_glyph(g::Group) = rightmost_glyph(last(glyph))
+rightmost_glyph(g::Group) = rightmost_glyph(last(g.elements))
