@@ -155,6 +155,14 @@ for symbol in delimiter_symbols
     symbol_to_canonical[symbol] = TeXExpr(:delimiter, symbol)
 end
 
+for (com_str, symbol) in pairs(delimiter_commands)
+    delim_expr = TeXExpr(:delimiter, symbol)
+    if !haskey(symbol_to_canonical, symbol)
+        symbol_to_canonical[symbol] = delim_expr
+    end
+    command_definitions[com_str] = (delim_expr, 0)
+end
+
 ##
 ## Default behavior
 ##

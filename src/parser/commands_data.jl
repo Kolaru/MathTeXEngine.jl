@@ -110,5 +110,20 @@ punctuation_symbols = split(raw", ; . !")
 delimiter_symbols = split(raw"| / ( ) [ ] < >")
 font_names = split(raw"rm cal it tt sf bf default bb frak scr regular")
 
+delimiter_commands = Dict(
+    raw"\langle" => '⟨',
+    raw"\rangle" => '⟩',
+    raw"\vert" => '|',
+    raw"\Vert" => '‖',
+    raw"\lbrack" => '[',
+    raw"\rbrack" => ']',
+    raw"\lbrace" => '{',
+    raw"\rbrace" => '}',
+    raw"\lceil" => '⌈',
+    raw"\rceil" => '⌉',
+    raw"\lfloor" => '⌊',
+    raw"\lfloor" => '⌊',
+)
+
 # TODO Add to the parser what come below, if needed
 wide_accent_commands = split(raw"\widehat \widetilde \widebar")

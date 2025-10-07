@@ -157,24 +157,27 @@ function TeXChar(char::Char, state::LayoutState, char_type)
         return TeXChar(id, font, font_family, false, char)
     end
 
-    font = get_font(state, char_type)
+    font_id = get_font_identifier(state, char_type)
+    font = get_font(font_family, font_id)
 
     return TeXChar(
         glyph_index(font, char),
         font,
         font_family,
-        is_slanted(state.font_family, char_type),
+        font_id == :italic || font_id == :bolditalic, # previously: `is_slanted(state.font_family, char_type)`
         char)
 end
 
 function TeXChar(name::AbstractString, state::LayoutState, char_type ; represented='?')
     font_family = state.font_family
-    font = get_font(state, char_type)
+    font_id = get_font_identifier(state, char_type)
+    font = get_font(font_family, font_id)
+
     return TeXChar(
         glyph_index(font, name),
         font,
         font_family,
-        is_slanted(state.font_family, char_type),
+        font_id == :italic || font_id == :bolditalic, # previously: `is_slanted(state.font_family, char_type)`
         represented)
 end
 
@@ -289,9 +292,13 @@ struct Group{T} <: TeXElement
     elements::Vector{<:TeXElement}
     positions::Vector{Point2f}
     scales::Vector{T}
+    slanted::Bool
 end
 
-Group(elements, positions) = Group(elements, positions, ones(length(elements)))
+Group(elements, positions, scales; slanted=false) = Group(elements, positions, scales, slanted)
+Group(elements, positions; slanted=false) = Group(elements, positions, ones(length(elements)); slanted)
+
+is_slanted(g::Group) = g.slanted
 
 xpositions(g::Group) = [p[1] for p in g.positions]
 ypositions(g::Group) = [p[2] for p in g.positions]
@@ -334,4 +341,4 @@ end
 xheight(g::Group) = maximum(xheight.(g.elements) .* g.scales)
 
 leftmost_glyph(g::Group) = leftmost_glyph(first(g.elements))
-rightmost_glyph(g::Group) = rightmost_glyph(last(glyph))
+rightmost_glyph(g::Group) = rightmost_glyph(last(g.elements))
