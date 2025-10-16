@@ -1,4 +1,3 @@
-const token_command = re"\\[a-zA-Z]+" | re"\\."
 tex_tokens = [
     :char => re".",
     :primes => re"'+",
@@ -6,9 +5,9 @@ tex_tokens = [
     :underscore => re"_",
     :rcurly => re"}",
     :lcurly => re"{",
-    :command => token_command, 
-    :right => re"\\right." | re"\\right" * token_command,
-    :left => re"\\left." | re"\\left" * token_command,
+    :command => re"\\[a-zA-Z]+" | re"\\.",
+    :right => re"\\right.",
+    :left => re"\\left.",
     :newline => (re"\\" * re"\\") | re"\\n",
     :dollar => re"$"
 ]

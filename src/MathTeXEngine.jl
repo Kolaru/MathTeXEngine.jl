@@ -18,7 +18,6 @@ import FreeTypeAbstraction:
     hadvance, inkheight, inkwidth,
     height_insensitive_boundingbox, leftinkbound, rightinkbound,
     topinkbound, bottominkbound
-    
 export TeXToken, tokenize
 export TeXExpr, texparse, TeXParseError, manual_texexpr
 export TeXElement, TeXChar, VLine, HLine, generate_tex_elements
