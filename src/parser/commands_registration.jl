@@ -58,8 +58,6 @@ const command_definitions = Dict(
     raw"\frac" => (TeXExpr(:frac), 2),
     raw"\sqrt" => (TeXExpr(:sqrt), 1),
     raw"\overline" => (TeXExpr(:overline), 1),
-    raw"\{" => (TeXExpr(:delimiter, '{'), 0),
-    raw"\}" => (TeXExpr(:delimiter, '}'), 0),
     raw"\_" => (TeXExpr(:symbol, '_'), 0),
     raw"\%" => (TeXExpr(:symbol, '%'), 0),
     raw"\$" => (TeXExpr(:symbol, '$'), 0),
@@ -150,9 +148,18 @@ for symbol in punctuation_symbols
     symbol_to_canonical[symbol] = TeXExpr(:punctuation, symbol)
 end
 
+# Delimiters
 for symbol in delimiter_symbols
     symbol = first(symbol)
     symbol_to_canonical[symbol] = TeXExpr(:delimiter, symbol)
+end
+
+for (com_str, symbol) in pairs(delimiter_commands)
+    delim_expr = TeXExpr(:delimiter, symbol)
+    if !haskey(symbol_to_canonical, symbol)
+        symbol_to_canonical[symbol] = delim_expr
+    end
+    command_definitions[com_str] = (delim_expr, 0)
 end
 
 ##
