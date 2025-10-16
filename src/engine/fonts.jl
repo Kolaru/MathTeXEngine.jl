@@ -257,7 +257,7 @@ get_fontpath(fontstyle::Symbol) = get_fontpath(FontFamily(), fontstyle)
 
 function is_slanted(font_family, char_type)
     font_id = font_family.font_mapping[char_type]
-    return font_id == :italic
+    return font_id == :italic || font_id == :bolditalic
 end
 
 slant_angle(font_family) = font_family.slant_angle * π / 180
