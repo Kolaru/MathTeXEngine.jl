@@ -93,15 +93,29 @@ function tex_layout(expr, state)
                 
             dxs = hadvance.(elements) .* scales
             xs = [0, cumsum(dxs[1:end-1])...]
+           
+            # vertical layout
+            # TODO Check what the algorithm should be here
+            bot_content = bottominkbound(content)
+            h_content = inkheight(content)
+            ### left
+            ### center vertically: 
+            ### 1) compute height delta >= 0
+            ### 2a) target lower bounding box position is ((content bbox position) - delta)
+            ### 2b) but positioning starts at baseline, so correct for current bbox position 
+            h_left = inkheight(left) * left_scale
+            delta_left = max(0, (h_left - h_content)) / 2
+            y_left = bot_content - delta_left - (bottominkbound(left) * left_scale)
+            ## right
+            h_right = inkheight(right) * right_scale
+            delta_right = max(0, (h_right - h_content)) / 2
+            y_right = bot_content - delta_right - (bottominkbound(right) * right_scale)
 
-            # TODO Height calculation for the parenthesis looks wrong
-            # TODO Check what the algorithm should be there
-            # Center the delimiters in the middle of the bot and top baselines ?
             return Group(elements, 
                 Point2f[
-                    (xs[1], -bottominkbound(left) + bottominkbound(content)),
+                    (xs[1], y_left),
                     (xs[2], 0),
-                    (xs[3], -bottominkbound(right) + bottominkbound(content))
+                    (xs[3], y_right)
                 ],
                 scales
             )
