@@ -1,3 +1,6 @@
+include("opentype_mathtable.jl")
+import .OpenTypeMathTable: MathTable, get_math_constant
+
 const FONTS = RelocatableFolders.@path joinpath(@__DIR__, "..", "..", "assets", "fonts")
 
 function full_fontpath(fontname::AbstractString)
@@ -6,6 +9,8 @@ function full_fontpath(fontname::AbstractString)
 end
 
 const _cached_fonts = Dict{String, FTFont}()
+
+const _cached_math_tables = Dict{String, Union{Nothing, MathTable}}()
 
 """
     load_font(str)
@@ -19,6 +24,14 @@ function load_font(str)
     path = full_fontpath(str)
     get!(_cached_fonts, path) do
         FTFont(path)
+    end
+end
+
+function load_math_table(str)
+    path = full_fontpath(str)
+    face = load_font(str)
+    get!(_cached_math_tables, path) do
+        MathTable(face; throw_error=false)
     end
 end
 
@@ -224,6 +237,12 @@ function get_font(font_family::FontFamily, fontstyle::Symbol)
     return load_font(font_family.fonts[fontstyle])
 end
 get_font(fontstyle::Symbol) = get_font(FontFamily(), fontstyle)
+
+function get_math_table(font_family::FontFamily)
+    math_font = get(font_family.fonts, :math, nothing)
+    isnothing(math_font) && return math_font
+    return load_math_table(math_font)
+end
 
 """
     texfont(font_desc=:text)
