@@ -81,6 +81,15 @@ The engine should support every construction the parser does (see below).
 
 Currently the only font set supported is Computer Modern.
 
+# Advanced Customization
+
+There is a reference to a boolean flag for enabling/disabling a heuristic that is meant to remove spacing from binary operator symbols if they are 
+used as unary prefixes instead:
+```julia
+MathTeXEngine.UNSPACE_BINARY_OPERATORS_HEURISTIC[] = true # default
+```
+If the flag is set to `true`, `L"+1"` should not have additional spacing around `+` while `L"1+2"` has.
+
 ## Engine examples
 
 ### Basic examples
