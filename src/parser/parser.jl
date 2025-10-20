@@ -106,7 +106,13 @@ end
 function delimiter(com_str, str)
     str = str[length(com_str)+1:end]
     if length(str) == 1
-        return TeXExpr(:delimiter, only(str))
+        char = only(str)
+        if char == '<'
+            char = '⟨'
+        elseif char == '>'
+            char = '⟩'
+        end
+        return TeXExpr(:delimiter, char)
     else
         return only(texparse(str).args)
     end

@@ -111,6 +111,8 @@ delimiter_symbols = split(raw"| / \ ( ) [ ] ⟨ ⟩ ‖ ⌈ ⌉ ⌊ ⌋ ⌜ ⌝ 
     ## NOTE `<` and `>` not included in `delimiter_symbols` because 
     ##      they should not be used as such. In math mode, they are relation symbols and
     ##      we don't want to change that by overwriting the `symbol_to_canonical` entries.
+    ##      **However**, `\left<` and `\right>` should work to produce `\left\langle` and 
+    ##      `\right\rangle`, respectively, due to intercepting `delimiter(...)`.
     ## NOTE `{` and `}` not included because they are group delimiters that the tokenizer
     ##      should recognize as `lcurly` and `rcurly`. 
     ##      The symbols have to be typed by command.
