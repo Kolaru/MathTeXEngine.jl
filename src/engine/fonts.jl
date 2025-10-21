@@ -51,29 +51,65 @@ const _default_fonts = Dict(
     :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
 )
 
+const _default_mathfont_command_mapping = Dict(
+    ## by default, `\mathbf` now acts like `\symbf`, i.e., its a glyph-substitution switch
+    ## rather than a font switch. 
+    ## To have it act like `\textbf`, add an entry `:bf` => (:text, :bf),
+)
+
 """
-    FontFamily(fonts ; font_mapping, font_modifiers, special_chars, slant_angle, thickness)
+    FontFamily(
+        fonts; 
+        font_mapping, font_modifiers, special_chars, slant_angle, thickness,
+        unicode_math_substitutions, unicode_math_aliases, unicode_math_config,
+        mathfont_command_mapping
+    )
 
 A set of font for LaTeX rendering.
 
 # Required fields
   - `fonts` A with the path to 5 fonts (:regular, :italic, :bold, :bolditalic,
     and :math). The same font can be used for multiple entries, and unrelated
-    fonts can be mixed.
-    Missing fields are completed with the default fonts from NewComputerModern.
+    fonts can be mixed.\n
+    Missing fields are completed with the default fonts from NewComputerModern.\n
+    It is suggested to use a proper `:math` font for best rendering results of 
+    mathematical expressions.
 
 # Optional fields
   - `font_mapping` a dict mapping the different character types (`:digit`,
-    `:function`, `:punctuation`, `:symbol`, `:variable`) to a font identifier.
-    Default to `MathTeXEngine._default_font_mapping`
+    `:function`, `:punctuation`, `:symbol`, `:variable`) to a font identifier.\n
+    This mapping is relevant mainly for characters typed in “math mode”, i.e., 
+    characters enclosed by \\\$-signs, because otherwise the default text font is used.\n
+    Defaults to `MathTeXEngine._default_font_mapping`.
   - `font_modifiers` a dict of dict, one entry per font command supported in the
     font set. Each entry is a dict that maps a font identifier to another.
-    Default to `MathTeXEngine._default_font_modifiers`.
-  - `specail_chars` mapping for special characters that should not be
+    This dict determines the font selection of (nested) `\\textXX` commands.\n
+    Defaults to `MathTeXEngine._default_font_modifiers`.
+  - `special_chars` mapping for special characters that should not be
     represented by their default unicode glyph
-    (for example necessary to access the big integral glyph).
+    (for example necessary to access the big integral glyph).\n
+    Defaults to an empty `Dict`.
   - `slant_angle` the angle by which the italic fonts are slanted, in degree.
   - `thickness` the thickness of the lines associated to the font.
+  - `unicode_math_substitutions` is nested dict to determine glyph styling and 
+    substitutions in math mode. See the README of the `UnicodeMath` sub-module for details.
+    It is recommended to use `unicode_math_config` instead of setting this manually.\n
+    Defaults to `MathTeXEngine.UCM.default_substitutions`.
+  - `unicode_math_aliases` is a nested dict for style aliases by alphabet.
+    It is recommended to use `unicode_math_config` instead of setting this manually.\n
+    Defaults to `MathTeXEngine.UCM.default_aliases`.
+  - `unicode_math_config` can be used to set `unicode_math_substitutions` and
+    `unicode_math_aliases` in tandem by giving a valid `UCMConfig` object.\n
+    For example, `UCMConfig(; math_style_spec=:iso)` will result in common glyphs adhering
+    to ISO recommendations within mathematical expressions.\n
+    Defaults to `nothing`.
+  - `mathfont_command_mapping` is a `Dict{Symbol, Tuple{Symbol, Symbol}` and 
+    configures the behavior of `\\mathXX` commands.
+    By default `\\mathit` is synonymous for `\\symit` and rather than switching fonts, 
+    for every glyph in the argument a fitting Unicode substitution is chosen.
+    This corresponds to an entry `:it => (:sym, :it)`.
+    To enable legacy behavior, add an entry `:it => (:text, it)`.\n
+    Defaults to `MathTeXEngine._default_mathfont_command_mapping`.
 """
 struct FontFamily
     fonts::Dict{Symbol, String}
@@ -82,16 +118,28 @@ struct FontFamily
     special_chars::Dict{Char, Tuple{String, Int}}
     slant_angle::Float64
     thickness::Float64
+    unicode_math_substitutions::Dict{Symbol, Dict{Symbol, Dict{Symbol, Symbol}}}
+    unicode_math_aliases::Dict{Symbol, Dict{Symbol, Symbol}}
+    mathfont_command_mapping::Dict{Symbol, Tuple{Symbol, Symbol}}
 end
 
-function FontFamily(fonts ;
+function FontFamily(fonts;
         font_mapping = _default_font_mapping,
         font_modifiers = _default_font_modifiers,
         special_chars = Dict{Char, Tuple{String, Int}}(),
         slant_angle = 13,
-        thickness = 0.0375)
+        thickness = 0.0375,
+        unicode_math_substitutions = UCM.default_substitutions,
+        unicode_math_aliases = UCM.default_aliases,
+        unicode_math_config = nothing,
+        mathfont_command_mapping = _default_mathfont_command_mapping
+    )
 
     fonts = merge(_default_fonts, Dict(fonts))
+
+    if isa(unicode_math_config, UCM.UCMConfig)
+        unicode_math_substitutions, unicode_math_aliases = UCM.config_dicts(unicode_math_config)
+    end
     
     return FontFamily(
         fonts,
@@ -99,7 +147,10 @@ function FontFamily(fonts ;
         font_modifiers,
         special_chars,
         slant_angle,
-        thickness
+        thickness,
+        unicode_math_substitutions,
+        unicode_math_aliases,
+        mathfont_command_mapping
     )
 end
 
@@ -255,9 +306,25 @@ object.
 get_fontpath(font_family::FontFamily, fontstyle::Symbol) = full_fontpath(font_family.fonts[fontstyle])
 get_fontpath(fontstyle::Symbol) = get_fontpath(FontFamily(), fontstyle)
 
-function is_slanted(font_family, char_type)
-    font_id = font_family.font_mapping[char_type]
-    return font_id == :italic
+function is_slanted(font_family, char_type, char...)
+    font_id = get(font_family.font_mapping, char_type, :math)
+    return is_slanted(font_id, char...)
+end
+function is_slanted(font_id)
+    return font_id == :italic || font_id == :bolditalic
+end
+function is_slanted(font_id, char)
+    is_slanted(font_id) && return true
+
+    if font_id == :math
+        if haskey(UCM.chars_to_ucmchars, char)
+            ucm_char = UCM.chars_to_ucmchars[char]
+            if ucm_char.style in (:it, :bfit, :sfit, :bfsfit, :bbit)    # TODO `:bfcal` ?
+                return true
+            end
+        end
+    end
+    return false
 end
 
 slant_angle(font_family) = font_family.slant_angle * π / 180

@@ -88,7 +88,7 @@ end
 
 for name in font_names
     com_str = "\\math$name"
-    command_definitions[com_str] = (TeXExpr(:font, Symbol(name)), 1)
+    command_definitions[com_str] = (TeXExpr(:mathfont, Symbol(name)), 1)
     com_str = "\\text$name"
     command_definitions[com_str] = (TeXExpr(:text, Symbol(name)), 1)
 end
@@ -98,6 +98,8 @@ for style_symb in UCM.all_styles
     com_str = "\\sym$(style_symb)"
     command_definitions[com_str] = (TeXExpr(:sym, style_symb), 1)
 end
+command_definitions["\\symrm"] = (TeXExpr(:sym, :up), 1)
+command_definitions["\\symscr"] = (TeXExpr(:sym, :cal), 1)
 
 ##
 ## Symbols
@@ -169,6 +171,21 @@ for (com_str, symbol) in latex_symbols
     end
 
     # Separate case for symbols that have multiple valid commands
+    if !haskey(command_definitions, com_str)
+        command_definitions[com_str] = (symbol_expr, 0)
+    end
+end
+
+# Register extra commands provided by `unicode-math` LaTeX package:
+for ucm_cmd in values(UCM.extra_commands)
+    com_str = ucm_cmd.latex_cmd
+    symbol = ucm_cmd.glyph
+    symbol_expr = TeXExpr(:symbol, symbol)
+
+    if !haskey(symbol_to_canonical, symbol)
+        symbol_to_canonical[symbol] = symbol_expr
+    end
+
     if !haskey(command_definitions, com_str)
         command_definitions[com_str] = (symbol_expr, 0)
     end

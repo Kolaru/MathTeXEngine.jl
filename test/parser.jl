@@ -70,7 +70,8 @@ end
                 (:char, 'v')
             )))
 
-        @test texparse(raw"ℝ") == texparse(raw"\mathbb{R}")
+        @test texparse(raw"ℝ") == manual_texexpr((:line, (:symbol, 'ℝ')))
+        @test texparse(raw"\mathbb{R}") == manual_texexpr((:line, (:mathfont, :bb, 'R')))
     end
 
     @testset "Fraction" begin

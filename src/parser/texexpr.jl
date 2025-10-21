@@ -1,10 +1,3 @@
-const _math_font_mappings = Dict(
-    :bb => to_blackboardbold,
-    :cal => to_caligraphic,
-    :frak => to_frakture,
-    :scr => to_caligraphic
-)
-
 """
     TeXExpr(head::Symbol, args::Vector)
 
@@ -22,32 +15,7 @@ struct TeXExpr
     head::Symbol
     args::Vector{Any}
 
-    function TeXExpr(head, args::Vector)
-        if head == :font
-            # Convert math font like `\mathbb{R}` -- TeXExpr(:font, [:bb, 'R']) --
-            # to unicode symbols -- e.g. TeXExpr(:symbol, 'ℝ')
-            if length(args) == 2 && haskey(_math_font_mappings, args[1])
-                font, content = args
-                to_font = _math_font_mappings[font]
-                return leafmap(content) do leaf
-                    sym = only(leaf.args)
-                    return TeXExpr(:symbol, to_font(sym))
-                end
-            end
-        end
-        if head == :sym
-            # Convert math font like `\symbb{R}` -- TeXExpr(:sym, [:bb, 'R']) --
-            # to unicode symbols -- e.g. TeXExpr(:ucm_glyph, 'ℝ')
-            if length(args) == 2 && args[1] in UCM.all_styles
-                style_symb, content = args
-                return leafmap(content) do leaf
-                    glyph = only(leaf.args)
-                    return TeXExpr(:ucm_glyph, UCM._sym(glyph, style_symb))
-                end
-            end
-        end
-        return new(head, args)
-    end
+    TeXExpr(head, args::Vector) = new(head, args)
 end
 
 TeXExpr(head) = TeXExpr(head, [])
