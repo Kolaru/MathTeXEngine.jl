@@ -99,7 +99,7 @@ end
         test_parse(raw"\rbrace", (:delimiter, '}'))
      
         ### test commands as arguments to a delimited group
-        for (cmd_str, delim_symb) in pairs(MTE.delimiter_commands)
+        for (cmd_str, delim_symb) in pairs(MathTeXEngine.delimiter_commands)
             ## NOTE this does not check for "correct" left right pairs like `\lbrack` and `\rbrack`
             test_parse(
                 "\\left$(cmd_str)\\right$(cmd_str)", 
