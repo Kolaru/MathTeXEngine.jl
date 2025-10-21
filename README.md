@@ -178,9 +178,9 @@ The table below contains the list of all supported LaTeX construction and their 
 | Group | `{ }` | `:group` | `elements...` |
 | Inline math | `$ $` | `:inline_math` | `content` |
 | Integral | `\int_a^b` | `:integral` | `symbol, low_bound, high_bound` |
-| Math glyph substitution | `\symit{}` | `:sym` | `font_modifier, expr` |
+| Math glyph substitution[^1] | `\symit{}` | `:sym` | `font_modifier, expr` |
 | Text fonts | `\textit{}` | `:text` | `font_modifier, expr` |
-| Math fonts[^1] | `\mathrm{}` | `:mathfont` | `font_modifier, expr` |
+| Math fonts[^2] | `\mathrm{}` | `:mathfont` | `font_modifier, expr` |
 | Punctuation | `!` | `:punctuation` |
 | Simple delimiter | `(` | `:delimiter` |
 | Square root | `\sqrt{2}` | `:sqrt` | `content` |
@@ -189,7 +189,11 @@ The table below contains the list of all supported LaTeX construction and their 
 | Subscript and superscript | `x_0^2` | `:decorated` | `core, subscript, superscript` |
 | Symbol with script under and/or over it | `\sum_i^k` | `:underover` | `symbol, under, over` |
 
-[^1]: The behavior of the `:mathfont` command can be controlled with the `mathfont_command_mapping` field of a `FontFamily`. 
+[^1]: By default, glyph substitutions loosely imitate the `math-style=TeX` setting of the LaTeX package [`unicode-math`](https://ctan.org/pkg/unicode-math?lang=en).
+  The `\symXX` commands are controlled by the fields `unicode_math_substitutions` and `unicode_math_aliases` of a `FontFamily`.
+  The `FontFamily` constructor accepts the `unicode_math_config` keyword argument to switch to other predefined styling conventions, e.g. `FontFamily(fonts; unicode_math_config=MathTeXEngine.UCMConfig(; math_style_spec=:iso))`. 
+  
+[^2]: The behavior of the `:mathfont` command can be controlled with the `mathfont_command_mapping` field of a `FontFamily`. 
   By default, these commands are **not** font switches, but alias the corresponding `:sym` commands, so that glyphs are substituted and the `:math` font is used.
   To have `\mathbf` act like `\textbf`, add an entry `:bf => (:text, :bf)` to the `mathfont_command_mapping` dict of the current font family.
 
