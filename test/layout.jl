@@ -87,11 +87,13 @@ end
     end
 
     @testset "Italic Correction" begin
-        MathTeXEngine.ITALIC_CORRECTION[] = false
-        els1 = generate_tex_elements(L"(f)x")
+        ffam = FontFamily()
+        
+        ffam.math_italics_correction[] = false
+        els1 = generate_tex_elements(L"(f)x", ffam)
 
-        MathTeXEngine.ITALIC_CORRECTION[] = true
-        els2 = generate_tex_elements(L"(f)x")
+        ffam.math_italics_correction[] = true
+        els2 = generate_tex_elements(L"(f)x", ffam)
 
         xpos = ((elem, pos),) -> pos[1]
 

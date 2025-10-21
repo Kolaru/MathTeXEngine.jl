@@ -74,6 +74,15 @@ A set of font for LaTeX rendering.
     (for example necessary to access the big integral glyph).
   - `slant_angle` the angle by which the italic fonts are slanted, in degree.
   - `thickness` the thickness of the lines associated to the font.
+  - `text_italics_correction` is a reference to a Boolean flag to enable or disable 
+    an italics correction heuristic for text.\n
+    Defaults to `Ref(false)`.
+  - `math_italics_correction` is a reference to a Boolean flag to enable or disable 
+    an italics correction heuristic in math expressions.\n
+    Defaults to `Ref(true)`.
+  - `italics_correction_up_to_it_spacing` is a reference to a space in font units 
+    inserted when switching from upright to italic glyphs.\n
+    Defaults to `Ref(0f0)`.
 """
 struct FontFamily
     fonts::Dict{Symbol, String}
@@ -82,6 +91,9 @@ struct FontFamily
     special_chars::Dict{Char, Tuple{String, Int}}
     slant_angle::Float64
     thickness::Float64
+    text_italics_correction::Base.RefValue{Bool}
+    math_italics_correction::Base.RefValue{Bool}
+    italics_correction_up_to_it_spacing::Base.RefValue{Float32}
 end
 
 function FontFamily(fonts ;
@@ -89,7 +101,23 @@ function FontFamily(fonts ;
         font_modifiers = _default_font_modifiers,
         special_chars = Dict{Char, Tuple{String, Int}}(),
         slant_angle = 13,
-        thickness = 0.0375)
+        thickness = 0.0375,
+        text_italics_correction=Ref(false),
+        math_italics_correction=Ref(true),
+        italics_correction_up_to_it_spacing=Ref(0f0)
+)
+
+    if !(text_italics_correction isa Ref)
+        text_italics_correction = Ref(text_italics_correction)
+    end
+
+    if !(math_italics_correction isa Ref)
+        math_italics_correction = Ref(math_italics_correction)
+    end
+
+    if !(italics_correction_up_to_it_spacing isa Ref)
+        italics_correction_up_to_it_spacing = Ref(italics_correction_up_to_it_spacing)
+    end
 
     fonts = merge(_default_fonts, Dict(fonts))
     
@@ -99,7 +127,10 @@ function FontFamily(fonts ;
         font_modifiers,
         special_chars,
         slant_angle,
-        thickness
+        thickness,
+        text_italics_correction,
+        math_italics_correction,
+        italics_correction_up_to_it_spacing
     )
 end
 
