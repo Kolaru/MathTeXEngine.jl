@@ -13,7 +13,7 @@ This is a package aimed at providing a pure Julia engine for LaTeX math mode. It
 When a string is parsed, a character can occur as a text character or within 
 a math expression, and a font has to be chosen accordingly.
 The characters in a text expression come from a variety of fonts,
-depending of whether they should be rendered upright or italic or with some other style.
+depending on whether they should be rendered upright or italic or with some other style.
 For characters in mathematical expressions usually a single [mathematical font](https://en.wikipedia.org/wiki/OpenType#Math) is used, 
 and stylized glyphs are chosen from the [Unicode maths blocks](https://en.wikipedia.org/wiki/Mathematical_operators_and_symbols_in_Unicode).  
 The set of all fonts forms a `FontFamily`, and several are predefined here (NewComputerModer, TeXGyreHeros, TeXGyrePagella, and LucioleMath)
@@ -191,7 +191,7 @@ The table below contains the list of all supported LaTeX construction and their 
 
 [^1]: The behavior of the `:mathfont` command can be controlled with the `mathfont_command_mapping` field of a `FontFamily`. 
   By default, these commands are **not** font switches, but alias the corresponding `:sym` commands, so that glyphs are substituted and the `:math` font is used.
-  To have `\mathbf` them act like `\textbf`, add an entry `:bf => (:text, :bf)` to the `mathfont_command_mapping` dict of the current font family.
+  To have `\mathbf` act like `\textbf`, add an entry `:bf => (:text, :bf)` to the `mathfont_command_mapping` dict of the current font family.
 
 ## Parser examples
 
