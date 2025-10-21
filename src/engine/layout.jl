@@ -137,31 +137,32 @@ function tex_layout(expr, state)
                     end                        
                 end
             end
-            
-            ## add post spaces in script boxes
-            script_space = get_math_constant(math_table, :spaceAfterScript, 1/24, true)
-            if state.script_level[] > 0
-                ## TODO this is not standard
-                script_space * .6
-            end
-            sub = sub == empty_elem ? sub : Group([sub, Space(script_space / sub_shrink)], [Point2f(0, 0), Point2f(hadvance(sub), 0)])
-            super = super == empty_elem ? super : Group([super, Space(script_space / sup_shrink)], [Point2f(0, 0), Point2f(hadvance(super), 0)])
-
             super_y = u
             sub_y = -v
-
+            
             ## X-Positions
             sup_delta = 0   # TODO proper kerning/italic correction usign OpenType data
-            sub_delta = 0
+            sub_delta = 0   # min(0, -leftinkbound(sub) * sub_shrink) * 0.8f0  # with italic glyphs and positive left bearing, there is too much space
             #=
             old logic:
             `sub_delta = (1 - sub_shrink) * leftinkbound(sub)`
                 # The logic is to have the ink of the subscript starts
                 # where the ink of the unshrink glyph would
             =#
- 
+
             super_x = max(hadvance(core), rightinkbound(core)) + sup_delta
             sub_x = hadvance(core) + sub_delta
+
+            ## add post spaces in script boxes
+            script_space = get_math_constant(math_table, :spaceAfterScript, 1/24, true)
+            if state.nesting_state.level > 1
+                ## TODO this is not standard
+                script_space *= .25f0
+            end
+            
+            sub = sub == empty_elem ? sub : Group([sub, Space(script_space / sub_shrink)], [Point2f(0, 0), Point2f(hadvance(sub), 0)])
+            super = super == empty_elem ? super : Group([super, Space(script_space / sup_shrink)], [Point2f(0, 0), Point2f(hadvance(super), 0)])
+            
             return Group(
                 [core, sub, super],
                 Point2f[
