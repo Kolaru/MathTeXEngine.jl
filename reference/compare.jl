@@ -1,5 +1,6 @@
 using CairoMakie
 using FileIO
+using Git
 using MathTeXEngine
 using Tar
 using Test
@@ -7,14 +8,16 @@ using TOML
 
 include("references.jl")
 
-function last_major_version()
-    path = joinpath(@__DIR__, "..", "Project.toml")
-    version = VersionNumber(TOML.parse(String(read(path)))["version"])
-    return "v" * string(VersionNumber(version.major, version.minor))
+function latest_refimages_tag()
+    buff = IOBuffer()
+    run(pipeline(git(["tag", "--list"]) ; stdout = buff))
+    tags = split(String(take!(buff)))
+    i = findlast(s -> (length(s) >= 9 && s[1:9] == "refimages"), tags)
+    return tags[i]
 end
 
-function download_refimages(tag = last_major_version())
-    url = "https://github.com/user-attachments/files/22683734/reference_images.tgz"
+function download_refimages(tag = latest_refimages_tag())
+    url = "https://github.com/Kolaru/MathTeXEngine.jl/releases/download/$tag/reference_images.tar"
     images_tar = joinpath(@__DIR__, "reference_images.tar")
     images = joinpath(@__DIR__, "reference_images")
     if isfile(images_tar)

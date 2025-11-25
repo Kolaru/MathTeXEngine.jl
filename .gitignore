@@ -1,3 +1,4 @@
 Manifest.toml
 reference/**/*.png
 experimental/
+*.tar
