@@ -1,8 +1,5 @@
 # Reference test
 
-To run the reference tests, simply run `compare.jl` twice.
+To run the reference tests, simply run `compare.jl`. This will download the reference files corresponding to the latest release.
 
-First on the master branch, it will create the reference images.
-
-Then on the current branch to test, it will generate the corresponding
-reference images and test they are the same.
+To generate new reference images, run `generate.jl`. This will generate `reference_images.tar`.

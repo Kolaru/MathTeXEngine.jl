@@ -2,49 +2,57 @@ using CairoMakie
 using FileIO
 using Git
 using MathTeXEngine
+using Tar
 using Test
+using TOML
 
 include("references.jl")
 
-const git = Git.git()
+function latest_refimages_tag()
+    buff = IOBuffer()
+    run(pipeline(git(["tag", "--list"]) ; stdout = buff))
+    tags = split(String(take!(buff)))
+    i = findlast(s -> (length(s) >= 9 && s[1:9] == "refimages"), tags)
+    return tags[i]
+end
 
-begin
-    readchomp(`$git fetch`)
-    master_id = readchomp(`$git rev-parse --short master`)
-    current_id = readchomp(`$git rev-parse --short HEAD`)
-    is_clean = isempty(readchomp(`$git status -s`))
-    current_branch = readchomp(`$git rev-parse --abbrev-ref HEAD`)
-
-    @info "Reference test started on branch $current_branch"
-
-    if !is_clean
-        @warn "Using dirty commit for comparison"
-        current_id *= "-dirty"
+function download_refimages(tag = latest_refimages_tag())
+    url = "https://github.com/Kolaru/MathTeXEngine.jl/releases/download/$tag/reference_images.tar"
+    images_tar = joinpath(@__DIR__, "reference_images.tar")
+    images = joinpath(@__DIR__, "reference_images")
+    if isfile(images_tar)
+        if Bool(parse(Int, get(ENV, "REUSE_IMAGES_TAR", "0")))
+            @info "$images_tar already exists, skipping download as requested"
+        else
+            rm(images_tar)
+        end
     end
+    !isfile(images_tar) && download(url, images_tar)
+    isdir(images) && rm(images, recursive = true, force = true)
+    Tar.extract(images_tar, images)
+    return images
+end
 
-    rm("reference/$current_id", recursive = true, force = true)
-    generate("reference/$current_id")
+@testset "Reference images" begin
+    @info "Reference test started"
 
-    if current_branch == "master"
-        @info "Reference test started on master branch, nothing to compare"
-        return
-    end
-
-    if !isdir("reference/$master_id")
-        @warn "No reference available for master commit $master_id, aborting"
-        @test_broken false
-        return
-    end
-
-    @info "Comparing reference on master $master_id with current commit $current_id on branch $current_branch"
-
+    @info "Downloading reference images"
+    reference_images = download_refimages()
+    
+    @info "Generating comparison images"
+    comparison_images = joinpath(@__DIR__, "comparison_images")
+    rm(comparison_images, recursive = true, force = true)
+    generate(comparison_images)
+    
     # Compare
-    rm("reference/comparisons", recursive = true, force = true)
-    path = mkpath("reference/comparisons")
+    reference_comparison_images = joinpath(@__DIR__, "reference_comparison_images")
+    rm(reference_comparison_images, recursive = true, force = true)
+    path = mkpath(reference_comparison_images)
 
+    @info "Comparing images"
     for group in keys(inputs)
-        refimg = load("reference/$master_id/$group.png")
-        img = load("reference/$current_id/$group.png")
+        refimg = load(joinpath(reference_images, "$group.png"))
+        img = load(joinpath(comparison_images, "$group.png"))
 
         if img != refimg
             @info "Saving the reference comparison for '$group'."
