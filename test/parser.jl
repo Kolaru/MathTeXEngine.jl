@@ -20,6 +20,10 @@ end
         )
     end
 
+    @testset "Showing errors" begin
+        @test_throws "tokenized as" texparse("{")
+    end
+
     @testset "Delimiter" begin
         expr = texparse(L"\left(\frac{x}{y}\right)")
         delimited = expr.args[1].args[1]

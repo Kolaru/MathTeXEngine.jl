@@ -8,7 +8,7 @@ end
 function Base.showerror(io::IO, e::TeXParseError)
     println(io, "TeXParseError: ",  e.msg)
     show_state(io, e.stack, e.position, e.tex)
-    show_tokenization(io, tex)
+    show_tokenization(io, e.tex)
 end
 
 function show_tokenization(io, tex)
