@@ -107,7 +107,43 @@ combining_accents = [
 ]
 
 punctuation_symbols = split(raw", ; . !")
-delimiter_symbols = split(raw"| / ( ) [ ] < >")
+delimiter_symbols = split(raw"| / \ ( ) [ ] ⟨ ⟩ ‖ ⌈ ⌉ ⌊ ⌋ ⌜ ⌝ ⌞ ⌟")
+    ## NOTE `<` and `>` not included in `delimiter_symbols` because 
+    ##      they should not be used as such. In math mode, they are relation symbols and
+    ##      we don't want to change that by overwriting the `symbol_to_canonical` entries.
+    ##      **However**, `\left<` and `\right>` should work to produce `\left\langle` and 
+    ##      `\right\rangle`, respectively, due to intercepting `delimiter(...)`.
+    ## NOTE `{` and `}` not included because they are group delimiters that the tokenizer
+    ##      should recognize as `lcurly` and `rcurly`. 
+    ##      The symbols have to be typed by command.
+
+## some delimiter symbols can also be typed with commands;
+### instead of relying on `get_symbol_char` (like with `space_commands` in `commands_registration.jl`)
+### we define them explicitly, because `latex_symbols` misses some
+delimiter_commands = Dict(
+    raw"\vert" => '|',
+    raw"\slash" => '/',         # NOTE seems to work with LaTeX, but not MathJax
+    raw"\backslash" => '\\',
+    raw"\lbrack" => '[',
+    raw"\rbrack" => ']',
+    raw"\langle" => '⟨',
+    raw"\rangle" => '⟩',
+    raw"\|" => '‖',
+    raw"\Vert" => '‖',
+    raw"\lceil" => '⌈',
+    raw"\rceil" => '⌉',
+    raw"\lfloor" => '⌊',
+    raw"\lfloor" => '⌊',
+    raw"\ulcorner" => '⌜',
+    raw"\urcorner" => '⌝',
+    raw"\llcorner" => '⌞',
+    raw"\lrcorner" => '⌟',
+    raw"\{" => '{',
+    raw"\}" => '}',
+    raw"\lbrace" => '{',
+    raw"\rbrace" => '}',
+)
+
 font_names = split(raw"rm cal it tt sf bf default bb frak scr regular")
 
 # TODO Add to the parser what come below, if needed

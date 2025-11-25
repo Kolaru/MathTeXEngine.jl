@@ -55,6 +55,65 @@ end
 
         @test_throws TeXParseError texparse(raw"\left( x")
         @test_throws TeXParseError texparse(raw"x \right)")
+
+        ## all `delimiter_symbols`
+        test_parse(raw"|", (:delimiter, '|'))
+        test_parse(raw"/", (:delimiter, '/'))
+        test_parse(raw"\\", (:delimiter, '\\'))
+        test_parse(raw"(", (:delimiter, '('))
+        test_parse(raw")", (:delimiter, ')'))
+        test_parse(raw"[", (:delimiter, '['))
+        test_parse(raw"]", (:delimiter, ']'))
+        test_parse(raw"⟨", (:delimiter, '⟨'))
+        test_parse(raw"⟩", (:delimiter, '⟩'))
+        test_parse(raw"‖", (:delimiter, '‖'))
+        test_parse(raw"⌈", (:delimiter, '⌈'))
+        test_parse(raw"⌉", (:delimiter, '⌉'))
+        test_parse(raw"⌊", (:delimiter, '⌊'))
+        test_parse(raw"⌋", (:delimiter, '⌋'))
+        test_parse(raw"⌜", (:delimiter, '⌜'))
+        test_parse(raw"⌝", (:delimiter, '⌝'))
+        test_parse(raw"⌞", (:delimiter, '⌞'))
+        test_parse(raw"⌟", (:delimiter, '⌟'))
+
+        test_parse(raw"<", (:space, '<'))   # formerly, this was a delimiter
+        test_parse(raw">", (:space, '>'))
+
+        ## all `delimiter_commands`
+        test_parse(raw"\vert", (:delimiter, '|'))
+        test_parse(raw"\slash", (:delimiter, '/'))
+        test_parse(raw"\backslash", (:delimiter, '\\'))
+        test_parse(raw"\lbrack", (:delimiter, '['))
+        test_parse(raw"\rbrack", (:delimiter, ']'))
+        test_parse(raw"\langle", (:delimiter, '⟨'))
+        test_parse(raw"\rangle", (:delimiter, '⟩'))
+        test_parse(raw"\|", (:delimiter, '‖'))
+        test_parse(raw"\Vert", (:delimiter, '‖'))
+        test_parse(raw"\lceil", (:delimiter, '⌈'))
+        test_parse(raw"\rceil", (:delimiter, '⌉'))
+        test_parse(raw"\lfloor", (:delimiter, '⌊'))
+        test_parse(raw"\lfloor", (:delimiter, '⌊'))
+        test_parse(raw"\ulcorner", (:delimiter, '⌜'))
+        test_parse(raw"\urcorner", (:delimiter, '⌝'))
+        test_parse(raw"\llcorner", (:delimiter, '⌞'))
+        test_parse(raw"\lrcorner", (:delimiter, '⌟'))
+        test_parse(raw"\{", (:delimiter, '{'))
+        test_parse(raw"\}", (:delimiter, '}'))
+        test_parse(raw"\lbrace", (:delimiter, '{'))
+        test_parse(raw"\rbrace", (:delimiter, '}'))
+     
+        ### test commands as arguments to a delimited group
+        for (cmd_str, delim_symb) in pairs(MathTeXEngine.delimiter_commands)
+            ## NOTE this does not check for "correct" left right pairs like `\lbrack` and `\rbrack`
+            test_parse(
+                "\\left$(cmd_str)\\right$(cmd_str)", 
+                (:delimited,
+                    (:delimiter, delim_symb),
+                    (:group,),
+                    (:delimiter, delim_symb)
+                )
+            )
+        end
     end
 
     @testset "Fonts" begin
