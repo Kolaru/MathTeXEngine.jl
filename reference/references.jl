@@ -49,7 +49,7 @@ inputs["integrals"] = [
     L"\int \int \int"
 ]
 
-input["linebreaks"] = [
+inputs["linebreaks"] = [
     L"we clearly see $x = 22$\\and $y > x^2$"
 ]
 
