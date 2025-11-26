@@ -27,6 +27,9 @@ function tex_layout(expr, state)
     args = [expr.args...]
     shrink = 0.6
 
+    math_table = get_math_table(font_family)
+    default_rule_thickness = get_math_constant(math_table, :fractionRuleThickness, thickness(font_family), true)
+
     try
         if isleaf(expr)  # :char, :delimiter, :digit, :punctuation, :symbol
             char = args[1]
@@ -57,30 +60,116 @@ function tex_layout(expr, state)
                 [1, 1]
             )
         elseif head == :decorated
-            core, sub, super = tex_layout.(args, state)
+            ## within this conditional we determine several layouting constants;
+            ## for the typesetting heuristics refer to
+            ## Appendix G in https://visualmatheditor.equatheque.net/doc/texbook.pdfl
+            ## for information on the OpenType Math names refer to
+            ## https://learn.microsoft.com/en-us/typography/opentype/spec/math#math-table-structures
+            ## for name mapping between OpenType and Tex refer to
+            ## 7.4.2 in https://mirrors.ibiblio.org/CTAN/systems/doc/luatex/luatex.pdf
 
-            if !isnothing(args[3]) && args[3].head == :primes
-                super_x = min(hadvance(core), rightinkbound(core)) - 0.1
-                super_y = 0.1
-                super_shrink = 1
+            ## layout nucleus
+            core = tex_layout(args[1], state)
+
+            ## before layouting sub- and superscript, we have to determine the current scaling factors
+            ### special treatment for primes
+            sup_is_primes = (!isnothing(args[3]) && args[3].head == :primes)
+            
+            script_shrink = if state.script_level[] <= 0
+                get_math_constant(math_table, :scriptPercentScaleDown, 80) / 100
             else
-                super_x = max(hadvance(core), rightinkbound(core))
-                super_y = xheight(font_family)
-                super_shrink = shrink
+                get_math_constant(math_table, :scriptScriptPercentScaleDown, 60) / 100
             end
+            sub_shrink = script_shrink / state.script_scale[]
+            sup_shrink = (sup_is_primes ? state.script_scale[] : script_shrink) / state.script_scale[]
 
+            ## layout sub- and superscript
+            sub = tex_layout(args[2], inc_script_level(state, sub_shrink))
+            super = tex_layout(args[3], inc_script_level(state, sup_shrink))
+            
+            ## Y-Positions
+            _1_5_x_height = abs(1/5 * xheight(font_family)) 
+            sub1 = get_math_constant(math_table, :subscriptShiftDown, 0, true)
+            sub2 = get_math_constant(math_table, :subscriptShiftDownWithSuperscript, sub1, true)    # not (yet) in OpenType standard, so will equal sub1
+            sub_drop = get_math_constant(math_table, :subscriptBaselineDropMin, 0, true)
+            sub_topmax = get_math_constant(math_table, :subscriptTopMax, 4 * _1_5_x_height, true)
+
+            sup1 = sup_is_primes ? 0 : get_math_constant(math_table, :superscriptShiftUp, 0, true)
+            sup_drop = get_math_constant(math_table, :superscriptBaselineDropMax, 0, true)
+            sup_botmin = get_math_constant(math_table, :superscriptBottomMin, _1_5_x_height, true)
+            sup_botmax = get_math_constant(math_table, :superscriptBottomMaxWithSubscript, 4 * sup_botmin, true)
+
+            gap_min = get_math_constant(math_table, :subSuperscriptGapMin, 4 * default_rule_thickness, true)
+
+            ### 18a -- Appendix G in TeXBook
+            atomic_core = isa(core, TeXChar) || isa(core, Space)
+            ### preliminary (positive) offsets
+            v = atomic_core ? 0 : -bottominkbound(core) + sub_drop
+            u = atomic_core ? 0 : topinkbound(core) - sup_drop
+            
+            sub_height = topinkbound(sub) * sub_shrink
+            sup_depth = -bottominkbound(super) * sup_shrink
+
+            empty_elem = Space(0)
+
+            if sub != empty_elem && super == empty_elem
+                ### 18b no superscript
+                v = max(v, sub1, sub_height - sub_topmax)
+            else
+                v = max(v, sub2)
+                ### 18c
+                u = max(u, sup1, sup_depth + sup_botmin)
+                if sub != empty_elem
+                    ### nontrivial sub- and superscripts
+                    _u = u - sup_depth
+                    _v = sub_height - v
+                    if _u - _v < gap_min
+                        ### 18e
+                        psi = sup_botmax - _u
+                        if psi > 0
+                            u += psi
+                            v -= psi
+                        else
+                            #### TODO unsure about this
+                            psi = gap_min - (_u - _v)
+                            v += psi
+                        end
+                    end                        
+                end
+            end
+            super_y = u
+            sub_y = -v
+            
+            ## X-Positions
+            sup_delta = 0   # TODO proper kerning/italic correction usign OpenType data
+            sub_delta = 0   # min(0, -leftinkbound(sub) * sub_shrink) * 0.8f0  # with italic glyphs and positive left bearing, there is too much space
+            #=
+            old logic:
+            `sub_delta = (1 - sub_shrink) * leftinkbound(sub)`
+                # The logic is to have the ink of the subscript starts
+                # where the ink of the unshrink glyph would
+            =#
+
+            super_x = max(hadvance(core), rightinkbound(core)) + sup_delta
+            sub_x = hadvance(core) + sub_delta
+
+            ## add post spaces in script boxes
+            script_space = get_math_constant(math_table, :spaceAfterScript, 1/24, true)
+            if state.nesting_state.level > 1
+                ## TODO this is not standard
+                script_space *= .25f0
+            end
+            
+            sub = sub == empty_elem ? sub : Group([sub, Space(script_space / sub_shrink)], [Point2f(0, 0), Point2f(hadvance(sub), 0)])
+            super = super == empty_elem ? super : Group([super, Space(script_space / sup_shrink)], [Point2f(0, 0), Point2f(hadvance(super), 0)])
+            
             return Group(
                 [core, sub, super],
                 Point2f[
                     (0, 0),
-                    (
-                        # The logic is to have the ink of the subscript starts
-                        # where the ink of the unshrink glyph would
-                        hadvance(core) + (1 - shrink) * leftinkbound(sub),
-                        -0.2
-                    ),
-                    ( super_x, super_y)],
-                [1, shrink, super_shrink]
+                    (sub_x, sub_y),
+                    (super_x, super_y)],
+                [1, sub_shrink, sup_shrink]
             )
         elseif head == :delimited
             elements = tex_layout.(args, state)
@@ -198,7 +287,16 @@ function tex_layout(expr, state)
                 ]
             )
         elseif head == :primes
-            primes = [TeXExpr(:char, ''') for _ in 1:only(args)]
+            len = only(args)
+            primes = if len == 1
+                [TeXExpr(:symbol, '′'),]
+            elseif len == 2
+                [TeXExpr(:symbol, '″'),]
+            elseif len == 3
+                [TeXExpr(:symbol, '‴'),]
+            else
+                reduce(vcat, [Space(-3/36), TeXExpr(:char, '′')] for _ in 1:len)
+            end
             return horizontal_layout(tex_layout.(primes, state))
         elseif head == :space
             return Space(args[1])

@@ -67,7 +67,12 @@ function push_down!(stack)
             top = TeXExpr(:space, 0.0)
         # Unroll group with single elements
         elseif length(top.args) == 1
-            top = only(top.args)
+            _top = only(top.args)
+            ## don't unroll group if it contains something with sub- or superscripts;
+            ## someone might intentionally type `{x^y}^z` and unrolling would cause problems
+            if head(_top) != :decorated
+                top = _top
+            end
         end
     end
     push!(first(stack), top)
@@ -148,6 +153,23 @@ function texparse(tex ; root = TeXExpr(:lines), showdebug = false)
         !isvalid(tex, pos) && continue
 
         try
+            ## before the actual parsing logic starts, make prime symbols active; 
+            ## this way, they act as superscripts;
+            ## TODO do this for other unicode glyphs acting as sub- or superscripts? (e.g., '⁰': Unicode U+2070)
+            if token == char
+                c = tex[pos]
+                if c == '′' || c == '‵'
+                    token = primes
+                    len = 1
+                elseif c == '″' || c == '‶'
+                    token = primes
+                    len = 2
+                elseif c == '‴' || c == '‷'
+                    token = primes
+                    len = 3
+                end
+            end
+
             if token == dollar
                 if head(first(stack)) == :inline_math
                     inside_math = false
