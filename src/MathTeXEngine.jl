@@ -28,6 +28,13 @@ export glyph_index
 # Reexport from LaTeXStrings
 export @L_str
 
+# Global settings flags
+
+## parser flag to indicate whether or not to (try to) remove space for 
+## binary operator symbols if they are used as unary prefixes 
+## (only in math mode)
+const UNSPACE_BINARY_OPERATORS_HEURISTIC = Ref(true)
+
 include("parser/tokenizer.jl")
 include("parser/texexpr.jl")
 include("parser/commands_data.jl")
