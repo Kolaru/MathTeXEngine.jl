@@ -85,6 +85,34 @@ end
         char, pos, size = first(elems)
         @test pos[1] == 2
     end
+
+    @testset "Italic Correction" begin
+        ffam = FontFamily()
+        
+        ffam.math_italics_correction[] = false
+        els1 = generate_tex_elements(L"(f)x", ffam)
+
+        ffam.math_italics_correction[] = true
+        els2 = generate_tex_elements(L"(f)x", ffam)
+
+        xpos = ((elem, pos),) -> pos[1]
+
+        ## space between upright `(` and slanted `f` is increased to avoid collisions at bottom left corner
+        Δ1 = xpos(els1[2]) - xpos(els1[1])
+        Δ2 = xpos(els2[2]) - xpos(els2[1])
+        @test Δ1 < Δ2
+
+        ## space between slanted `f` and upright `)` is increased to avoid collisions at top right corner
+        Δ1 = xpos(els1[3]) - xpos(els1[2])
+        Δ2 = xpos(els2[3]) - xpos(els2[2])
+        @test Δ1 < Δ2
+
+        ## with NewComputerModern, some italic glyphs seem to have large positive bearing
+        ## it should be reduced by correction heuristic
+        Δ1 = xpos(els1[4]) - xpos(els1[3])
+        Δ2 = xpos(els2[4]) - xpos(els2[3])
+        @test Δ1 > Δ2
+   end
 end
 
 @testset "Generate elements" begin
