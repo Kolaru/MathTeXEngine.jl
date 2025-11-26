@@ -47,9 +47,38 @@ end
         texchar = tex_layout(expr, FontFamily())
         @test isa(texchar, TeXChar)
 
-        expr = manual_texexpr((:font, :rm, 'u'))
+        expr = manual_texexpr((:mathfont, :rm, 'u'))
         texchar = tex_layout(expr, FontFamily())
         @test isa(texchar, TeXChar)
+
+        ## UnicodeMath
+        expr = manual_texexpr((:char, 'a'))
+        texchar = tex_layout(expr, FontFamily())
+        @test texchar.represented_char == 'a'
+        
+        expr = manual_texexpr((:inline_math, (:char, 'a')))
+        texgroup = tex_layout(expr, FontFamily())
+        texchar = only(texgroup.elements)
+        @test texchar.represented_char == '𝑎'
+        
+        expr = manual_texexpr((:inline_math, (:text, :rm, (:char, 'a'))))
+        texgroup = tex_layout(expr, FontFamily())
+        texchar = only(texgroup.elements)
+        @test texchar.represented_char == 'a'
+        @test texchar.font == get_font(FontFamily(), :regular)
+
+        expr = manual_texexpr((:inline_math, (:mathfont, :rm, (:char, 'a'))))
+        texgroup = tex_layout(expr, FontFamily())
+        texchar = only(texgroup.elements)
+        @test texchar.represented_char == '𝑎'
+        @test texchar.font == get_font(FontFamily(), :math)
+
+        ffam = deepcopy(FontFamily())
+        ffam.mathfont_command_mapping[:rm] = (:text, :rm)
+        expr = manual_texexpr((:inline_math, (:mathfont, :rm, (:char, 'a'))))
+        texgroup = tex_layout(expr, ffam)
+        texchar = only(texgroup.elements)
+        @test texchar.font == get_font(ffam, :regular)
     end
 
     @testset "Group" begin

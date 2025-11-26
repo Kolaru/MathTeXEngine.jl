@@ -6,8 +6,12 @@ using AbstractTrees
 using Automa
 using FreeTypeAbstraction
 using LaTeXStrings
-using UnicodeFun
 
+include("UnicodeMath/src/UnicodeMath.jl")
+import .UnicodeMath as UCM
+import .UnicodeMath: UCMConfig
+
+import UnPack: @unpack
 using DataStructures: Stack
 using GeometryBasics: Point2f, Rect2f
 using REPL.REPLCompletions: latex_symbols

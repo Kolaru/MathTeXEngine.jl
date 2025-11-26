@@ -28,6 +28,28 @@ function tex_layout(expr, state)
     shrink = 0.6
 
     try
+        ## intercept `\mathXX` commands before layouting because their behavior depends 
+        ## on `font_family.mathfont_command_mapping`:
+        if head == :mathfont
+            modifier, content = args
+            if haskey(font_family.mathfont_command_mapping, modifier)
+                _head, _modifier = font_family.mathfont_command_mapping[modifier]
+                if _head == :text || _head == :sym
+                    head = _head
+                    if _head == :sym 
+                        if _modifier == :rm
+                            _modifier = :up
+                        elseif _modifier == :src
+                            _modifier = :cal
+                        end
+                    end
+                    args = [_modifier, content]
+                end
+            else
+                head = :sym
+            end
+        end
+
         if isleaf(expr)  # :char, :delimiter, :digit, :punctuation, :symbol
             char = args[1]
             if char == ' ' && state.tex_mode == :inline_math
@@ -105,9 +127,9 @@ function tex_layout(expr, state)
                 ],
                 scales
             )
-        elseif head == :font
+        elseif head == :sym
             modifier, content = args
-            return tex_layout(content, add_font_modifier(state, modifier))
+            return tex_layout(content, add_ucm_modifier(state, modifier))
         elseif head == :fontfamily
             return Space(0)
         elseif head == :frac

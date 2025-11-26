@@ -7,10 +7,14 @@ import MathTeXEngine: TeXParseError
 
 import MathTeXEngine: tex_layout, generate_tex_elements
 import MathTeXEngine: Space, TeXElement
-import MathTeXEngine: load_font
+import MathTeXEngine: load_font, get_font
 import MathTeXEngine: inkheight, inkwidth
 
 include("texexpr.jl")
 include("parser.jl")
 include("fonts.jl")
 include("layout.jl")
+
+import MathTeXEngine: UCM
+import UnPack: @unpack
+include("../src/UnicodeMath/test/alltests.jl")

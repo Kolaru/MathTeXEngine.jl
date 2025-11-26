@@ -154,16 +154,31 @@ function TeXChar(char::Char, state::LayoutState, char_type)
     if haskey(font_family.special_chars, char)
         fontpath, id = font_family.special_chars[char]
         font = load_font(fontpath)
-        return TeXChar(id, font, font_family, false, char)
+        return TeXChar(id, font, font_family, false, char)  ## TODO is_slanted
     end
 
-    font = get_font(state, char_type)
+    font_id = get_font_id(state, char_type)
+    font = get_font(font_family, font_id)
+
+    if font_id == :math
+        @unpack unicode_math_substitutions, unicode_math_aliases = font_family
+        char = UCM.apply_style(char, unicode_math_substitutions, unicode_math_aliases)
+        @unpack ucm_modifiers = state
+        if !isempty(ucm_modifiers)
+            for trgt_style in reverse(ucm_modifiers)
+                char = UCM.apply_style(
+                    char, unicode_math_substitutions, unicode_math_aliases, trgt_style;
+                    is_styled=true
+                )
+            end
+        end
+    end
 
     return TeXChar(
         glyph_index(font, char),
         font,
         font_family,
-        is_slanted(state.font_family, char_type),
+        is_slanted(font_id, char),
         char)
 end
 

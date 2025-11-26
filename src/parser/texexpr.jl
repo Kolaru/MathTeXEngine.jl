@@ -1,10 +1,3 @@
-const _math_font_mappings = Dict(
-    :bb => to_blackboardbold,
-    :cal => to_caligraphic,
-    :frak => to_frakture,
-    :scr => to_caligraphic
-)
-
 """
     TeXExpr(head::Symbol, args::Vector)
 
@@ -22,20 +15,7 @@ struct TeXExpr
     head::Symbol
     args::Vector{Any}
 
-    function TeXExpr(head, args::Vector)
-        # Convert math font like `\mathbb{R}` -- TeXExpr(:font, [:bb, 'R']) --
-        # to unicode symbols -- e.g. TeXExpr(:symbol, 'ℝ')
-        if length(args) == 2 && head == :font && haskey(_math_font_mappings, args[1])
-            font, content = args
-            to_font = _math_font_mappings[font]
-            return leafmap(content) do leaf
-                sym = only(leaf.args)
-                return TeXExpr(:symbol, to_font(sym))
-            end
-        end
-
-        return new(head, args)
-    end
+    TeXExpr(head, args::Vector) = new(head, args)
 end
 
 TeXExpr(head) = TeXExpr(head, [])
@@ -102,7 +82,10 @@ manual_texexpr(any) = any
 
 head(texexpr::TeXExpr) = texexpr.head
 head(::Char) = :char
-isleaf(texexpr::TeXExpr) = texexpr.head in (:char, :delimiter, :digit, :punctuation, :symbol)
+function isleaf(texexpr::TeXExpr)
+    return texexpr.head in (
+        :char, :delimiter, :digit, :punctuation, :symbol, :ucm_glyph)
+end
 isleaf(::Nothing) = true
 
 function AbstractTrees.children(texexpr::TeXExpr)
