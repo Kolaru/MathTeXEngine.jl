@@ -34,7 +34,7 @@ jobs:
           julia --project=reference --code-coverage reference/compare.jl
           && echo "TESTS_SUCCESSFUL=true" >> $GITHUB_ENV
       - name: Upload test Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ReferenceImages_MathTeXEngine_${{ matrix.version }}
           path: ./reference/reference_comparison_images/
