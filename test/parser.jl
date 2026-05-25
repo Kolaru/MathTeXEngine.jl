@@ -1,6 +1,6 @@
-function test_parse(input, args... ; broken=false)
+function test_parse(input, args...; broken = false)
     arg = (:line, args...)
-    if broken
+    return if broken
         @test_broken texparse(input) == manual_texexpr(arg)
     else
         @test texparse(input) == manual_texexpr(arg)
@@ -43,10 +43,11 @@ end
 
         test_parse(
             raw"\left(a+b\right)",
-            (:delimited,
+            (
+                :delimited,
                 '(',
                 (:group, 'a', (:spaced, '+'), 'b'),
-                ')'
+                ')',
             )
         )
 
@@ -101,16 +102,17 @@ end
         test_parse(raw"\}", (:delimiter, '}'))
         test_parse(raw"\lbrace", (:delimiter, '{'))
         test_parse(raw"\rbrace", (:delimiter, '}'))
-     
+
         ### test commands as arguments to a delimited group
         for (cmd_str, delim_symb) in pairs(MathTeXEngine.delimiter_commands)
             ## NOTE this does not check for "correct" left right pairs like `\lbrack` and `\rbrack`
             test_parse(
-                "\\left$(cmd_str)\\right$(cmd_str)", 
-                (:delimited,
+                "\\left$(cmd_str)\\right$(cmd_str)",
+                (
+                    :delimited,
                     (:delimiter, delim_symb),
                     (:group,),
-                    (:delimiter, delim_symb)
+                    (:delimiter, delim_symb),
                 )
             )
         end
@@ -120,18 +122,28 @@ end
         test_parse(raw"\mathrm{u}", (:font, :rm, (:char, 'u')))
         test_parse(raw"\text{u}", (:text, :rm, (:char, 'u')))
 
-        test_parse(raw"\mathrm{u v}", (:text, :rm,
-            (:group,
-                (:char, 'u'),
-                (:char, ' '),
-                (:char, 'v')
-            )))
-        test_parse(raw"\text{u v}", (:text, :rm,
-            (:group,
-                (:char, 'u'),
-                (:char, ' '),
-                (:char, 'v')
-            )))
+        test_parse(
+            raw"\mathrm{u v}", (
+                :text, :rm,
+                (
+                    :group,
+                    (:char, 'u'),
+                    (:char, ' '),
+                    (:char, 'v'),
+                ),
+            )
+        )
+        test_parse(
+            raw"\text{u v}", (
+                :text, :rm,
+                (
+                    :group,
+                    (:char, 'u'),
+                    (:char, ' '),
+                    (:char, 'v'),
+                ),
+            )
+        )
 
         @test texparse(raw"ℝ") == texparse(raw"\mathbb{R}")
     end
@@ -194,18 +206,20 @@ end
         )
         test_parse(
             raw"\sum_{k=0}^n",
-            (:underover,
+            (
+                :underover,
                 (:symbol, '∑'),
                 (:group, 'k', (:spaced, (:symbol, '=')), (:digit, '0')),
-                'n'
+                'n',
             )
         )
         test_parse(
             raw"\lim_x",
-            (:underover,
+            (
+                :underover,
                 (:function, "lim"),
                 'x',
-                nothing
+                nothing,
             )
         )
     end
@@ -226,6 +240,11 @@ end
         )
     end
 
+    @testset "Bold symbol" begin
+        test_parse(raw"\boldsymbol{\nabla}", (:boldsymbol, (:symbol, '∇')))
+        test_parse(raw"\bm{\epsilon}", (:boldsymbol, (:symbol, 'ϵ')))
+    end
+
     @testset "Space" begin
         test_parse(raw"\quad", (:space, 1))
         test_parse(raw"\qquad", (:space, 2))
@@ -241,13 +260,17 @@ end
         # Hyphen must be replaced by a minus sign
         test_parse(raw"-", (:spaced, (:symbol, '−')))
 
-        test_parse(raw"a-b $c-d$",
-                   (:char, 'a'), (:char, '-'), (:char, 'b'),
-                   (:char, ' '),
-                   (:inline_math,
-                    (:char, 'c'),
-                    (:spaced, (:symbol, '−')),
-                    (:char, 'd')))
+        test_parse(
+            raw"a-b $c-d$",
+            (:char, 'a'), (:char, '-'), (:char, 'b'),
+            (:char, ' '),
+            (
+                :inline_math,
+                (:char, 'c'),
+                (:spaced, (:symbol, '−')),
+                (:char, 'd'),
+            )
+        )
     end
 
     @testset "Unary operator spacing heuristic" begin
@@ -256,31 +279,51 @@ end
             MathTeXEngine.unspace_binary_operators_heuristic_enabled[] = true
 
             test_parse(raw"$-1$", (:inline_math, (:symbol, '−'), (:digit, '1')))
-            test_parse(raw"$2-1$",
-                       (:inline_math,
-                        (:digit, '2'),
-                        (:spaced, (:symbol, '−')),
-                        (:digit, '1')))
-            test_parse(raw"$\alpha^*$",
-                       (:inline_math,
-                        (:decorated, (:symbol, 'α'), nothing, (:symbol, '*'))))
-            test_parse(raw"$\frac{1}{2}\pm\sqrt{3}$",
-                       (:inline_math,
-                        (:frac, (:digit, '1'), (:digit, '2')),
-                        (:spaced, (:symbol, '±')),
-                        (:sqrt, (:digit, '3'))))
-            test_parse(raw"$\frac{1}{2}{}\pm\sqrt{3}$",
-                       (:inline_math,
-                        (:frac, (:digit, '1'), (:digit, '2')),
-                        (:space, 0.0),
-                        (:symbol, '±'),
-                        (:sqrt, (:digit, '3'))))
+            test_parse(
+                raw"$2-1$",
+                (
+                    :inline_math,
+                    (:digit, '2'),
+                    (:spaced, (:symbol, '−')),
+                    (:digit, '1'),
+                )
+            )
+            test_parse(
+                raw"$\alpha^*$",
+                (
+                    :inline_math,
+                    (:decorated, (:symbol, 'α'), nothing, (:symbol, '*')),
+                )
+            )
+            test_parse(
+                raw"$\frac{1}{2}\pm\sqrt{3}$",
+                (
+                    :inline_math,
+                    (:frac, (:digit, '1'), (:digit, '2')),
+                    (:spaced, (:symbol, '±')),
+                    (:sqrt, (:digit, '3')),
+                )
+            )
+            test_parse(
+                raw"$\frac{1}{2}{}\pm\sqrt{3}$",
+                (
+                    :inline_math,
+                    (:frac, (:digit, '1'), (:digit, '2')),
+                    (:space, 0.0),
+                    (:symbol, '±'),
+                    (:sqrt, (:digit, '3')),
+                )
+            )
 
             MathTeXEngine.unspace_binary_operators_heuristic_enabled[] = false
             test_parse(raw"$-1$", (:inline_math, (:spaced, (:symbol, '−')), (:digit, '1')))
-            test_parse(raw"$\alpha^*$",
-                       (:inline_math,
-                        (:decorated, (:symbol, 'α'), nothing, (:spaced, (:symbol, '*')))))
+            test_parse(
+                raw"$\alpha^*$",
+                (
+                    :inline_math,
+                    (:decorated, (:symbol, 'α'), nothing, (:spaced, (:symbol, '*'))),
+                )
+            )
         finally
             MathTeXEngine.unspace_binary_operators_heuristic_enabled[] = old
         end
@@ -298,7 +341,7 @@ end
             ("Φ", raw"\Phi"),
             # The following test symbols with multiple commands
             ("ε", raw"\varepsilon"),
-            ("ε", raw"\upepsilon")
+            ("ε", raw"\upepsilon"),
         ]
 
         for (char, sym) in test_symbols

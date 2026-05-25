@@ -27,7 +27,7 @@ A font at a given location is cached for further use.
 """
 function load_font(str)
     path = full_fontpath(str)
-    get!(_cached_fonts, path) do
+    return get!(_cached_fonts, path) do
         FTFont(path)
     end
 end
@@ -50,7 +50,7 @@ const _default_font_mapping = Dict(
 const _default_font_modifiers = Dict(
     :rm => Dict(:bolditalic => :bold, :italic => :regular),
     :it => Dict(:bold => :bolditalic, :regular => :italic),
-    :bf => Dict(:italic => :bolditalic, :regular => :bold)
+    :bf => Dict(:italic => :bolditalic, :regular => :bold, :math => :bold)
 )
 
 const _default_fonts = Dict(
@@ -94,12 +94,14 @@ struct FontFamily
     thickness::Float64
 end
 
-function FontFamily(fonts ;
+function FontFamily(
+        fonts;
         font_mapping = _default_font_mapping,
         font_modifiers = _default_font_modifiers,
         special_chars = Dict{Char, Tuple{String, Int}}(),
         slant_angle = 13,
-        thickness = 0.0375)
+        thickness = 0.0375
+    )
 
     fonts = merge(_default_fonts, Dict(fonts))
 
@@ -138,6 +140,7 @@ function Base.show(io::IO, family::FontFamily)
         spaces = " "^(12 - length(string(key)))
         println(io, "  $key$spaces=>  $font")
     end
+    return
 end
 
 
@@ -153,7 +156,8 @@ const default_font_families = Dict(
             :bolditalic => joinpath("NewComputerModern", "NewCM10-BoldItalic.otf"),
             :math => joinpath("NewComputerModern", "NewCMMath-Regular.otf")
         ),
-        special_chars =_symbol_to_new_computer_modern),
+        special_chars = _symbol_to_new_computer_modern
+    ),
     "TeXGyreHeros" => FontFamily(
         Dict(
             :regular => joinpath("TeXGyreHerosMakie", "TeXGyreHerosMakie-Regular.otf"),
@@ -243,7 +247,7 @@ Return the font used by MathTeXEngine.
 If a font descriptor is given (e.g. :italic) return the font used for that
 scenario.
 """
-function texfont(font_desc=:text)
+function texfont(font_desc = :text)
     family = FontFamily()
 
     haskey(family.fonts, font_desc) && return load_font(family.fonts[font_desc])
@@ -251,9 +255,11 @@ function texfont(font_desc=:text)
 
     valids = vcat(collect(keys(family.fonts)), collect(keys(family.font_mapping)))
     valids = join([":$sym" for sym in valids], ", ", " and ")
-    throw(ArgumentError(
-        "Invalid font descriptor $font_desc, valid possibilites are $valids"
-    ))
+    throw(
+        ArgumentError(
+            "Invalid font descriptor $font_desc, valid possibilites are $valids"
+        )
+    )
 end
 
 """

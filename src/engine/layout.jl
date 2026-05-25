@@ -360,6 +360,9 @@ function tex_layout(expr, state)
         elseif head == :font
             modifier, content = args
             return tex_layout(content, add_font_modifier(state, modifier))
+        elseif head == :boldsymbol
+            content = only(args)
+            return tex_layout(content, add_font_modifier(state, :bf))
         elseif head == :fontfamily
             return Space(0)
         elseif head == :frac

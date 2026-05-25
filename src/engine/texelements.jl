@@ -161,17 +161,23 @@ end
 
 function TeXChar(char::Char, state::LayoutState, char_type)
     font_family = state.font_family
+    font_id = get_font_identifier(state, char_type)
 
-    if haskey(font_family.special_chars, char)
+    if font_id == font_family.font_mapping[char_type] && haskey(font_family.special_chars, char)
         fontpath, id = font_family.special_chars[char]
         font = load_font(fontpath)
         return TeXChar(id, font, font_family, is_slanted_math_symbol(char, char_type), char)
     end
 
-    font_id = get_font_identifier(state, char_type)
     font = get_font(font_family, font_id)
 
     glyph_id = glyph_index(font, char)
+    if glyph_id == 0 && haskey(font_family.special_chars, char)
+        fontpath, id = font_family.special_chars[char]
+        font = load_font(fontpath)
+        return TeXChar(id, font, font_family, is_slanted_math_symbol(char, char_type), char)
+    end
+
     if glyph_id == 0 && char_type in (:delimiter, :symbol)
         fallback = default_math_texchar(char, font_family, char)
         if !isnothing(fallback)

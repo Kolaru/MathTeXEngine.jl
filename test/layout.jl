@@ -122,6 +122,30 @@ ink_group_vmid(elements) = (minimum(ink_bottom, elements) + maximum(ink_top, ele
         expr = manual_texexpr((:font, :rm, 'u'))
         texchar = tex_layout(expr, FontFamily())
         @test isa(texchar, TeXChar)
+
+        font_family = FontFamily()
+        bold_font = MathTeXEngine.get_font(font_family, :bold)
+        bold_special_chars = [
+            char for char in keys(font_family.special_chars)
+                if MathTeXEngine.glyph_index(bold_font, char) != 0
+        ]
+        @test !isempty(bold_special_chars)
+
+        for char in bold_special_chars
+            expr = manual_texexpr((:font, :bf, (:symbol, char)))
+            texchar = tex_layout(expr, font_family)
+            @test texchar.font == bold_font
+            @test texchar.glyph_id == MathTeXEngine.glyph_index(bold_font, char)
+
+            expr = manual_texexpr((:boldsymbol, (:symbol, char)))
+            texchar = tex_layout(expr, font_family)
+            @test texchar.font == bold_font
+            @test texchar.glyph_id == MathTeXEngine.glyph_index(bold_font, char)
+        end
+
+        elems = generate_tex_elements(L"\boldsymbol{\nabla}")
+        @test length(elems) == 1
+        @test only(elems)[1].glyph_id != 0
     end
 
     @testset "Group" begin

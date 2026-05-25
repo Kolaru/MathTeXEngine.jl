@@ -2,7 +2,7 @@ struct CanonicalDict{T}
     dict::Dict{T, TeXExpr}
 end
 
-CanonicalDict{T}() where T = CanonicalDict(Dict{T, TeXExpr}())
+CanonicalDict{T}() where {T} = CanonicalDict(Dict{T, TeXExpr}())
 
 Base.setindex!(d::CanonicalDict, val::TeXExpr, key) = (d.dict[key] = val)
 Base.setindex!(d::CanonicalDict{Char}, val::TeXExpr, key::String) = (d[first(key)] = val)
@@ -58,6 +58,8 @@ const command_definitions = Dict(
     raw"\frac" => (TeXExpr(:frac), 2),
     raw"\sqrt" => (TeXExpr(:sqrt), 1),
     raw"\overline" => (TeXExpr(:overline), 1),
+    raw"\boldsymbol" => (TeXExpr(:boldsymbol), 1),
+    raw"\bm" => (TeXExpr(:boldsymbol), 1),
     raw"\_" => (TeXExpr(:symbol, '_'), 0),
     raw"\%" => (TeXExpr(:symbol, '%'), 0),
     raw"\$" => (TeXExpr(:symbol, '$'), 0),
