@@ -4,11 +4,13 @@ using LaTeXStrings
 
 include("data/basics.jl")
 include("data/spacing.jl")
+include("data/bold_symbols.jl")
 
 with_font(font_name, expr) = latexstring("\\fontfamily{$font_name}$expr")
 
 const REFERENCES = Dict(
     "basics" => BASICS,
+    "bold_symbols" => BOLD_SYMBOLS,
     "spacing" => SPACING
 )
 
@@ -16,7 +18,7 @@ const SUPPORTED_FONTS = [
     "NewComputerModern",
     "TeXGyreHeros",
     "TeXGyrePagella",
-    "LucioleMath"
+    "LucioleMath",
 ]
 
 function generate(destination_folder, references = REFERENCES, fonts = SUPPORTED_FONTS)
@@ -34,7 +36,7 @@ function generate(destination_folder, references = REFERENCES, fonts = SUPPORTED
                 failures[group] = fails
             end
 
-            save(joinpath(path, "$group.png"), fig, px_per_unit=3)
+            save(joinpath(path, "$group.png"), fig, px_per_unit = 3)
         end
     end
 
@@ -51,7 +53,7 @@ function reference_figure(exprs, fonts = SUPPORTED_FONTS)
                 Label(fig[i, j], with_font(font, expr))
             catch e
                 failures[expr] = e
-            end 
+            end
         end
     end
     resize_to_layout!(fig)
